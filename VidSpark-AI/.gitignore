@@ -1,0 +1,9 @@
+.env
+.env.local
+.env.production
+*.pem
+*.key
+node_modules/
+.wrangler/
+dist/
+*.zip

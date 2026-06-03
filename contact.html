@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="index, follow">
+<meta name="description" content="Contactez l'équipe VidSpark AI — Support, facturation, données personnelles, signalement d'abus.">
+<title>Contact — VidSpark AI</title>
+<style>
+/* ════════════════════════════════════════════════════════════
+   TOKENS
+════════════════════════════════════════════════════════════ */
+:root {
+  --bg:       #07070a;
+  --s1:       #0e0e12;
+  --s2:       #141418;
+  --s3:       #1a1a20;
+  --b1:       #1e1e26;
+  --b2:       #2a2a35;
+  --b3:       #3a3a48;
+  --text:     #e8e8f0;
+  --muted:    #8888a0;
+  --faint:    #505060;
+  --purple:   #7c6dfa;
+  --purple-l: #a78bfa;
+  --purple-d: #2d1f5e;
+  --green:    #22c55e;
+  --green-d:  #0d2d1a;
+  --red:      #ef4444;
+  --red-d:    #2d0a0a;
+  --amber:    #f59e0b;
+  --amber-d:  #2d1e00;
+  --blue:     #3b82f6;
+  --blue-d:   #0d1e3a;
+  --r:        8px;
+  --r2:       12px;
+  --r3:       16px;
+  --shadow:   0 4px 24px rgba(0,0,0,.5);
+  --container:1180px;
+}
+
+/* ════════════════════════════════════════════════════════════
+   RESET & BASE
+════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  overflow-x: hidden;
+}
+a { color: inherit; text-decoration: none; }
+
+/* ════════════════════════════════════════════════════════════
+   LAYOUT HELPERS
+════════════════════════════════════════════════════════════ */
+.wrap { max-width: var(--container); margin: 0 auto; padding: 0 24px; }
+
+/* ════════════════════════════════════════════════════════════
+   TYPOGRAPHY
+════════════════════════════════════════════════════════════ */
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--purple-l);
+  background: rgba(124,109,250,.1);
+  border: 1px solid rgba(124,109,250,.25);
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+}
+.gradient-text {
+  background: linear-gradient(135deg, #a78bfa 0%, #7c6dfa 40%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ════════════════════════════════════════════════════════════
+   NAV
+════════════════════════════════════════════════════════════ */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(7,7,10,.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--b1);
+}
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+}
+.nav-logo-icon {
+  width: 34px; height: 34px;
+  background: rgba(124,109,250,.15);
+  border: 1px solid rgba(124,109,250,.35);
+  border-radius: var(--r);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+}
+.nav-logo-name  { font-size: 16px; color: var(--text); }
+.nav-logo-badge {
+  font-size: 10px;
+  background: var(--purple-d);
+  color: var(--purple-l);
+  border: 1px solid rgba(124,109,250,.3);
+  padding: 1px 7px;
+  border-radius: 20px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 14px;
+  color: var(--muted);
+  padding: 6px 12px;
+  border-radius: var(--r);
+  transition: color .15s;
+}
+.nav-links a:hover, .nav-links a.active { color: var(--text); }
+.nav-cta { display: flex; align-items: center; gap: 10px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px; padding: 10px 20px; border-radius: var(--r2);
+  font-size: 14px; font-weight: 600; transition: all .2s; cursor: pointer;
+  border: none; font-family: inherit; white-space: nowrap;
+}
+.btn-primary {
+  background: var(--purple); color: #fff;
+  box-shadow: 0 4px 20px rgba(124,109,250,.35);
+}
+.btn-primary:hover {
+  background: var(--purple-l);
+  box-shadow: 0 6px 28px rgba(124,109,250,.5);
+  transform: translateY(-1px);
+}
+.btn-ghost {
+  color: var(--muted); border: 1px solid var(--b2);
+  background: rgba(255,255,255,.03);
+}
+.btn-ghost:hover { color: var(--text); border-color: var(--b3); background: rgba(255,255,255,.06); }
+.nav-toggle {
+  display: none; flex-direction: column;
+  gap: 5px; padding: 8px; cursor: pointer;
+}
+.nav-toggle span {
+  display: block; width: 22px; height: 2px;
+  background: var(--muted); border-radius: 2px; transition: all .2s;
+}
+#nav-check { display: none; }
+
+@media (max-width: 860px) {
+  .nav-links, .nav-cta .btn-ghost { display: none; }
+  .nav-toggle { display: flex; }
+  #nav-check:checked ~ .nav-inner .nav-links {
+    display: flex; flex-direction: column;
+    position: absolute; top: 64px; left: 0; right: 0;
+    background: var(--s1); border-bottom: 1px solid var(--b1);
+    padding: 16px 24px; gap: 4px; z-index: 99;
+  }
+  #nav-check:checked ~ .nav-inner .nav-toggle span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
+  #nav-check:checked ~ .nav-inner .nav-toggle span:nth-child(2) { opacity: 0; }
+  #nav-check:checked ~ .nav-inner .nav-toggle span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+}
+
+/* ════════════════════════════════════════════════════════════
+   HERO
+════════════════════════════════════════════════════════════ */
+.hero {
+  border-bottom: 1px solid var(--b1);
+  padding: 64px 24px 56px;
+  text-align: center;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124,109,250,.12) 0%, transparent 70%);
+  position: relative;
+  overflow: hidden;
+}
+.hero-grid-bg {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(124,109,250,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,109,250,.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 0%, black 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 0%, black 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-content { position: relative; }
+.hero h1 {
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: 900;
+  line-height: 1.15;
+  margin-bottom: 14px;
+}
+.hero p { font-size: 17px; color: var(--muted); max-width: 520px; margin: 0 auto; }
+.hero-date { margin-top: 14px; font-size: 12px; color: var(--faint); }
+
+/* ════════════════════════════════════════════════════════════
+   CONTACT METHODS
+════════════════════════════════════════════════════════════ */
+.contact-section { padding: 72px 0 0; }
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 48px;
+}
+.contact-card {
+  background: var(--s1);
+  border: 1px solid var(--b1);
+  border-radius: var(--r3);
+  padding: 28px 24px;
+  transition: border-color .2s, transform .2s, box-shadow .2s;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.contact-card::before {
+  content: "";
+  position: absolute; inset: 0;
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+}
+.contact-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,.4); }
+
+/* Card color variants */
+.card-purple::before { background: radial-gradient(ellipse 80% 80% at 50% -20%, rgba(124,109,250,.07) 0%, transparent 60%); }
+.card-purple:hover    { border-color: rgba(124,109,250,.4); }
+.card-purple:hover::before { opacity: 1; }
+.card-purple .card-icon-wrap { background: rgba(124,109,250,.1); border-color: rgba(124,109,250,.2); }
+.card-purple .card-icon { color: var(--purple-l); }
+.card-purple .card-btn { background: rgba(124,109,250,.12); color: var(--purple-l); border-color: rgba(124,109,250,.25); }
+.card-purple .card-btn:hover { background: rgba(124,109,250,.22); }
+
+.card-green::before { background: radial-gradient(ellipse 80% 80% at 50% -20%, rgba(34,197,94,.06) 0%, transparent 60%); }
+.card-green:hover    { border-color: rgba(34,197,94,.35); }
+.card-green:hover::before { opacity: 1; }
+.card-green .card-icon-wrap { background: rgba(34,197,94,.1); border-color: rgba(34,197,94,.2); }
+.card-green .card-icon { color: var(--green); }
+.card-green .card-btn { background: rgba(34,197,94,.1); color: var(--green); border-color: rgba(34,197,94,.25); }
+.card-green .card-btn:hover { background: rgba(34,197,94,.2); }
+
+.card-blue::before { background: radial-gradient(ellipse 80% 80% at 50% -20%, rgba(59,130,246,.06) 0%, transparent 60%); }
+.card-blue:hover    { border-color: rgba(59,130,246,.35); }
+.card-blue:hover::before { opacity: 1; }
+.card-blue .card-icon-wrap { background: rgba(59,130,246,.1); border-color: rgba(59,130,246,.2); }
+.card-blue .card-icon { color: var(--blue); }
+.card-blue .card-btn { background: rgba(59,130,246,.1); color: #93c5fd; border-color: rgba(59,130,246,.25); }
+.card-blue .card-btn:hover { background: rgba(59,130,246,.2); }
+
+.card-red::before { background: radial-gradient(ellipse 80% 80% at 50% -20%, rgba(239,68,68,.06) 0%, transparent 60%); }
+.card-red:hover    { border-color: rgba(239,68,68,.3); }
+.card-red:hover::before { opacity: 1; }
+.card-red .card-icon-wrap { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.2); }
+.card-red .card-icon { color: var(--red); }
+.card-red .card-btn { background: rgba(239,68,68,.1); color: #fca5a5; border-color: rgba(239,68,68,.2); }
+.card-red .card-btn:hover { background: rgba(239,68,68,.2); }
+
+.card-icon-wrap {
+  width: 46px; height: 46px;
+  border-radius: var(--r2);
+  border: 1px solid;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 18px;
+  flex-shrink: 0;
+}
+.card-icon { font-size: 22px; }
+.card-title {
+  font-size: 16px; font-weight: 700;
+  color: var(--text); margin-bottom: 8px;
+}
+.card-desc {
+  font-size: 13px; color: var(--muted);
+  line-height: 1.65; flex: 1; margin-bottom: 20px;
+}
+.card-email {
+  font-size: 13px; font-weight: 600;
+  color: var(--muted); font-family: "SF Mono", "Fira Code", monospace;
+  background: var(--s2); border: 1px solid var(--b2);
+  padding: 7px 12px; border-radius: var(--r);
+  margin-bottom: 12px; word-break: break-all;
+}
+.card-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 7px; padding: 9px 16px; border-radius: var(--r);
+  font-size: 13px; font-weight: 600;
+  border: 1px solid; cursor: pointer;
+  transition: background .15s; text-decoration: none;
+  font-family: inherit;
+}
+.card-delay {
+  font-size: 11px; color: var(--faint);
+  margin-top: 10px; display: flex; align-items: center; gap: 5px;
+}
+.card-delay::before { content: "⏱"; }
+
+@media (max-width: 1000px) { .contact-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width:  540px) { .contact-grid { grid-template-columns: 1fr; } }
+
+/* ════════════════════════════════════════════════════════════
+   FORM SECTION
+════════════════════════════════════════════════════════════ */
+.form-section {
+  padding: 72px 0 96px;
+}
+.form-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 56px;
+  align-items: start;
+  margin-top: 56px;
+}
+.form-aside h2 {
+  font-size: 24px; font-weight: 800;
+  line-height: 1.25; margin-bottom: 16px;
+}
+.form-aside p { font-size: 15px; color: var(--muted); line-height: 1.7; margin-bottom: 24px; }
+.form-info-list { list-style: none; }
+.form-info-list li {
+  display: flex; align-items: flex-start; gap: 12px;
+  font-size: 14px; color: var(--muted); padding: 10px 0;
+  border-bottom: 1px solid var(--b1);
+}
+.form-info-list li:last-child { border-bottom: none; }
+.form-info-icon {
+  width: 30px; height: 30px; flex-shrink: 0;
+  background: var(--s2); border: 1px solid var(--b2);
+  border-radius: var(--r); display: flex; align-items: center;
+  justify-content: center; font-size: 14px;
+}
+.form-info-text strong { display: block; color: var(--text); font-size: 13px; margin-bottom: 1px; }
+.form-info-text span   { font-size: 12px; }
+
+/* Form card */
+.form-card {
+  background: var(--s1);
+  border: 1px solid var(--b1);
+  border-radius: var(--r3);
+  padding: 36px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.form-group { margin-bottom: 20px; }
+label {
+  display: block;
+  font-size: 13px; font-weight: 600;
+  color: var(--muted); margin-bottom: 7px;
+  letter-spacing: .02em;
+}
+label span { color: var(--red); margin-left: 2px; }
+input[type="text"],
+input[type="email"],
+select,
+textarea {
+  width: 100%;
+  background: var(--s2);
+  border: 1px solid var(--b2);
+  border-radius: var(--r);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  padding: 11px 14px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+textarea::placeholder { color: var(--faint); }
+input[type="text"]:focus,
+input[type="email"]:focus,
+select:focus,
+textarea:focus {
+  border-color: rgba(124,109,250,.55);
+  box-shadow: 0 0 0 3px rgba(124,109,250,.12);
+}
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238888a0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+select option { background: var(--s2); color: var(--text); }
+textarea { resize: vertical; min-height: 130px; line-height: 1.6; }
+.form-hint { font-size: 12px; color: var(--faint); margin-top: 5px; }
+.form-submit-row {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 16px;
+  margin-top: 8px; flex-wrap: wrap;
+}
+.form-note { font-size: 12px; color: var(--faint); }
+.form-note a { color: var(--purple-l); }
+.form-note a:hover { text-decoration: underline; }
+.btn-submit {
+  display: inline-flex; align-items: center;
+  gap: 8px; padding: 13px 28px;
+  background: var(--purple); color: #fff;
+  border: none; border-radius: var(--r2);
+  font-size: 15px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  transition: all .2s;
+  box-shadow: 0 4px 20px rgba(124,109,250,.3);
+}
+.btn-submit:hover {
+  background: var(--purple-l);
+  box-shadow: 0 6px 28px rgba(124,109,250,.5);
+  transform: translateY(-1px);
+}
+.btn-submit:active { transform: translateY(0); }
+
+@media (max-width: 820px) {
+  .form-layout { grid-template-columns: 1fr; }
+  .form-row    { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .form-card    { padding: 24px 20px; }
+  .form-submit-row { flex-direction: column; align-items: flex-start; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   INFO BAR
+════════════════════════════════════════════════════════════ */
+.info-bar {
+  background: var(--s1);
+  border-top: 1px solid var(--b1);
+  border-bottom: 1px solid var(--b1);
+  padding: 28px 0;
+}
+.info-bar-inner {
+  display: flex; align-items: center; justify-content: center;
+  gap: 40px; flex-wrap: wrap;
+}
+.info-item {
+  display: flex; align-items: center;
+  gap: 10px; font-size: 14px; color: var(--muted);
+}
+.info-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px rgba(34,197,94,.5);
+}
+.info-item strong { color: var(--text); }
+
+/* ════════════════════════════════════════════════════════════
+   FOOTER
+════════════════════════════════════════════════════════════ */
+footer {
+  background: var(--s1);
+  border-top: 1px solid var(--b1);
+  padding: 48px 0 32px;
+}
+.footer-main {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr 1fr 1fr;
+  gap: 48px;
+  padding-bottom: 48px;
+  border-bottom: 1px solid var(--b1);
+  margin-bottom: 32px;
+}
+.footer-brand .nav-logo { margin-bottom: 14px; }
+.footer-brand p { font-size: 14px; color: var(--muted); line-height: 1.7; max-width: 260px; }
+.footer-col h4 {
+  font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em;
+  color: var(--muted); margin-bottom: 16px;
+}
+.footer-col ul { list-style: none; }
+.footer-col li { margin-bottom: 10px; }
+.footer-col a { font-size: 14px; color: var(--muted); transition: color .15s; }
+.footer-col a:hover { color: var(--text); }
+.footer-col a.active { color: var(--purple-l); }
+.footer-bottom {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+}
+.footer-bottom p { font-size: 13px; color: var(--faint); }
+.footer-badges { display: flex; gap: 10px; }
+.footer-badge {
+  font-size: 11px; color: var(--muted);
+  background: var(--s2); border: 1px solid var(--b2);
+  padding: 3px 10px; border-radius: 20px; font-weight: 600;
+}
+@media (max-width: 900px) { .footer-main { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 540px) {
+  .footer-main { grid-template-columns: 1fr; }
+  .footer-bottom { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════
+     NAV
+════════════════════════════════════════════════════ -->
+<input type="checkbox" id="nav-check" hidden>
+<nav class="nav" role="navigation">
+  <div class="wrap">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo" aria-label="VidSpark AI">
+        <div class="nav-logo-icon">⚡</div>
+        <span class="nav-logo-name">VidSpark AI</span>
+        <span class="nav-logo-badge">Beta</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/#features">Fonctionnalités</a></li>
+        <li><a href="/#pricing">Tarifs</a></li>
+        <li><a href="/#faq">FAQ</a></li>
+        <li><a href="/contact.html" class="active">Contact</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a href="/#pricing" class="btn btn-ghost">Tarifs</a>
+        <a href="https://chromewebstore.google.com" class="btn btn-primary" target="_blank" rel="noopener">
+          Installer gratuitement
+        </a>
+      </div>
+      <label for="nav-check" class="nav-toggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </label>
+    </div>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════════════════
+     HERO
+════════════════════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-grid-bg"></div>
+  <div class="wrap">
+    <div class="hero-content">
+      <div class="label">✉️ Contact</div>
+      <h1>Nous sommes à<br><span class="gradient-text">votre écoute</span></h1>
+      <p>Sélectionnez le canal adapté à votre demande pour obtenir la réponse la plus rapide.</p>
+      <div class="hero-date">Délai de réponse moyen · Support : 72 h · Business : 24 h</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     CONTACT METHODS
+════════════════════════════════════════════════════ -->
+<section class="contact-section">
+  <div class="wrap">
+    <div class="contact-grid">
+
+      <!-- Support général -->
+      <div class="contact-card card-purple">
+        <div class="card-icon-wrap"><div class="card-icon">💬</div></div>
+        <div class="card-title">Support général</div>
+        <p class="card-desc">
+          Questions sur l'extension, les fonctionnalités, les scores SEO,
+          la configuration ou tout autre sujet lié à l'utilisation de VidSpark AI.
+        </p>
+        <div class="card-email">support@vidspark.ai</div>
+        <a href="mailto:support@vidspark.ai" class="card-btn">
+          Écrire un email →
+        </a>
+        <div class="card-delay">Réponse sous 72 heures ouvrées</div>
+      </div>
+
+      <!-- Facturation -->
+      <div class="contact-card card-green">
+        <div class="card-icon-wrap"><div class="card-icon">💳</div></div>
+        <div class="card-title">Facturation</div>
+        <p class="card-desc">
+          Questions sur votre abonnement, vos factures, un remboursement,
+          le droit de rétractation, ou toute erreur de prélèvement.
+        </p>
+        <div class="card-email">billing@vidspark.ai</div>
+        <a href="mailto:billing@vidspark.ai" class="card-btn">
+          Écrire un email →
+        </a>
+        <div class="card-delay">Réponse sous 48 heures ouvrées</div>
+      </div>
+
+      <!-- Données personnelles -->
+      <div class="contact-card card-blue">
+        <div class="card-icon-wrap"><div class="card-icon">🔒</div></div>
+        <div class="card-title">Données personnelles</div>
+        <p class="card-desc">
+          Exercice de vos droits RGPD : accès, rectification, suppression,
+          portabilité, opposition. Toute question relative à votre vie privée.
+        </p>
+        <div class="card-email">privacy@vidspark.ai</div>
+        <a href="mailto:privacy@vidspark.ai" class="card-btn">
+          Écrire un email →
+        </a>
+        <div class="card-delay">Réponse sous 72 h · Traitement sous 30 jours</div>
+      </div>
+
+      <!-- Signalement -->
+      <div class="contact-card card-red">
+        <div class="card-icon-wrap"><div class="card-icon">🚨</div></div>
+        <div class="card-title">Signalement d'abus</div>
+        <p class="card-desc">
+          Signalement d'une utilisation abusive, d'une faille de sécurité,
+          de contenu inapproprié ou de toute activité frauduleuse sur la plateforme.
+        </p>
+        <div class="card-email">abuse@vidspark.ai</div>
+        <a href="mailto:abuse@vidspark.ai" class="card-btn">
+          Signaler →
+        </a>
+        <div class="card-delay">Traitement prioritaire sous 24 heures</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     INFO BAR
+════════════════════════════════════════════════════ -->
+<div class="info-bar" style="margin-top:48px">
+  <div class="wrap">
+    <div class="info-bar-inner">
+      <div class="info-item"><div class="info-dot"></div><strong>Service disponible</strong></div>
+      <div class="info-item">📅 Lundi – Vendredi · 9h–18h CET</div>
+      <div class="info-item">🌍 Support en Français &amp; English</div>
+      <div class="info-item">⚡ Business : réponse sous 24 h</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     FORM
+════════════════════════════════════════════════════ -->
+<section class="form-section" id="formulaire">
+  <div class="wrap">
+    <div class="form-layout">
+
+      <!-- Aside info -->
+      <div class="form-aside">
+        <div class="label">✉️ Formulaire</div>
+        <h2>Envoyez-nous<br><span class="gradient-text">un message</span></h2>
+        <p>
+          Préférez-vous ne pas ouvrir votre client email ?
+          Remplissez ce formulaire et votre message sera acheminé
+          vers le bon service.
+        </p>
+        <ul class="form-info-list">
+          <li>
+            <div class="form-info-icon">🔐</div>
+            <div class="form-info-text">
+              <strong>Données sécurisées</strong>
+              <span>Vos informations ne sont jamais partagées avec des tiers.</span>
+            </div>
+          </li>
+          <li>
+            <div class="form-info-icon">⏱</div>
+            <div class="form-info-text">
+              <strong>Délai de réponse</strong>
+              <span>72 h ouvrées pour le support, 24 h pour la facturation et les urgences.</span>
+            </div>
+          </li>
+          <li>
+            <div class="form-info-icon">🌍</div>
+            <div class="form-info-text">
+              <strong>Langues acceptées</strong>
+              <span>Français et English. Les autres langues sont traitées au mieux.</span>
+            </div>
+          </li>
+          <li>
+            <div class="form-info-icon">📎</div>
+            <div class="form-info-text">
+              <strong>Pièces jointes</strong>
+              <span>Pour envoyer des captures d'écran, utilisez directement les adresses email.</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Form card -->
+      <div class="form-card">
+        <form action="mailto:support@vidspark.ai" method="post" enctype="text/plain" novalidate>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f-name">Nom <span>*</span></label>
+              <input
+                type="text"
+                id="f-name"
+                name="nom"
+                placeholder="Votre nom complet"
+                required
+                autocomplete="name">
+            </div>
+            <div class="form-group">
+              <label for="f-email">Email <span>*</span></label>
+              <input
+                type="email"
+                id="f-email"
+                name="email"
+                placeholder="vous@exemple.com"
+                required
+                autocomplete="email">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="f-subject">Sujet <span>*</span></label>
+            <select id="f-subject" name="sujet" required>
+              <option value="" disabled selected>Sélectionner le type de demande</option>
+              <optgroup label="Support">
+                <option value="support-extension">Problème avec l'extension</option>
+                <option value="support-analyse">Question sur une analyse</option>
+                <option value="support-compte">Gestion du compte</option>
+                <option value="support-autre">Autre question</option>
+              </optgroup>
+              <optgroup label="Facturation">
+                <option value="billing-abonnement">Gestion de l'abonnement</option>
+                <option value="billing-remboursement">Demande de remboursement</option>
+                <option value="billing-facture">Facture ou paiement</option>
+              </optgroup>
+              <optgroup label="Légal &amp; Données">
+                <option value="rgpd-acces">Accès à mes données (RGPD)</option>
+                <option value="rgpd-suppression">Suppression de mes données</option>
+                <option value="rgpd-autre">Autre demande RGPD</option>
+              </optgroup>
+              <optgroup label="Signalement">
+                <option value="abuse-securite">Faille de sécurité</option>
+                <option value="abuse-abus">Utilisation abusive</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="f-plan">Votre plan actuel</label>
+            <select id="f-plan" name="plan">
+              <option value="" disabled selected>Sélectionner votre plan (optionnel)</option>
+              <option value="free">Gratuit</option>
+              <option value="pro">Pro</option>
+              <option value="business">Business</option>
+              <option value="unknown">Je ne sais pas</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="f-message">Message <span>*</span></label>
+            <textarea
+              id="f-message"
+              name="message"
+              placeholder="Décrivez votre demande en détail. Plus vous êtes précis, plus vite nous pourrons vous aider."
+              required></textarea>
+            <div class="form-hint">Minimum 20 caractères. Indiquez votre adresse email de compte VidSpark AI si différente de celle ci-dessus.</div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:8px">
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;font-weight:400;color:var(--muted)">
+              <input
+                type="checkbox"
+                name="rgpd"
+                required
+                style="width:16px;height:16px;margin-top:2px;accent-color:var(--purple);flex-shrink:0">
+              <span>
+                J'accepte que mes données soient utilisées pour traiter ma demande de support,
+                conformément à la <a href="/privacy.html" style="color:var(--purple-l)">politique de confidentialité</a>. <span style="color:var(--red)">*</span>
+              </span>
+            </label>
+          </div>
+
+          <div class="form-submit-row">
+            <p class="form-note">
+              En soumettant, votre client email s'ouvrira avec votre message pré-rempli.<br>
+              Voir notre <a href="/privacy.html">politique de confidentialité</a>.
+            </p>
+            <button type="submit" class="btn-submit">
+              Envoyer le message
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="8" x2="14" y2="8"/><polyline points="9 3 14 8 9 13"/></svg>
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════════════ -->
+<footer>
+  <div class="wrap">
+    <div class="footer-main">
+      <div class="footer-brand">
+        <a href="/" class="nav-logo">
+          <div class="nav-logo-icon">⚡</div>
+          <span class="nav-logo-name">VidSpark AI</span>
+        </a>
+        <p>
+          L'extension Chrome qui analyse et optimise vos vidéos YouTube
+          avec l'IA. Scores SEO, Viral, Miniature et suggestions générées
+          par Claude d'Anthropic.
+        </p>
+      </div>
+      <div class="footer-col">
+        <h4>Produit</h4>
+        <ul>
+          <li><a href="/#features">Fonctionnalités</a></li>
+          <li><a href="/#pricing">Tarifs</a></li>
+          <li><a href="/#faq">FAQ</a></li>
+          <li><a href="https://chromewebstore.google.com" target="_blank" rel="noopener">Chrome Web Store</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Légal</h4>
+        <ul>
+          <li><a href="/privacy.html">Politique de confidentialité</a></li>
+          <li><a href="/terms.html">Conditions d'utilisation</a></li>
+          <li><a href="mailto:privacy@vidspark.ai">Données personnelles</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="mailto:support@vidspark.ai">Support</a></li>
+          <li><a href="mailto:billing@vidspark.ai">Facturation</a></li>
+          <li><a href="mailto:abuse@vidspark.ai">Signalement</a></li>
+          <li><a href="/contact.html" class="active">Formulaire</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 VidSpark AI. Tous droits réservés. Non affilié à YouTube ou Google LLC.</p>
+      <div class="footer-badges">
+        <span class="footer-badge">RGPD</span>
+        <span class="footer-badge">Chrome MV3</span>
+        <span class="footer-badge">Claude AI</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

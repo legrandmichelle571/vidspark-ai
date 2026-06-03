@@ -1,0 +1,74 @@
+{
+  "manifest_version": 3,
+  "name": "VidSpark AI",
+  "version": "1.0.0",
+  "description": "YouTube SEO Intelligence — AI-powered analysis for creators",
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "storage",
+    "clipboardWrite",
+    "alarms"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "https://vidsparkpro.com/*",
+    "https://*.vidsparkpro.com/*",
+    "http://localhost:3000/*",
+    "http://localhost:3001/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "VidSpark AI"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.youtube.com/*"
+      ],
+      "js": [
+        "plans.config.js",
+        "paywall.js",
+        "content.js"
+      ],
+      "css": [
+        "styles.css"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://vidsparkpro.com/*",
+        "https://*.vidsparkpro.com/*",
+        "http://localhost:3000/*"
+      ],
+      "js": [
+        "website-bridge.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "ai-report.html",
+        "report.css",
+        "pricing.html",
+        "onboarding.html",
+        "onboarding.js",
+        "channel-select.html",
+        "channel-select.js",
+        "icon.png"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "icons": {
+    "128": "icon.png"
+  }
+}

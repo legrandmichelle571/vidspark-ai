@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VidSpark AI — Pricing</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: linear-gradient(135deg, #0f1117 0%, #161b22 100%);
+      color: #c9d1d9;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .header h1 {
+      font-size: 40px;
+      color: #ffffff;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .header p {
+      font-size: 18px;
+      color: #8b949e;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 60px;
+    }
+
+    .pricing-card {
+      background: rgba(22, 27, 34, 0.6);
+      border: 2px solid #30363d;
+      border-radius: 12px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .pricing-card:hover {
+      border-color: #58a6ff;
+      box-shadow: 0 0 20px rgba(88, 166, 255, 0.2);
+      transform: translateY(-4px);
+    }
+
+    .pricing-card.recommended {
+      border-color: #00d4ff;
+      box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+      transform: scale(1.05);
+    }
+
+    .badge {
+      position: absolute;
+      top: -12px;
+      left: 20px;
+      background: linear-gradient(90deg, #00d4ff, #0099cc);
+      color: #000;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .plan-name {
+      font-size: 24px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-top: 12px;
+      margin-bottom: 12px;
+    }
+
+    .price {
+      font-size: 48px;
+      font-weight: 700;
+      color: #00d4ff;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .price-period {
+      font-size: 14px;
+      color: #8b949e;
+      margin-bottom: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #30363d;
+    }
+
+    .features-list {
+      flex: 1;
+      margin-bottom: 24px;
+    }
+
+    .feature {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #c9d1d9;
+    }
+
+    .feature::before {
+      content: '✓';
+      color: #22c55e;
+      font-weight: 700;
+      margin-right: 10px;
+      min-width: 20px;
+    }
+
+    .feature.disabled::before {
+      content: '✗';
+      color: #6e7681;
+    }
+
+    .feature.disabled {
+      color: #6e7681;
+      text-decoration: line-through;
+    }
+
+    .cta-button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    .cta-button.primary {
+      background: linear-gradient(90deg, #00d4ff, #0099cc);
+      color: #000;
+    }
+
+    .cta-button.primary:hover {
+      box-shadow: 0 8px 16px rgba(0, 212, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .cta-button.secondary {
+      background: rgba(0, 212, 255, 0.1);
+      color: #00d4ff;
+      border: 1px solid rgba(0, 212, 255, 0.3);
+    }
+
+    .cta-button.secondary:hover {
+      background: rgba(0, 212, 255, 0.2);
+      border-color: rgba(0, 212, 255, 0.5);
+    }
+
+    .comparison-table {
+      margin-top: 60px;
+      overflow-x: auto;
+    }
+
+    .comparison-table table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(22, 27, 34, 0.4);
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+      padding: 16px;
+      text-align: left;
+      border-bottom: 1px solid #30363d;
+    }
+
+    .comparison-table th {
+      background: rgba(30, 30, 40, 0.6);
+      font-weight: 700;
+      color: #00d4ff;
+      text-align: center;
+    }
+
+    .comparison-table td:first-child {
+      font-weight: 600;
+      color: #ffffff;
+      text-align: left;
+    }
+
+    .comparison-table td {
+      text-align: center;
+      color: #c9d1d9;
+    }
+
+    .comparison-table tr:last-child th,
+    .comparison-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .faq {
+      margin-top: 80px;
+      padding-top: 60px;
+      border-top: 1px solid #30363d;
+    }
+
+    .faq h2 {
+      font-size: 32px;
+      color: #ffffff;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+
+    .faq-item {
+      margin-bottom: 24px;
+      padding: 20px;
+      background: rgba(30, 30, 40, 0.4);
+      border-radius: 8px;
+      border-left: 3px solid #00d4ff;
+    }
+
+    .faq-item h3 {
+      color: #ffffff;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    .faq-item p {
+      color: #8b949e;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 40px;
+      border-top: 1px solid #30363d;
+      color: #6e7681;
+      font-size: 12px;
+    }
+
+    .logo {
+      display: inline-block;
+      margin-bottom: 20px;
+      font-size: 32px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 768px) {
+      .pricing-card.recommended {
+        transform: scale(1);
+      }
+
+      .header h1 {
+        font-size: 28px;
+      }
+
+      .pricing-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .comparison-table {
+        font-size: 12px;
+      }
+
+      .comparison-table th,
+      .comparison-table td {
+        padding: 12px 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">✨ VidSpark AI</div>
+      <h1>Simple, Transparent Pricing</h1>
+      <p>Choose the perfect plan to unlock AI-powered YouTube SEO analysis</p>
+    </div>
+
+    <div class="pricing-grid">
+      <!-- FREE PLAN -->
+      <div class="pricing-card">
+        <h3 class="plan-name">Free</h3>
+        <div class="price">$0</div>
+        <div class="price-period">Forever free</div>
+        <div class="features-list">
+          <div class="feature">10 analyses/month</div>
+          <div class="feature">Basic SEO & Viral scores</div>
+          <div class="feature">1 channel only</div>
+          <div class="feature disabled">AI titles generation</div>
+          <div class="feature disabled">Competitor analysis</div>
+          <div class="feature disabled">PDF export</div>
+        </div>
+        <button class="cta-button secondary" onclick="alert('You are already on the Free plan')">Current Plan</button>
+      </div>
+
+      <!-- PRO PLAN (RECOMMENDED) -->
+      <div class="pricing-card recommended">
+        <div class="badge">⭐ Recommended</div>
+        <h3 class="plan-name">Pro</h3>
+        <div class="price">$9.99</div>
+        <div class="price-period">per month (or $95.90/year)</div>
+        <div class="features-list">
+          <div class="feature">500 analyses/month</div>
+          <div class="feature">100 AI reports/month</div>
+          <div class="feature">Unlimited AI titles</div>
+          <div class="feature">10 channels max</div>
+          <div class="feature">Competitor analysis</div>
+          <div class="feature">PDF export & History</div>
+        </div>
+        <button class="cta-button primary" onclick="window.open('https://vidsparkpro.com/checkout?plan=pro', '_blank')">Upgrade to Pro</button>
+      </div>
+
+      <!-- BUSINESS PLAN -->
+      <div class="pricing-card">
+        <h3 class="plan-name">Business</h3>
+        <div class="price">$29.99</div>
+        <div class="price-period">per month (or $287.90/year)</div>
+        <div class="features-list">
+          <div class="feature">10k analyses/month</div>
+          <div class="feature">5k AI reports/month</div>
+          <div class="feature">Unlimited AI titles</div>
+          <div class="feature">5 channels (same owner)</div>
+          <div class="feature">API access</div>
+          <div class="feature">Priority support</div>
+        </div>
+        <button class="cta-button primary" onclick="window.open('https://vidsparkpro.com/checkout?plan=business', '_blank')">Upgrade to Business</button>
+      </div>
+    </div>
+
+    <!-- DETAILED COMPARISON -->
+    <div class="comparison-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Free</th>
+            <th>Pro</th>
+            <th>Business</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Monthly Analyses</td>
+            <td>10</td>
+            <td>500</td>
+            <td>10,000</td>
+          </tr>
+          <tr>
+            <td>AI Reports</td>
+            <td>0</td>
+            <td>100</td>
+            <td>5,000</td>
+          </tr>
+          <tr>
+            <td>AI Titles</td>
+            <td>0</td>
+            <td>Unlimited</td>
+            <td>Unlimited</td>
+          </tr>
+          <tr>
+            <td>Max Channels</td>
+            <td>1</td>
+            <td>10</td>
+            <td>5 (same owner)</td>
+          </tr>
+          <tr>
+            <td>Competitor Analysis</td>
+            <td>—</td>
+            <td>✓</td>
+            <td>✓</td>
+          </tr>
+          <tr>
+            <td>PDF Export</td>
+            <td>—</td>
+            <td>✓</td>
+            <td>✓</td>
+          </tr>
+          <tr>
+            <td>Full History</td>
+            <td>—</td>
+            <td>✓</td>
+            <td>✓</td>
+          </tr>
+          <tr>
+            <td>API Access</td>
+            <td>—</td>
+            <td>—</td>
+            <td>✓</td>
+          </tr>
+          <tr>
+            <td>Priority Support</td>
+            <td>—</td>
+            <td>—</td>
+            <td>✓</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FAQ -->
+    <div class="faq">
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-item">
+        <h3>Can I upgrade or downgrade anytime?</h3>
+        <p>Yes! You can change your plan at any time. Changes take effect immediately, and we'll prorate charges accordingly.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Do you offer yearly discounts?</h3>
+        <p>Absolutely! Our yearly plans save you 20% compared to monthly billing. Pro: $95.90/year, Business: $287.90/year.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What payment methods do you accept?</h3>
+        <p>We accept all major credit cards (Visa, Mastercard, Amex) and PayPal. All payments are secure and encrypted.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Is there a free trial?</h3>
+        <p>Start with our Free plan to test VidSpark AI risk-free. Upgrade anytime to unlock advanced features.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What happens if I exceed my monthly limit?</h3>
+        <p>Once you hit your monthly limit, you'll be notified. Upgrade to a higher plan or wait for the next month to continue.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Do you offer refunds?</h3>
+        <p>We offer 7-day money-back guarantee on your first purchase. Contact support@vidsparkpro.com for refund requests.</p>
+      </div>
+    </div>
+
+    <footer>
+      <p>&copy; 2026 VidSpark AI. All rights reserved. | <a href="https://vidsparkpro.com/terms" style="color: #58a6ff; text-decoration: none;">Terms</a> | <a href="https://vidsparkpro.com/privacy" style="color: #58a6ff; text-decoration: none;">Privacy</a></p>
+    </footer>
+  </div>
+</body>
+</html>
