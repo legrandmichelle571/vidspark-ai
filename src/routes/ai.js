@@ -1,0 +1,248 @@
+/**
+ * Routes IA — Proxy sécurisé vers Anthropic
+ * Clé API reste côté serveur uniquement
+ * POST /api/ai/seo-report
+ * POST /api/ai/titles
+ * POST /api/ai/description
+ * POST /api/ai/tags
+ * POST /api/ai/analysis/save
+ */
+const router = require('express').Router();
+const { requireAuth, requirePro, checkQuota, checkTitlesQuota } = require('../middleware/auth');
+const rateLimit = require('express-rate-limit');
+
+/* Rate limit global : 10 appels IA / minute */
+const aiRateLimit = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { error: 'Too many AI requests. Please wait a moment.' }
+});
+
+/* ── Helper: appel Anthropic ── */
+async function callAnthropic(prompt, maxTokens = 1000) {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method:  'POST',
+    headers: {
+      'Content-Type':      'application/json',
+      'x-api-key':         process.env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model:      'claude-sonnet-4-20250514',
+      max_tokens: maxTokens,
+      messages:   [{ role: 'user', content: prompt }]
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Anthropic API error ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.content?.[0]?.text || '';
+}
+
+/* ── Rapport SEO IA ──────────────────────────────────────────────
+   checkQuota : appliqué à Free, Pro ET Business
+   quota_used incrémenté pour TOUS les plans après succès
+──────────────────────────────────────────────────────────────── */
+router.post('/seo-report', requireAuth, checkQuota, aiRateLimit, async (req, res) => {
+  try {
+    const { videoId, title, description, language = 'fr' } = req.body;
+    if (!title) return res.status(400).json({ error: 'Title required' });
+
+    const langNames = {
+      fr:'français', en:'english', ar:'arabe', es:'espagnol',
+      de:'allemand', ru:'russe',   ja:'japonais', ko:'coréen', zh:'chinois'
+    };
+    const langName = langNames[language] || language;
+
+    const prompt = `Tu es un expert YouTube SEO. Analyse ce titre et cette description YouTube en ${langName}.
+
+Titre : "${title}"
+Description (${description?.length || 0} caractères) : "${(description || '').slice(0, 300)}"
+
+Réponds UNIQUEMENT en JSON valide (pas de backticks, pas de commentaires) :
+{
+  "score": <nombre 0-100>,
+  "viral_score": <nombre 0-100>,
+  "viral_reason": "<analyse en ${langName}, 2-3 phrases>",
+  "checklist": [
+    {"item": "<problème>", "detail": "<explication>", "status": "ok|fix"}
+  ],
+  "suggestions": ["<suggestion 1 en ${langName}>", "<suggestion 2>", "<suggestion 3>"]
+}`;
+
+    const text   = await callAnthropic(prompt);
+    const clean  = text.replace(/```json|```/g, '').trim();
+    const result = JSON.parse(clean);
+
+    const supabase = req.app.locals.supabase;
+
+    /* Sauvegarder dans l'historique */
+    if (videoId) {
+      await supabase.from('analysis_history').upsert({
+        user_id:        req.user.id,
+        video_id:       videoId,
+        title,
+        score_seo:      result.score,
+        score_viral:    result.viral_score,
+        checklist_data: { checklist: result.checklist, suggestions: result.suggestions },
+        ai_report:      result
+      }, { onConflict: 'user_id,video_id' });
+    }
+
+    await supabase.rpc('increment_user_quota', {
+  user_uuid: req.user.id
+});
+
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/SEO]', err.message);
+    if (err.message.includes('JSON')) {
+      return res.status(500).json({ error: 'AI response parsing failed' });
+    }
+    res.status(500).json({ error: 'AI analysis failed' });
+  }
+});
+
+/* ── Titres IA ───────────────────────────────────────────────────
+   checkTitlesQuota : bloque Free, limite Pro à 100/jour, Business à 500/jour
+   titles_used incrémenté pour Pro ET Business après succès
+──────────────────────────────────────────────────────────────── */
+router.post('/titles', requireAuth, checkTitlesQuota, aiRateLimit, async (req, res) => {
+  try {
+    const { title, description, language = 'fr' } = req.body;
+    if (!title) return res.status(400).json({ error: 'Title required' });
+
+    const prompt = `Tu es un expert YouTube SEO et copywriter.
+Génère 5 variantes de titres YouTube optimisés basés sur ce titre original : "${title}"
+
+Chaque variante doit avoir un type différent. Réponds UNIQUEMENT en JSON :
+{
+  "titles": [
+    {"text": "<titre version SEO>",      "hook": "SEO",     "score": <0-100>},
+    {"text": "<titre version CTR>",      "hook": "CTR",     "score": <0-100>},
+    {"text": "<titre version Virale>",   "hook": "Viral",   "score": <0-100>},
+    {"text": "<titre version Shorts>",   "hook": "Shorts",  "score": <0-100>},
+    {"text": "<titre version Trending>", "hook": "Trending","score": <0-100>}
+  ]
+}
+
+Langue: ${language}. Titres entre 55-70 caractères idéalement.`;
+
+    const text   = await callAnthropic(prompt);
+    const result = JSON.parse(text.replace(/```json|```/g, '').trim());
+
+    /* Incrémenter titles_used — tous les plans avec accès (Pro/Business) */
+    await req.app.locals.supabase.rpc('increment_titles_quota', {
+  user_uuid: req.user.id
+});
+
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/TITLES]', err.message);
+    res.status(500).json({ error: 'Titles generation failed' });
+  }
+});
+
+/* ── Description IA (Pro/Business) ───────────────────────────────
+   requirePro : Free bloqué
+   checkQuota : limite journalière analyses appliquée
+   quota_used incrémenté après succès
+──────────────────────────────────────────────────────────────── */
+router.post('/description', requireAuth, requirePro, checkQuota, aiRateLimit, async (req, res) => {
+  try {
+    const { title, description, language = 'fr' } = req.body;
+
+    const prompt = `Génère une description YouTube SEO optimisée pour cette vidéo.
+Titre: "${title}"
+Description actuelle (${description?.length || 0} chars): "${(description || '').slice(0, 200)}"
+
+Réponds en JSON :
+{
+  "description": "<description optimisée 500-800 caractères avec mots-clés, timestamps fictifs, CTA>",
+  "hashtags": ["#hashtag1","#hashtag2","#hashtag3","#hashtag4","#hashtag5"]
+}
+Langue: ${language}.`;
+
+    const text   = await callAnthropic(prompt, 800);
+    const result = JSON.parse(text.replace(/```json|```/g, '').trim());
+
+    /* Incrémenter quota_used — tous les plans */
+    await req.app.locals.supabase.rpc('increment_user_quota', {
+  user_uuid: req.user.id
+});
+
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/DESC]', err.message);
+    res.status(500).json({ error: 'Description generation failed' });
+  }
+});
+
+/* ── Tags IA (Pro/Business) ──────────────────────────────────────
+   requirePro : Free bloqué
+   checkQuota : limite journalière analyses appliquée
+   quota_used incrémenté après succès
+──────────────────────────────────────────────────────────────── */
+router.post('/tags', requireAuth, requirePro, checkQuota, aiRateLimit, async (req, res) => {
+  try {
+    const { title, description, language = 'fr' } = req.body;
+
+    const prompt = `Génère des tags YouTube optimisés pour cette vidéo.
+Titre: "${title}"
+
+Réponds en JSON :
+{
+  "tags": ["tag1","tag2","tag3","tag4","tag5","tag6","tag7","tag8"],
+  "hashtags": ["#hashtag1","#hashtag2","#hashtag3","#hashtag4","#hashtag5"]
+}
+Langue: ${language}. Tags: 2-5 mots max chacun.`;
+
+    const text   = await callAnthropic(prompt, 400);
+    const result = JSON.parse(text.replace(/```json|```/g, '').trim());
+
+    /* Incrémenter quota_used (analyses) — tous les plans */
+    await req.app.locals.supabase.rpc('increment_user_quota', {
+  user_uuid: req.user.id
+});
+
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/TAGS]', err.message);
+    res.status(500).json({ error: 'Tags generation failed' });
+  }
+});
+
+/* ── Sauvegarder analyse ── */
+router.post('/analysis/save', requireAuth, async (req, res) => {
+  try {
+    const {
+      videoId, title, views, thumbnail_url,
+      score_seo, score_viral, score_thumbnail, score_global,
+      seo_potential, viral_potential, ctr_estimated
+    } = req.body;
+
+    if (!videoId) return res.status(400).json({ error: 'videoId required' });
+
+    const supabase = req.app.locals.supabase;
+    const { data, error } = await supabase.from('analysis_history').upsert({
+      user_id: req.user.id,
+      video_id: videoId,
+      title, views, thumbnail_url,
+      score_seo, score_viral,
+      score_thumbnail, score_global,
+      seo_potential, viral_potential, ctr_estimated
+    }, { onConflict: 'user_id,video_id' }).select().single();
+
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ message: 'Analysis saved', id: data.id });
+  } catch (err) {
+    console.error('[AI/SAVE]', err.message);
+    res.status(500).json({ error: 'Save failed' });
+  }
+});
+
+module.exports = router;
