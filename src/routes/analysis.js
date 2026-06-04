@@ -1,21 +1,30 @@
 /**
- * Routes analyse
- * GET /api/analysis/history
- * POST /api/analysis/save
+ * Analysis Routes
  */
-const router = require('express').Router();
-const { requireAuth } = require('../middleware/auth');
 
-router.get('/history', requireAuth, async (req, res) => {
-  const supabase = req.app.locals.supabase;
-  const { data, error } = await supabase
-    .from('analysis_history')
-    .select('*')
-    .eq('user_id', req.user.id)
-    .order('created_at', { ascending: false })
-    .limit(50);
-  if (error) return res.status(400).json({ error: error.message });
-  res.json({ analyses: data });
-});
+const express = require('express');
+const analysisController = require('../controllers/analysisController');
+const { requireAuth } = require('../middleware/auth');
+const { checkQuota } = require('../middleware/quota');
+
+const router = express.Router();
+
+// Create analysis
+router.post('/', requireAuth, checkQuota, analysisController.createAnalysis);
+
+// List analyses
+router.get('/', requireAuth, analysisController.listAnalyses);
+
+// Get analysis
+router.get('/:id', requireAuth, analysisController.getAnalysis);
+
+// Delete analysis
+router.delete('/:id', requireAuth, analysisController.deleteAnalysis);
+
+// Regenerate analysis
+router.post('/:id/regenerate', requireAuth, checkQuota, analysisController.regenerateAnalysis);
+
+// Export analysis
+router.get('/:id/export', requireAuth, analysisController.exportAnalysis);
 
 module.exports = router;

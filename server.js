@@ -76,6 +76,10 @@ const authRoutes = require('./src/routes/auth');
 const userRoutes = require('./src/routes/user');
 const adminRoutes = require('./src/routes/admin');
 const analyticsRoutes = require('./src/routes/analytics');
+const projectsRoutes = require('./src/routes/projects');
+const analysisRoutes = require('./src/routes/analysis');
+const paymentsRoutes = require('./src/routes/payments');
+const webhooksRoutes = require('./src/routes/webhooks');
 
 // Health Check
 app.get('/health', (req, res) => {
@@ -92,6 +96,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', requireAuth, userRoutes);
 app.use('/api/admin', requireAuth, adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/projects', projectsRoutes);
+app.use('/api/analysis', analysisRoutes);
+app.use('/api/payments', paymentsRoutes);
+
+// Webhooks (NO AUTHENTICATION - Stripe will POST here)
+app.use('/api/webhooks', webhooksRoutes);
 
 // ============================================
 // Error Handling
