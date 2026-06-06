@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="VidSpark AI — Analysez et optimisez vos vidéos YouTube avec l'IA. Scores SEO, Viral, Miniature. Titres IA. Extension Chrome gratuite.">
+<meta name="theme-color" content="#07070a">
+<meta property="og:title" content="VidSpark AI — YouTube SEO Intelligence">
+<meta property="og:description" content="L'extension Chrome qui analyse et optimise vos vidéos YouTube avec l'IA. Scores SEO, Viral, Titres IA optimisés.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vidspark.ai">
+<title>VidSpark AI — YouTube SEO Intelligence</title>
+<style>
+/* ════════════════════════════════════════════════════════════
+   TOKENS
+════════════════════════════════════════════════════════════ */
+:root {
+  --bg:       #07070a;
+  --s1:       #0e0e12;
+  --s2:       #141418;
+  --s3:       #1a1a20;
+  --b1:       #1e1e26;
+  --b2:       #2a2a35;
+  --b3:       #3a3a48;
+  --text:     #e8e8f0;
+  --muted:    #8888a0;
+  --faint:    #505060;
+  --purple:   #7c6dfa;
+  --purple-l: #a78bfa;
+  --purple-d: #2d1f5e;
+  --green:    #22c55e;
+  --green-d:  #0d2d1a;
+  --red:      #ef4444;
+  --amber:    #f59e0b;
+  --blue:     #3b82f6;
+  --r:        8px;
+  --r2:       12px;
+  --r3:       16px;
+  --r4:       24px;
+  --shadow:   0 4px 24px rgba(0,0,0,.5);
+  --glow:     0 0 60px rgba(124,109,250,.18);
+  --container:1180px;
+}
+
+/* ════════════════════════════════════════════════════════════
+   RESET & BASE
+════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  overflow-x: hidden;
+}
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+
+/* ════════════════════════════════════════════════════════════
+   LAYOUT HELPERS
+════════════════════════════════════════════════════════════ */
+.wrap    { max-width: var(--container); margin: 0 auto; padding: 0 24px; }
+.section { padding: 96px 0; }
+.section-sm { padding: 72px 0; }
+
+/* ════════════════════════════════════════════════════════════
+   TYPOGRAPHY
+════════════════════════════════════════════════════════════ */
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--purple-l);
+  background: rgba(124,109,250,.1);
+  border: 1px solid rgba(124,109,250,.25);
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+}
+.section-title {
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+.section-sub {
+  font-size: 17px;
+  color: var(--muted);
+  max-width: 560px;
+  line-height: 1.7;
+}
+.centered { text-align: center; }
+.centered .section-sub { margin: 0 auto; }
+.gradient-text {
+  background: linear-gradient(135deg, #a78bfa 0%, #7c6dfa 40%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ════════════════════════════════════════════════════════════
+   BUTTONS
+════════════════════════════════════════════════════════════ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 24px;
+  border-radius: var(--r2);
+  font-size: 15px;
+  font-weight: 600;
+  transition: all .2s ease;
+  white-space: nowrap;
+}
+.btn-primary {
+  background: var(--purple);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(124,109,250,.35);
+}
+.btn-primary:hover {
+  background: var(--purple-l);
+  box-shadow: 0 6px 28px rgba(124,109,250,.5);
+  transform: translateY(-1px);
+}
+.btn-ghost {
+  color: var(--muted);
+  border: 1px solid var(--b2);
+  background: rgba(255,255,255,.03);
+}
+.btn-ghost:hover {
+  color: var(--text);
+  border-color: var(--b3);
+  background: rgba(255,255,255,.06);
+}
+.btn-lg {
+  padding: 16px 32px;
+  font-size: 16px;
+  border-radius: var(--r3);
+}
+.btn-sm {
+  padding: 9px 18px;
+  font-size: 13px;
+  border-radius: var(--r);
+}
+
+/* ════════════════════════════════════════════════════════════
+   NAV
+════════════════════════════════════════════════════════════ */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(7,7,10,.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--b1);
+}
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+}
+.nav-logo-icon {
+  width: 34px; height: 34px;
+  background: rgba(124,109,250,.15);
+  border: 1px solid rgba(124,109,250,.35);
+  border-radius: var(--r);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+}
+.nav-logo-name  { font-size: 16px; color: var(--text); }
+.nav-logo-badge {
+  font-size: 10px;
+  background: var(--purple-d);
+  color: var(--purple-l);
+  border: 1px solid rgba(124,109,250,.3);
+  padding: 1px 7px;
+  border-radius: 20px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 14px;
+  color: var(--muted);
+  padding: 6px 12px;
+  border-radius: var(--r);
+  transition: color .15s;
+}
+.nav-links a:hover { color: var(--text); }
+.nav-cta { display: flex; align-items: center; gap: 10px; }
+
+/* Mobile nav */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+  cursor: pointer;
+}
+.nav-toggle span {
+  display: block;
+  width: 22px; height: 2px;
+  background: var(--muted);
+  border-radius: 2px;
+  transition: all .2s;
+}
+#nav-check { display: none; }
+
+@media (max-width: 860px) {
+  .nav-links, .nav-cta .btn-ghost { display: none; }
+  .nav-toggle { display: flex; }
+  #nav-check:checked ~ .nav-inner .nav-links {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 64px; left: 0; right: 0;
+    background: var(--s1);
+    border-bottom: 1px solid var(--b1);
+    padding: 16px 24px;
+    gap: 4px;
+    z-index: 99;
+  }
+  #nav-check:checked ~ .nav-inner .nav-toggle span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
+  #nav-check:checked ~ .nav-inner .nav-toggle span:nth-child(2) { opacity: 0; }
+  #nav-check:checked ~ .nav-inner .nav-toggle span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+}
+
+/* ════════════════════════════════════════════════════════════
+   HERO
+════════════════════════════════════════════════════════════ */
+.hero {
+  position: relative;
+  padding: 100px 0 80px;
+  overflow: hidden;
+}
+/* Background effects */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(124,109,250,.15) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 80% 60%, rgba(59,130,246,.07) 0%, transparent 60%);
+  pointer-events: none;
+}
+.hero-grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(124,109,250,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,109,250,.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 0%, black 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 0%, black 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+.hero-left { max-width: 560px; }
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--green);
+  background: rgba(34,197,94,.08);
+  border: 1px solid rgba(34,197,94,.2);
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+.hero-eyebrow::before {
+  content: "";
+  width: 7px; height: 7px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse-green 2s infinite;
+}
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,.4); }
+  50%       { box-shadow: 0 0 0 5px rgba(34,197,94,0); }
+}
+.hero h1 {
+  font-size: clamp(36px, 5vw, 58px);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -.02em;
+  margin-bottom: 20px;
+}
+.hero-desc {
+  font-size: 18px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 36px;
+  max-width: 480px;
+}
+.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.hero-trust {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 40px;
+  font-size: 13px;
+  color: var(--faint);
+}
+.hero-trust-sep { width: 1px; height: 14px; background: var(--b2); }
+.hero-stars { color: var(--amber); letter-spacing: -1px; }
+
+/* ── Extension Mockup ── */
+.hero-mockup {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.mockup-wrap {
+  position: relative;
+  animation: float 4s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+.mockup-glow {
+  position: absolute;
+  inset: -30px;
+  background: radial-gradient(ellipse at center, rgba(124,109,250,.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+.mockup-panel {
+  width: 320px;
+  background: var(--s1);
+  border: 1px solid var(--b2);
+  border-radius: var(--r3);
+  box-shadow: var(--shadow), 0 0 0 1px rgba(124,109,250,.12);
+  overflow: hidden;
+}
+.mockup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--s2);
+  border-bottom: 1px solid var(--b1);
+}
+.mockup-logo { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; }
+.mockup-logo-icon {
+  width: 26px; height: 26px;
+  background: rgba(124,109,250,.2);
+  border: 1px solid rgba(124,109,250,.35);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+}
+.mockup-badge {
+  font-size: 10px;
+  background: rgba(124,109,250,.15);
+  color: var(--purple-l);
+  border: 1px solid rgba(124,109,250,.3);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+.mockup-tabs {
+  display: flex;
+  background: var(--s2);
+  border-bottom: 1px solid var(--b1);
+  padding: 0 8px;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.mockup-tabs::-webkit-scrollbar { display: none; }
+.mockup-tab {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 8px 10px;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+.mockup-tab.active { color: var(--purple-l); border-color: var(--purple); }
+.mockup-thumb {
+  width: 100%;
+  height: 80px;
+  background: linear-gradient(135deg, #1a1a28 0%, #0d1a2e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.mockup-thumb-icon { font-size: 28px; opacity: .4; }
+.mockup-scores {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  padding: 14px 8px;
+  border-bottom: 1px solid var(--b1);
+}
+.mscore {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.mscore-ring { position: relative; width: 44px; height: 44px; }
+.mscore-ring svg { transform: rotate(-90deg); }
+.mscore-ring circle.track { fill: none; stroke: var(--b2); stroke-width: 4; }
+.mscore-ring circle.fill  { fill: none; stroke-width: 4; stroke-linecap: round; transition: stroke-dashoffset .8s ease; }
+.mscore-val {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+}
+.mscore-lbl { font-size: 9px; color: var(--muted); font-weight: 600; }
+.mockup-checklist { padding: 10px 14px; }
+.mcheck {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted);
+  padding: 4px 0;
+}
+.mcheck-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.mcheck-dot.ok  { background: var(--green); }
+.mcheck-dot.fix { background: var(--amber); }
+.mockup-ai-badge {
+  margin: 8px 14px 12px;
+  background: rgba(124,109,250,.08);
+  border: 1px solid rgba(124,109,250,.2);
+  border-radius: var(--r);
+  padding: 8px 10px;
+  font-size: 10px;
+  color: var(--purple-l);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+/* Floating badges around mockup */
+.mockup-badge-float {
+  position: absolute;
+  background: var(--s1);
+  border: 1px solid var(--b2);
+  border-radius: var(--r2);
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: var(--shadow);
+  white-space: nowrap;
+}
+.badge-seo {
+  top: 10px; right: -50px;
+  color: var(--purple-l);
+}
+.badge-viral {
+  bottom: 50px; left: -50px;
+  color: var(--green);
+}
+.badge-ctr {
+  bottom: 5px; right: -40px;
+  color: var(--amber);
+  font-size: 11px;
+}
+
+@media (max-width: 860px) {
+  .hero-inner { grid-template-columns: 1fr; }
+  .hero-left  { max-width: 100%; text-align: center; }
+  .hero-desc  { margin-left: auto; margin-right: auto; }
+  .hero-actions { justify-content: center; }
+  .hero-trust   { justify-content: center; }
+  .hero-mockup  { order: -1; }
+  .mockup-panel { width: 280px; }
+  .badge-seo, .badge-viral, .badge-ctr { display: none; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   STATS BAR
+════════════════════════════════════════════════════════════ */
+.stats-bar {
+  border-top: 1px solid var(--b1);
+  border-bottom: 1px solid var(--b1);
+  background: var(--s1);
+  padding: 28px 0;
+}
+.stats-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+.stat-item { text-align: center; }
+.stat-num  {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-lbl { font-size: 13px; color: var(--muted); }
+
+/* ════════════════════════════════════════════════════════════
+   FEATURES
+════════════════════════════════════════════════════════════ */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 56px;
+}
+.feature-card {
+  background: var(--s1);
+  border: 1px solid var(--b1);
+  border-radius: var(--r3);
+  padding: 28px;
+  transition: border-color .2s, transform .2s, box-shadow .2s;
+  position: relative;
+  overflow: hidden;
+}
+.feature-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 80% at 50% -20%, rgba(124,109,250,.06) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity .3s;
+}
+.feature-card:hover { border-color: rgba(124,109,250,.35); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,.4); }
+.feature-card:hover::before { opacity: 1; }
+.feature-icon {
+  width: 44px; height: 44px;
+  border-radius: var(--r2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-bottom: 18px;
+}
+.fi-purple { background: rgba(124,109,250,.12); border: 1px solid rgba(124,109,250,.2); }
+.fi-green  { background: rgba(34,197,94,.1);   border: 1px solid rgba(34,197,94,.2); }
+.fi-blue   { background: rgba(59,130,246,.1);  border: 1px solid rgba(59,130,246,.2); }
+.fi-amber  { background: rgba(245,158,11,.1);  border: 1px solid rgba(245,158,11,.2); }
+.fi-red    { background: rgba(239,68,68,.1);   border: 1px solid rgba(239,68,68,.2); }
+.fi-pink   { background: rgba(236,72,153,.1);  border: 1px solid rgba(236,72,153,.2); }
+.feature-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.feature-desc { font-size: 14px; color: var(--muted); line-height: 1.65; }
+.feature-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+}
+.ftag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: var(--s2);
+  color: var(--muted);
+  border: 1px solid var(--b2);
+}
+
+@media (max-width: 900px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 540px) { .features-grid { grid-template-columns: 1fr; } }
+
+/* ════════════════════════════════════════════════════════════
+   HOW IT WORKS
+════════════════════════════════════════════════════════════ */
+.how-it-works { background: var(--s1); border-top: 1px solid var(--b1); border-bottom: 1px solid var(--b1); }
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  margin-top: 56px;
+  position: relative;
+}
+.steps-grid::before {
+  content: "";
+  position: absolute;
+  top: 28px;
+  left: calc(16.66% + 20px);
+  right: calc(16.66% + 20px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--b2), var(--b2), transparent);
+}
+.step {
+  text-align: center;
+  padding: 0 32px;
+  position: relative;
+}
+.step-num {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--purple-d);
+  border: 2px solid rgba(124,109,250,.4);
+  color: var(--purple-l);
+  font-size: 18px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  position: relative;
+  z-index: 1;
+  background: var(--s1);
+}
+.step h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+.step p   { font-size: 14px; color: var(--muted); }
+
+@media (max-width: 700px) {
+  .steps-grid { grid-template-columns: 1fr; gap: 40px; }
+  .steps-grid::before { display: none; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   PRICING
+════════════════════════════════════════════════════════════ */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 56px;
+  align-items: start;
+}
+.pricing-card {
+  background: var(--s1);
+  border: 1px solid var(--b1);
+  border-radius: var(--r3);
+  padding: 32px 28px;
+  position: relative;
+  transition: border-color .2s;
+}
+.pricing-card:hover { border-color: var(--b3); }
+.pricing-card.featured {
+  border-color: rgba(124,109,250,.5);
+  background: linear-gradient(160deg, rgba(124,109,250,.07) 0%, var(--s1) 60%);
+  box-shadow: 0 0 0 1px rgba(124,109,250,.15), var(--glow);
+}
+.pricing-popular {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--purple);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 14px;
+  border-radius: 20px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.pricing-plan { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
+.pricing-price {
+  font-size: 42px;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.pricing-price sup  { font-size: 20px; font-weight: 700; vertical-align: super; }
+.pricing-price span { font-size: 16px; font-weight: 500; color: var(--muted); }
+.pricing-desc { font-size: 13px; color: var(--muted); margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--b1); }
+.pricing-features { list-style: none; margin-bottom: 28px; }
+.pricing-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--muted);
+  padding: 6px 0;
+}
+.pricing-features li::before {
+  content: "✓";
+  color: var(--green);
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.pricing-features li.dim::before { content: "—"; color: var(--b3); }
+.pricing-features li.dim { color: var(--b3); }
+.pricing-note { font-size: 12px; color: var(--faint); text-align: center; margin-top: 12px; }
+
+@media (max-width: 900px) {
+  .pricing-grid { grid-template-columns: 1fr; max-width: 400px; margin-left: auto; margin-right: auto; }
+  .pricing-card.featured { order: -1; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   FAQ
+════════════════════════════════════════════════════════════ */
+.faq-list {
+  max-width: 720px;
+  margin: 56px auto 0;
+}
+details {
+  background: var(--s1);
+  border: 1px solid var(--b1);
+  border-radius: var(--r2);
+  margin-bottom: 10px;
+  transition: border-color .2s;
+  overflow: hidden;
+}
+details[open] { border-color: rgba(124,109,250,.3); }
+details:hover  { border-color: var(--b3); }
+summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+summary::-webkit-details-marker { display: none; }
+summary::after {
+  content: "+";
+  color: var(--purple-l);
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-left: 16px;
+  transition: transform .2s;
+}
+details[open] summary::after { content: "−"; }
+.faq-answer {
+  padding: 0 20px 18px;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.75;
+}
+.faq-answer a { color: var(--purple-l); }
+.faq-answer a:hover { text-decoration: underline; }
+
+/* ════════════════════════════════════════════════════════════
+   FINAL CTA
+════════════════════════════════════════════════════════════ */
+.cta-section {
+  background: radial-gradient(ellipse 80% 80% at 50% 50%, rgba(124,109,250,.1) 0%, transparent 70%);
+  border-top: 1px solid var(--b1);
+  border-bottom: 1px solid var(--b1);
+}
+.cta-inner {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.cta-inner h2 {
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 900;
+  margin-bottom: 16px;
+  line-height: 1.2;
+}
+.cta-inner p { font-size: 17px; color: var(--muted); margin-bottom: 36px; }
+.cta-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.cta-sub { margin-top: 20px; font-size: 12px; color: var(--faint); }
+
+/* ════════════════════════════════════════════════════════════
+   FOOTER
+════════════════════════════════════════════════════════════ */
+footer {
+  background: var(--s1);
+  border-top: 1px solid var(--b1);
+  padding: 48px 0 32px;
+}
+.footer-main {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr 1fr 1fr;
+  gap: 48px;
+  padding-bottom: 48px;
+  border-bottom: 1px solid var(--b1);
+  margin-bottom: 32px;
+}
+.footer-brand .nav-logo { margin-bottom: 14px; }
+.footer-brand p { font-size: 14px; color: var(--muted); line-height: 1.7; max-width: 260px; }
+.footer-col h4 {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.footer-col ul { list-style: none; }
+.footer-col li { margin-bottom: 10px; }
+.footer-col a { font-size: 14px; color: var(--muted); transition: color .15s; }
+.footer-col a:hover { color: var(--text); }
+.footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.footer-bottom p { font-size: 13px; color: var(--faint); }
+.footer-badges { display: flex; gap: 10px; }
+.footer-badge {
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--s2);
+  border: 1px solid var(--b2);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) { .footer-main { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 540px) {
+  .footer-main { grid-template-columns: 1fr; }
+  .footer-bottom { flex-direction: column; align-items: flex-start; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   UTILS
+════════════════════════════════════════════════════════════ */
+.divider { width: 1px; height: 16px; background: var(--b2); }
+.chrome-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.chrome-icon {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: conic-gradient(#EA4335 0 120deg, #FBBC05 120deg 240deg, #34A853 240deg 360deg);
+  position: relative;
+  flex-shrink: 0;
+}
+.chrome-icon::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  background: var(--bg);
+  border-radius: 50%;
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════
+     NAV
+════════════════════════════════════════════════════ -->
+<input type="checkbox" id="nav-check" hidden>
+<nav class="nav" role="navigation">
+  <div class="wrap">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo" aria-label="VidSpark AI">
+        <div class="nav-logo-icon">⚡</div>
+        <span class="nav-logo-name">VidSpark AI</span>
+        <span class="nav-logo-badge">Beta</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#features">Fonctionnalités</a></li>
+        <li><a href="#pricing">Tarifs</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="/privacy.html">Confidentialité</a></li>
+      </ul>
+
+      <div class="nav-cta">
+        <a href="#pricing" class="btn btn-ghost btn-sm">Voir les tarifs</a>
+        <a href="https://chromewebstore.google.com" class="btn btn-primary btn-sm" target="_blank" rel="noopener">
+          Installer gratuitement
+        </a>
+      </div>
+
+      <label for="nav-check" class="nav-toggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </label>
+    </div>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════════════════
+     HERO
+════════════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-grid-bg"></div>
+  <div class="wrap">
+    <div class="hero-inner">
+
+      <!-- Left: Text -->
+      <div class="hero-left">
+        <div class="hero-eyebrow">Extension Chrome gratuite</div>
+        <h1>
+          YouTube SEO<br>
+          <span class="gradient-text">propulsé par l'IA</span>
+        </h1>
+        <p class="hero-desc">
+          VidSpark AI analyse vos vidéos YouTube en temps réel.
+          Scores SEO, Viral et Miniature. Titres optimisés.
+          Tags et descriptions générés par Claude d'Anthropic.
+        </p>
+        <div class="hero-actions">
+          <a href="https://chromewebstore.google.com" class="btn btn-primary btn-lg" target="_blank" rel="noopener">
+            <span class="chrome-icon"></span>
+            Installer l'extension
+          </a>
+          <a href="#features" class="btn btn-ghost btn-lg">
+            Voir la démo →
+          </a>
+        </div>
+        <div class="hero-trust">
+          <div class="chrome-logo">
+            <div class="chrome-icon"></div>
+            Chrome & Edge
+          </div>
+          <div class="divider"></div>
+          <div><span class="hero-stars">★★★★★</span> 5/5</div>
+          <div class="divider"></div>
+          <span>Gratuit · Aucune carte requise</span>
+        </div>
+      </div>
+
+      <!-- Right: Mockup -->
+      <div class="hero-mockup">
+        <div class="mockup-wrap">
+          <div class="mockup-glow"></div>
+
+          <!-- Floating badges -->
+          <div class="mockup-badge-float badge-seo">⚡ SEO Score 84</div>
+          <div class="mockup-badge-float badge-viral">🔥 Viral +71%</div>
+          <div class="mockup-badge-float badge-ctr">📈 CTR +2.4×</div>
+
+          <!-- Extension Panel -->
+          <div class="mockup-panel">
+            <!-- Header -->
+            <div class="mockup-header">
+              <div class="mockup-logo">
+                <div class="mockup-logo-icon">⚡</div>
+                VidSpark AI
+              </div>
+              <div class="mockup-badge">Pro</div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="mockup-tabs">
+              <div class="mockup-tab active">Aperçu</div>
+              <div class="mockup-tab">SEO</div>
+              <div class="mockup-tab">Miniature</div>
+              <div class="mockup-tab">Viral</div>
+              <div class="mockup-tab">Titres IA</div>
+              <div class="mockup-tab">Actions</div>
+            </div>
+
+            <!-- Thumbnail placeholder -->
+            <div class="mockup-thumb">
+              <div class="mockup-thumb-icon">▶</div>
+              <span>youtube.com/watch?v=…</span>
+            </div>
+
+            <!-- Scores -->
+            <div class="mockup-scores">
+              <!-- SEO 84 -->
+              <div class="mscore">
+                <div class="mscore-ring">
+                  <svg width="44" height="44" viewBox="0 0 44 44">
+                    <circle class="track" cx="22" cy="22" r="18"/>
+                    <circle class="fill" cx="22" cy="22" r="18"
+                      stroke="#7c6dfa"
+                      stroke-dasharray="113.1 113.1"
+                      stroke-dashoffset="18.1"/>
+                  </svg>
+                  <div class="mscore-val" style="color:#a78bfa">84</div>
+                </div>
+                <div class="mscore-lbl">SEO</div>
+              </div>
+              <!-- Viral 71 -->
+              <div class="mscore">
+                <div class="mscore-ring">
+                  <svg width="44" height="44" viewBox="0 0 44 44">
+                    <circle class="track" cx="22" cy="22" r="18"/>
+                    <circle class="fill" cx="22" cy="22" r="18"
+                      stroke="#22c55e"
+                      stroke-dasharray="113.1 113.1"
+                      stroke-dashoffset="32.8"/>
+                  </svg>
+                  <div class="mscore-val" style="color:#22c55e">71</div>
+                </div>
+                <div class="mscore-lbl">Viral</div>
+              </div>
+              <!-- Mini 68 -->
+              <div class="mscore">
+                <div class="mscore-ring">
+                  <svg width="44" height="44" viewBox="0 0 44 44">
+                    <circle class="track" cx="22" cy="22" r="18"/>
+                    <circle class="fill" cx="22" cy="22" r="18"
+                      stroke="#f59e0b"
+                      stroke-dasharray="113.1 113.1"
+                      stroke-dashoffset="36.2"/>
+                  </svg>
+                  <div class="mscore-val" style="color:#f59e0b">68</div>
+                </div>
+                <div class="mscore-lbl">Mini.</div>
+              </div>
+              <!-- Global 76 -->
+              <div class="mscore">
+                <div class="mscore-ring">
+                  <svg width="44" height="44" viewBox="0 0 44 44">
+                    <circle class="track" cx="22" cy="22" r="18"/>
+                    <circle class="fill" cx="22" cy="22" r="18"
+                      stroke="#3b82f6"
+                      stroke-dasharray="113.1 113.1"
+                      stroke-dashoffset="27.1"/>
+                  </svg>
+                  <div class="mscore-val" style="color:#3b82f6">76</div>
+                </div>
+                <div class="mscore-lbl">Global</div>
+              </div>
+            </div>
+
+            <!-- Checklist -->
+            <div class="mockup-checklist">
+              <div class="mcheck"><div class="mcheck-dot ok"></div>Longueur titre optimale (62 car.)</div>
+              <div class="mcheck"><div class="mcheck-dot ok"></div>Chiffre dans le titre — +40% CTR</div>
+              <div class="mcheck"><div class="mcheck-dot fix"></div>Ajouter un mot émotionnel fort</div>
+              <div class="mcheck"><div class="mcheck-dot fix"></div>Hook CTR en début de titre manquant</div>
+            </div>
+
+            <!-- AI badge -->
+            <div class="mockup-ai-badge">
+              ✨ Suggestion IA : <em>"5 astuces incroyables pour…"</em>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     STATS BAR
+════════════════════════════════════════════════════ -->
+<div class="stats-bar">
+  <div class="wrap">
+    <div class="stats-inner">
+      <div class="stat-item">
+        <div class="stat-num">14</div>
+        <div class="stat-lbl">Langues supportées</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">6</div>
+        <div class="stat-lbl">Modules d'analyse</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">5</div>
+        <div class="stat-lbl">Variantes de titres IA</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">100%</div>
+        <div class="stat-lbl">Clés API sécurisées côté serveur</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">Claude</div>
+        <div class="stat-lbl">Modèle IA — Anthropic</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     FEATURES
+════════════════════════════════════════════════════ -->
+<section class="section" id="features">
+  <div class="wrap">
+    <div class="centered">
+      <div class="label">✦ Fonctionnalités</div>
+      <h2 class="section-title">Tout ce dont un créateur YouTube a besoin</h2>
+      <p class="section-sub">
+        Six modules d'analyse IA intégrés directement dans YouTube.
+        Aucune fenêtre séparée, aucun copier-coller.
+      </p>
+    </div>
+
+    <div class="features-grid">
+
+      <div class="feature-card">
+        <div class="feature-icon fi-purple">📊</div>
+        <h3 class="feature-title">Analyse SEO</h3>
+        <p class="feature-desc">
+          Score SEO de 0 à 100, checklist de 6 critères (longueur titre, chiffres,
+          mots émotionnels, hook CTR, ponctuation, description), suggestions de
+          correction avec estimation du gain en points.
+        </p>
+        <div class="feature-tags">
+          <span class="ftag">Score SEO</span>
+          <span class="ftag">Checklist</span>
+          <span class="ftag">Mots-clés</span>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon fi-green">🔥</div>
+        <h3 class="feature-title">Score Viral</h3>
+        <p class="feature-desc">
+          Probabilité de viralité calculée à partir du hook CTR, de la présence
+          de chiffres, des mots émotionnels, de la longueur et de la richesse
+          de la description. Score actuel vs. potentiel si corrigé.
+        </p>
+        <div class="feature-tags">
+          <span class="ftag">Score Viral</span>
+          <span class="ftag">CTR Hook</span>
+          <span class="ftag">Potentiel</span>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon fi-amber">🖼</div>
+        <h3 class="feature-title">Analyse Miniature</h3>
+        <p class="feature-desc">
+          Score de la miniature par extraction de couleurs dominantes,
+          analyse du contraste et de la lisibilité du texte. Recommandations
+          pour améliorer le CTR. Téléchargement HD en un clic.
+        </p>
+        <div class="feature-tags">
+          <span class="ftag">Score Miniature</span>
+          <span class="ftag">Contraste</span>
+          <span class="ftag">Téléchargement HD</span>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon fi-blue">✨</div>
+        <h3 class="feature-title">Titres IA</h3>
+        <p class="feature-desc">
+          Génération de 5 variantes de titres optimisés — SEO, CTR, Viral,
+          Shorts et Trending — via Claude d'Anthropic. Score et type de hook
+          pour chaque variante. Copie en un clic.
+        </p>
+        <div class="feature-tags">
+          <span class="ftag">5 variantes</span>
+          <span class="ftag">Claude AI</span>
+          <span class="ftag">Pro</span>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon fi-pink">🏷</div>
+        <h3 class="feature-title">Mots-clés & Tags IA</h3>
+        <p class="feature-desc">
+          Génération de tags YouTube optimisés et de hashtags pertinents pour
+          maximiser la visibilité. Description SEO complète (500–800 car.)
+          avec mots-clés naturels, timestamps et CTA.
+        </p>
+        <div class="feature-tags">
+          <span class="ftag">Tags IA</span>
+          <span class="ftag">Hashtags</span>
+          <span class="ftag">Description IA</span>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon fi-red">🏆</div>
+        <h3 class="feature-title">Analyse Concurrentielle</h3>
+        <p class="feature-desc">
+          Mots-clés de votre niche, mots-clés manquants dans votre titre,
+          opportunités de contenu sous-exploitées. Rapport complet Pro avec
+          positionnement vs. les créateurs de votre thématique.
+        </p>
+        <div class="feature-tags">
+          <span class="ftag">Concurrence</span>
+          <span class="ftag">Opportunités</span>
+          <span class="ftag">Niche</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     HOW IT WORKS
+════════════════════════════════════════════════════ -->
+<section class="section how-it-works section-sm">
+  <div class="wrap">
+    <div class="centered">
+      <div class="label">⚡ Simple</div>
+      <h2 class="section-title">Opérationnel en 3 étapes</h2>
+      <p class="section-sub">Aucune configuration, aucune clé API à gérer. L'IA est côté serveur.</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step">
+        <div class="step-num" style="border-color:rgba(124,109,250,.5)">1</div>
+        <h3>Installer l'extension</h3>
+        <p>Ajoutez VidSpark AI au Chrome Web Store en un clic. Gratuit, aucune carte requise.</p>
+      </div>
+      <div class="step">
+        <div class="step-num" style="border-color:rgba(34,197,94,.5)">2</div>
+        <h3>Ouvrir une vidéo YouTube</h3>
+        <p>Naviguez sur n'importe quelle vidéo YouTube. Le panel VidSpark AI apparaît automatiquement.</p>
+      </div>
+      <div class="step">
+        <div class="step-num" style="border-color:rgba(59,130,246,.5)">3</div>
+        <h3>Analyser &amp; Optimiser</h3>
+        <p>Consultez vos scores, la checklist SEO et générez des titres optimisés avec l'IA en un clic.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     PRICING
+════════════════════════════════════════════════════ -->
+<section class="section" id="pricing">
+  <div class="wrap">
+    <div class="centered">
+      <div class="label">💎 Tarifs</div>
+      <h2 class="section-title">Commencez gratuitement</h2>
+      <p class="section-sub">
+        Un plan Free généreux, un plan Pro complet pour les créateurs sérieux
+        et un plan Business pour les agences et équipes.
+      </p>
+    </div>
+
+    <div class="pricing-grid">
+
+      <!-- Free -->
+      <div class="pricing-card">
+        <div class="pricing-plan">Gratuit</div>
+        <div class="pricing-price">0 €</div>
+        <p class="pricing-desc">Pour découvrir VidSpark AI sans engagement.</p>
+        <ul class="pricing-features">
+          <li>5 analyses par jour</li>
+          <li>Score SEO, Viral &amp; Miniature</li>
+          <li>Checklist SEO (6 critères)</li>
+          <li>Analyse concurrentielle basique</li>
+          <li>14 langues supportées</li>
+          <li class="dim">Rapport IA complet</li>
+          <li class="dim">Titres IA (5 variantes)</li>
+          <li class="dim">Description &amp; Tags IA</li>
+          <li class="dim">Historique d'analyses</li>
+        </ul>
+        <a href="https://chromewebstore.google.com" class="btn btn-ghost" style="width:100%;justify-content:center" target="_blank" rel="noopener">
+          Installer gratuitement
+        </a>
+      </div>
+
+      <!-- Pro -->
+      <div class="pricing-card featured">
+        <div class="pricing-popular">Le plus populaire</div>
+        <div class="pricing-plan" style="color:var(--purple-l)">Pro</div>
+        <div class="pricing-price"><sup>€</sup>9<span>,99 / mois</span></div>
+        <p class="pricing-desc">Analyses illimitées. L'IA complète à votre service.</p>
+        <ul class="pricing-features">
+          <li>Analyses illimitées</li>
+          <li>Score SEO, Viral &amp; Miniature</li>
+          <li>Checklist SEO complète</li>
+          <li><strong style="color:var(--text)">Rapport IA complet</strong></li>
+          <li><strong style="color:var(--text)">Titres IA — 5 variantes</strong></li>
+          <li><strong style="color:var(--text)">Description IA optimisée</strong></li>
+          <li><strong style="color:var(--text)">Tags &amp; Hashtags IA</strong></li>
+          <li>Historique d'analyses</li>
+          <li>14 langues supportées</li>
+        </ul>
+        <a href="https://chromewebstore.google.com" class="btn btn-primary" style="width:100%;justify-content:center" target="_blank" rel="noopener">
+          Commencer avec Pro
+        </a>
+        <p class="pricing-note">95,90 €/an · Soit 7,99 €/mois · Résiliable à tout moment</p>
+      </div>
+
+      <!-- Business -->
+      <div class="pricing-card">
+        <div class="pricing-plan">Business</div>
+        <div class="pricing-price"><sup>€</sup>29<span>,99 / mois</span></div>
+        <p class="pricing-desc">Pour les agences, créateurs multi-chaînes et équipes.</p>
+        <ul class="pricing-features">
+          <li>Tout ce qui est dans Pro</li>
+          <li><strong style="color:var(--text)">Multi-chaînes</strong></li>
+          <li><strong style="color:var(--text)">Gestion d'équipe</strong></li>
+          <li><strong style="color:var(--text)">Accès API</strong></li>
+          <li>Rapports avancés</li>
+          <li>Support prioritaire</li>
+          <li>Historique illimité</li>
+          <li>14 langues supportées</li>
+          <li>Facturation entreprise</li>
+        </ul>
+        <a href="mailto:support@vidspark.ai" class="btn btn-ghost" style="width:100%;justify-content:center">
+          Contacter l'équipe
+        </a>
+        <p class="pricing-note">287,90 €/an · Soit 23,99 €/mois</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     FAQ
+════════════════════════════════════════════════════ -->
+<section class="section section-sm" id="faq" style="background:var(--s1);border-top:1px solid var(--b1);border-bottom:1px solid var(--b1)">
+  <div class="wrap">
+    <div class="centered">
+      <div class="label">❓ FAQ</div>
+      <h2 class="section-title">Questions fréquentes</h2>
+      <p class="section-sub">Tout ce que vous devez savoir avant de démarrer.</p>
+    </div>
+
+    <div class="faq-list">
+
+      <details open>
+        <summary>Comment fonctionne VidSpark AI ?</summary>
+        <div class="faq-answer">
+          VidSpark AI est une extension Chrome qui s'intègre directement dans
+          YouTube. Quand vous ouvrez une vidéo, elle analyse automatiquement le
+          titre et la description pour calculer des scores SEO, Viral et Miniature.
+          Pour les fonctionnalités IA (titres, description, tags), elle envoie ces
+          données à notre backend sécurisé qui interroge le modèle Claude d'Anthropic.
+          <strong>Aucune clé API n'est stockée dans votre navigateur.</strong>
+        </div>
+      </details>
+
+      <details>
+        <summary>Quelles vidéos YouTube puis-je analyser ?</summary>
+        <div class="faq-answer">
+          Vous pouvez analyser <strong>n'importe quelle vidéo YouTube</strong> —
+          la vôtre ou celle d'un concurrent. Le panel VidSpark AI apparaît
+          automatiquement sur toutes les pages de vidéos YouTube (/watch) et
+          YouTube Shorts (/shorts). C'est utile pour analyser les meilleures
+          pratiques de votre niche.
+        </div>
+      </details>
+
+      <details>
+        <summary>Quelle est la différence entre le plan Free et Pro ?</summary>
+        <div class="faq-answer">
+          Le plan <strong>Free</strong> donne accès à 5 analyses par jour avec
+          les scores SEO, Viral et Miniature, ainsi que la checklist SEO.
+          Le plan <strong>Pro</strong> supprime la limite d'analyses, ajoute
+          le Rapport IA complet, la génération de titres (5 variantes), la
+          description IA optimisée, les tags et hashtags IA, et l'historique
+          de toutes vos analyses.
+        </div>
+      </details>
+
+      <details>
+        <summary>L'IA utilisée est-elle fiable ? Quelles données envoie-t-on ?</summary>
+        <div class="faq-answer">
+          Nous utilisons <strong>Claude Sonnet d'Anthropic</strong>, l'un des
+          modèles d'IA les plus performants du marché. Seuls le <em>titre</em>
+          et la <em>description</em> de la vidéo sont transmis pour analyse.
+          Ces données ne sont pas utilisées pour entraîner des modèles d'IA
+          (politique API d'Anthropic). Aucune donnée personnelle ou de navigation
+          n'est transmise à l'IA. Consultez notre
+          <a href="/privacy.html">politique de confidentialité</a> pour tous les détails.
+        </div>
+      </details>
+
+      <details>
+        <summary>Puis-je résilier mon abonnement à tout moment ?</summary>
+        <div class="faq-answer">
+          Oui, sans condition ni frais. Vous pouvez résilier depuis votre espace
+          de facturation directement dans l'extension. La résiliation prend effet
+          à la fin de la période en cours — vous conservez l'accès Pro jusqu'à
+          cette date. Conformément à la réglementation européenne, un droit de
+          rétractation de 14 jours s'applique sur le premier abonnement.
+        </div>
+      </details>
+
+      <details>
+        <summary>L'extension fonctionne-t-elle sur Microsoft Edge ?</summary>
+        <div class="faq-answer">
+          Oui. VidSpark AI est compatible avec tous les navigateurs basés sur
+          Chromium : <strong>Chrome, Edge, Brave, Vivaldi, Arc</strong> et
+          Opera. Pour Edge, vous pouvez installer les extensions Chrome depuis
+          le Chrome Web Store directement.
+        </div>
+      </details>
+
+      <details>
+        <summary>En quelles langues est disponible VidSpark AI ?</summary>
+        <div class="faq-answer">
+          L'interface est disponible en <strong>14 langues</strong> : Français,
+          English, Español, Deutsch, Português, Italiano, Nederlands, Русский,
+          日本語, 한국어, 中文, العربية, हिन्दी et Türkçe.
+          L'extension détecte automatiquement la langue de la vidéo analysée
+          pour adapter les suggestions.
+        </div>
+      </details>
+
+      <details>
+        <summary>Mes données YouTube sont-elles sécurisées ?</summary>
+        <div class="faq-answer">
+          VidSpark AI ne stocke que le titre et la description des vidéos
+          que vous choisissez d'analyser (pour votre historique Pro).
+          Votre historique de navigation YouTube, vos abonnements, vos
+          commentaires ou vos données de chaîne <strong>ne sont jamais
+          accessibles ni transmis</strong>. L'extension utilise uniquement
+          les permissions strictement nécessaires. Consultez notre
+          <a href="/privacy.html">politique de confidentialité</a> pour le détail
+          de chaque permission.
+        </div>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     FINAL CTA
+════════════════════════════════════════════════════ -->
+<section class="section cta-section">
+  <div class="wrap">
+    <div class="cta-inner">
+      <h2>
+        Boostez votre SEO YouTube<br>
+        <span class="gradient-text">dès aujourd'hui</span>
+      </h2>
+      <p>Rejoignez les créateurs qui utilisent l'IA pour optimiser leurs vidéos. Gratuit pour commencer.</p>
+      <div class="cta-actions">
+        <a href="https://chromewebstore.google.com" class="btn btn-primary btn-lg" target="_blank" rel="noopener">
+          <span class="chrome-icon"></span>
+          Installer VidSpark AI gratuitement
+        </a>
+        <a href="#pricing" class="btn btn-ghost btn-lg">Voir les tarifs</a>
+      </div>
+      <p class="cta-sub">Extension Chrome · MV3 · Gratuit · Aucune carte requise · RGPD</p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════════════ -->
+<footer>
+  <div class="wrap">
+    <div class="footer-main">
+
+      <div class="footer-brand">
+        <a href="/" class="nav-logo">
+          <div class="nav-logo-icon">⚡</div>
+          <span class="nav-logo-name">VidSpark AI</span>
+        </a>
+        <p>
+          L'extension Chrome qui analyse et optimise vos vidéos YouTube
+          avec l'IA. Scores SEO, Viral, Miniature et suggestions générées
+          par Claude d'Anthropic.
+        </p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Produit</h4>
+        <ul>
+          <li><a href="#features">Fonctionnalités</a></li>
+          <li><a href="#pricing">Tarifs</a></li>
+          <li><a href="#faq">FAQ</a></li>
+          <li><a href="https://chromewebstore.google.com" target="_blank" rel="noopener">Chrome Web Store</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Légal</h4>
+        <ul>
+          <li><a href="/privacy.html">Politique de confidentialité</a></li>
+          <li><a href="/terms.html">Conditions d'utilisation</a></li>
+          <li><a href="mailto:privacy@vidspark.ai">Données personnelles</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="mailto:support@vidspark.ai">Support</a></li>
+          <li><a href="mailto:billing@vidspark.ai">Facturation</a></li>
+          <li><a href="mailto:abuse@vidspark.ai">Signalement</a></li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <p>© 2026 VidSpark AI. Tous droits réservés. Non affilié à YouTube ou Google LLC.</p>
+      <div class="footer-badges">
+        <span class="footer-badge">RGPD</span>
+        <span class="footer-badge">Chrome MV3</span>
+        <span class="footer-badge">Claude AI</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

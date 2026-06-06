@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="index, follow">
+<title>Conditions Générales d'Utilisation — VidSpark AI</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #07070a;
+    --surface:  #0e0e12;
+    --border:   #1e1e28;
+    --text:     #e8e8f0;
+    --muted:    #8888a0;
+    --purple:   #7c6dfa;
+    --purple-l: #a78bfa;
+    --green:    #22c55e;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.75;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .logo-icon {
+    width: 34px;
+    height: 34px;
+    background: rgba(124,109,250,.15);
+    border: 1px solid rgba(124,109,250,.4);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+  }
+  .logo-name { font-size: 15px; font-weight: 800; color: var(--purple-l); }
+  .logo-sub  { font-size: 11px; color: var(--muted); }
+  header nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    margin-left: 20px;
+    transition: color .15s;
+  }
+  header nav a:hover { color: var(--text); }
+
+  /* ── Hero ── */
+  .hero {
+    border-bottom: 1px solid var(--border);
+    padding: 56px 24px 48px;
+    text-align: center;
+    background: linear-gradient(160deg, rgba(124,109,250,.06) 0%, transparent 60%);
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(124,109,250,.12);
+    border: 1px solid rgba(124,109,250,.3);
+    color: var(--purple-l);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    letter-spacing: .04em;
+  }
+  .hero h1 {
+    font-size: clamp(26px, 4vw, 38px);
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .hero p { color: var(--muted); font-size: 15px; max-width: 560px; margin: 0 auto; }
+  .hero-date { margin-top: 16px; font-size: 12px; color: var(--muted); }
+
+  /* ── Layout ── */
+  .layout {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+  @media (max-width: 720px) {
+    .layout { grid-template-columns: 1fr; }
+    .toc    { display: none; }
+  }
+
+  /* ── Table of contents ── */
+  .toc {
+    position: sticky;
+    top: 80px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .toc-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .toc a {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 4px 0 4px 10px;
+    border-left: 2px solid transparent;
+    transition: all .15s;
+  }
+  .toc a:hover { color: var(--purple-l); border-color: var(--purple); }
+
+  /* ── Article ── */
+  article section { margin-bottom: 44px; }
+
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2 .section-num {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--purple);
+    background: rgba(124,109,250,.12);
+    border: 1px solid rgba(124,109,250,.25);
+    padding: 2px 8px;
+    border-radius: 6px;
+    min-width: 32px;
+    text-align: center;
+  }
+
+  h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--purple-l);
+    margin: 20px 0 8px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+
+  p { color: var(--muted); margin-bottom: 12px; }
+  p:last-child { margin-bottom: 0; }
+  strong { color: var(--text); font-weight: 600; }
+  a { color: var(--purple-l); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ── Plans cards ── */
+  .plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .plan-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .plan-card.pro   { border-color: rgba(124,109,250,.4); }
+  .plan-card.biz   { border-color: rgba(34,197,94,.35); }
+  .plan-name {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .plan-price {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--purple-l);
+    margin-bottom: 10px;
+  }
+  .plan-price.free-price { color: var(--green); }
+  .plan-price.biz-price  { color: var(--green); }
+  .plan-price span { font-size: 12px; font-weight: 400; color: var(--muted); }
+  .plan-feature {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 3px 0;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .plan-feature::before { content: "✓"; color: var(--green); font-weight: 700; flex-shrink: 0; }
+
+  /* ── Tables ── */
+  .table-wrap { overflow-x: auto; margin: 16px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    background: rgba(124,109,250,.08);
+    color: var(--purple-l);
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    border: 1px solid var(--border);
+  }
+  td {
+    padding: 9px 14px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+  td strong { color: var(--text); }
+  tr:hover td { background: rgba(255,255,255,.02); }
+
+  /* ── Info boxes ── */
+  .box {
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 16px 0;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .box-info  { background: rgba(59,130,246,.08);  border: 1px solid rgba(59,130,246,.25);  color: #93c5fd; }
+  .box-green { background: rgba(34,197,94,.08);   border: 1px solid rgba(34,197,94,.25);   color: #86efac; }
+  .box-warn  { background: rgba(245,158,11,.08);  border: 1px solid rgba(245,158,11,.25);  color: #fcd34d; }
+  .box-red   { background: rgba(239,68,68,.08);   border: 1px solid rgba(239,68,68,.25);   color: #fca5a5; }
+
+  /* ── Lists ── */
+  ul, ol { padding-left: 20px; color: var(--muted); }
+  li { margin-bottom: 6px; }
+  li::marker { color: var(--purple); }
+
+  /* ── Footer ── */
+  footer {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 28px 24px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  footer a { color: var(--purple-l); }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="https://vidspark.ai" class="logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div class="logo-name">VidSpark AI</div>
+      <div class="logo-sub">YouTube SEO Intelligence</div>
+    </div>
+  </a>
+  <nav>
+    <a href="https://vidspark.ai">Accueil</a>
+    <a href="/privacy.html">Confidentialité</a>
+    <a href="mailto:support@vidspark.ai">Contact</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <div class="hero-badge">📄 Conditions Générales d'Utilisation</div>
+  <h1>Conditions d'utilisation</h1>
+  <p>Les règles qui gouvernent l'utilisation de VidSpark AI et de ses services.</p>
+  <div class="hero-date">Dernière mise à jour : 31 mai 2026 · En vigueur immédiatement</div>
+</div>
+
+<div class="layout">
+
+  <!-- Table of contents -->
+  <aside class="toc">
+    <div class="toc-title">Sommaire</div>
+    <a href="#presentation">1. Présentation</a>
+    <a href="#acceptation">2. Acceptation</a>
+    <a href="#compte">3. Compte utilisateur</a>
+    <a href="#plans">4. Plans et tarifs</a>
+    <a href="#facturation">5. Facturation</a>
+    <a href="#resiliation">6. Résiliation</a>
+    <a href="#utilisation">7. Utilisation acceptable</a>
+    <a href="#propriete">8. Propriété intellectuelle</a>
+    <a href="#contenu">9. Contenu utilisateur</a>
+    <a href="#disponibilite">10. Disponibilité</a>
+    <a href="#garanties">11. Garanties et responsabilité</a>
+    <a href="#modifications">12. Modifications</a>
+    <a href="#droit">13. Droit applicable</a>
+    <a href="#contact">14. Contact</a>
+  </aside>
+
+  <!-- Main article -->
+  <article>
+
+    <section id="presentation">
+      <h2><span class="section-num">01</span> Présentation du service</h2>
+      <p>
+        VidSpark AI est un service d'analyse SEO pour créateurs YouTube, accessible via
+        une <strong>extension Chrome/Edge</strong> et un <strong>tableau de bord web</strong>.
+        Il est édité par :
+      </p>
+      <p>
+        <strong>[NOM DE LA SOCIÉTÉ OU DE L'ÉDITEUR]</strong><br>
+        [Adresse complète]<br>
+        [Code postal, Ville, Pays]<br>
+        Email : <strong>support@vidspark.ai</strong>
+      </p>
+      <p>
+        VidSpark AI propose les fonctionnalités suivantes (selon le plan) :
+      </p>
+      <ul>
+        <li>Analyse SEO des titres et descriptions YouTube (score, checklist, suggestions)</li>
+        <li>Score de potentiel viral et analyse de miniature</li>
+        <li>Génération de titres, descriptions et tags optimisés par IA (Claude — Anthropic)</li>
+        <li>Rapport d'analyse complet</li>
+        <li>Historique d'analyses et tableau de bord</li>
+      </ul>
+    </section>
+
+    <section id="acceptation">
+      <h2><span class="section-num">02</span> Acceptation des conditions</h2>
+      <p>
+        En installant l'extension VidSpark AI, en créant un compte ou en utilisant tout
+        ou partie du service, vous acceptez sans réserve les présentes Conditions Générales
+        d'Utilisation (CGU) ainsi que notre
+        <a href="/privacy.html">Politique de confidentialité</a>.
+      </p>
+      <p>
+        Si vous n'acceptez pas ces conditions, vous devez cesser immédiatement d'utiliser
+        le service et désinstaller l'extension.
+      </p>
+      <div class="box box-info">
+        Ces CGU constituent un contrat juridiquement contraignant entre vous et l'éditeur
+        de VidSpark AI. Lisez-les attentivement avant toute utilisation.
+      </div>
+    </section>
+
+    <section id="compte">
+      <h2><span class="section-num">03</span> Compte utilisateur</h2>
+
+      <h3>3.1 Création du compte</h3>
+      <p>
+        L'utilisation des fonctionnalités IA de VidSpark AI nécessite la création d'un
+        compte avec une adresse email valide. Vous pouvez également vous connecter via
+        votre compte Google.
+      </p>
+      <p>
+        Vous vous engagez à fournir des informations exactes et à les maintenir à jour.
+        Un seul compte par personne physique ou morale est autorisé.
+      </p>
+
+      <h3>3.2 Sécurité du compte</h3>
+      <p>
+        Vous êtes seul responsable de la confidentialité de vos identifiants de connexion
+        et de toute activité effectuée depuis votre compte. En cas de compromission,
+        signalez-le immédiatement à <a href="mailto:support@vidspark.ai">support@vidspark.ai</a>.
+      </p>
+
+      <h3>3.3 Suppression du compte</h3>
+      <p>
+        Vous pouvez supprimer votre compte à tout moment depuis l'extension (Profil →
+        Supprimer mon compte). La suppression est définitive et entraîne l'effacement
+        de toutes vos données dans un délai de 30 jours, à l'exception des données de
+        facturation conservées pour raisons légales.
+      </p>
+    </section>
+
+    <section id="plans">
+      <h2><span class="section-num">04</span> Plans et fonctionnalités</h2>
+      <p>VidSpark AI propose trois niveaux de service :</p>
+
+      <div class="plans-grid">
+        <div class="plan-card">
+          <div class="plan-name">Free</div>
+          <div class="plan-price free-price">0 € <span>/ toujours</span></div>
+          <div class="plan-feature">5 analyses par jour</div>
+          <div class="plan-feature">Score SEO et Viral</div>
+          <div class="plan-feature">Checklist SEO</div>
+          <div class="plan-feature">Analyse de miniature</div>
+        </div>
+        <div class="plan-card pro">
+          <div class="plan-name">Pro</div>
+          <div class="plan-price">9,99 € <span>/ mois</span></div>
+          <div class="plan-feature">Analyses illimitées</div>
+          <div class="plan-feature">Rapport IA complet</div>
+          <div class="plan-feature">Titres IA (5 variantes)</div>
+          <div class="plan-feature">Description et Tags IA</div>
+          <div class="plan-feature">Historique d'analyses</div>
+        </div>
+        <div class="plan-card biz">
+          <div class="plan-name">Business</div>
+          <div class="plan-price biz-price">29,99 € <span>/ mois</span></div>
+          <div class="plan-feature">Tout ce qui est dans Pro</div>
+          <div class="plan-feature">Multi-chaînes</div>
+          <div class="plan-feature">Gestion d'équipe</div>
+          <div class="plan-feature">Accès API</div>
+          <div class="plan-feature">Support prioritaire</div>
+        </div>
+      </div>
+
+      <p>
+        Les tarifs annuels bénéficient d'une réduction : <strong>Pro 95,90 €/an</strong>
+        (soit 7,99 €/mois) et <strong>Business 287,90 €/an</strong> (soit 23,99 €/mois).
+      </p>
+      <p>
+        Les fonctionnalités incluses dans chaque plan peuvent évoluer. En cas de
+        modification substantielle des fonctionnalités d'un plan payant, les abonnés
+        actifs seront informés au moins 30 jours à l'avance.
+      </p>
+    </section>
+
+    <section id="facturation">
+      <h2><span class="section-num">05</span> Facturation et paiements</h2>
+
+      <h3>5.1 Modalités de paiement</h3>
+      <p>
+        Les abonnements payants sont traités via <strong>Stripe</strong> (carte bancaire)
+        ou <strong>PayPal</strong>. Le paiement est prélevé à l'avance pour chaque
+        période d'abonnement (mensuelle ou annuelle).
+      </p>
+      <p>
+        VidSpark AI ne stocke jamais vos coordonnées bancaires. Celles-ci sont
+        traitées exclusivement par Stripe et PayPal conformément aux normes PCI-DSS.
+      </p>
+
+      <h3>5.2 Renouvellement automatique</h3>
+      <p>
+        Les abonnements se renouvellent automatiquement à l'échéance de chaque période.
+        Vous pouvez annuler le renouvellement automatique à tout moment depuis votre
+        espace de facturation (accessible via l'extension) ou en contactant le support.
+      </p>
+
+      <h3>5.3 Taxes</h3>
+      <p>
+        Les prix affichés sont hors taxes pour les professionnels assujettis à la TVA.
+        La TVA applicable sera ajoutée selon votre pays de résidence au moment du paiement.
+      </p>
+
+      <h3>5.4 Erreurs de facturation</h3>
+      <p>
+        En cas d'erreur de facturation, signalez-la à
+        <a href="mailto:billing@vidspark.ai">billing@vidspark.ai</a> dans les
+        30 jours suivant le prélèvement pour obtenir un remboursement ou un avoir.
+      </p>
+    </section>
+
+    <section id="resiliation">
+      <h2><span class="section-num">06</span> Résiliation et remboursements</h2>
+
+      <h3>6.1 Résiliation par l'utilisateur</h3>
+      <p>
+        Vous pouvez résilier votre abonnement à tout moment. La résiliation prend effet
+        à la fin de la période en cours — vous conservez l'accès aux fonctionnalités Pro
+        jusqu'à cette date. Aucun remboursement au prorata n'est effectué pour la période
+        déjà facturée.
+      </p>
+
+      <h3>6.2 Droit de rétractation (UE)</h3>
+      <p>
+        Conformément à la directive européenne 2011/83/UE, vous bénéficiez d'un
+        <strong>droit de rétractation de 14 jours</strong> à compter de votre premier
+        abonnement payant. Pour exercer ce droit, contactez
+        <a href="mailto:billing@vidspark.ai">billing@vidspark.ai</a> avec votre
+        email et la date de souscription. Le remboursement sera effectué sous 14 jours.
+      </p>
+      <div class="box box-warn">
+        Le droit de rétractation ne s'applique pas si vous avez commencé à utiliser
+        les fonctionnalités Pro pendant le délai de 14 jours et avez expressément
+        renoncé à ce droit en cochant la case correspondante lors de la souscription.
+      </div>
+
+      <h3>6.3 Résiliation par VidSpark AI</h3>
+      <p>
+        Nous nous réservons le droit de suspendre ou résilier votre compte en cas de :
+      </p>
+      <ul>
+        <li>Violation des présentes CGU ou de la législation applicable</li>
+        <li>Utilisation abusive ou frauduleuse du service</li>
+        <li>Non-paiement d'une échéance après 15 jours de relance</li>
+      </ul>
+      <p>
+        En cas de résiliation pour violation, aucun remboursement ne sera accordé.
+        En cas de résiliation à notre initiative pour une autre raison, un remboursement
+        au prorata sera effectué.
+      </p>
+    </section>
+
+    <section id="utilisation">
+      <h2><span class="section-num">07</span> Utilisation acceptable</h2>
+
+      <h3>7.1 Utilisations autorisées</h3>
+      <p>VidSpark AI est conçu pour :</p>
+      <ul>
+        <li>Analyser vos propres vidéos YouTube afin d'en améliorer le référencement</li>
+        <li>Générer des suggestions de titres, descriptions et tags pour votre contenu</li>
+        <li>Étudier les tendances SEO de votre niche</li>
+        <li>Améliorer les performances de vos chaînes YouTube</li>
+      </ul>
+
+      <h3>7.2 Utilisations interdites</h3>
+      <p>Il est expressément interdit de :</p>
+      <ul>
+        <li>Contourner les limites de quota par tout moyen technique (comptes multiples, scripts, bots)</li>
+        <li>Revendre, louer ou sous-licencier l'accès au service à des tiers</li>
+        <li>Utiliser le service pour générer du contenu trompeur, frauduleux ou contraire aux CGU de YouTube</li>
+        <li>Effectuer de l'ingénierie inverse, décompiler ou tenter d'extraire le code source de l'extension</li>
+        <li>Surcharger délibérément les serveurs par des requêtes automatisées excessives</li>
+        <li>Utiliser le service pour toute activité illégale ou portant atteinte aux droits de tiers</li>
+        <li>Partager vos identifiants de connexion avec des tiers (sauf plan Business avec gestion d'équipe)</li>
+      </ul>
+
+      <div class="box box-red">
+        Toute utilisation abusive peut entraîner la suspension immédiate du compte,
+        sans remboursement, et le cas échéant des poursuites judiciaires.
+      </div>
+
+      <h3>7.3 Respect des conditions YouTube</h3>
+      <p>
+        VidSpark AI est un outil d'aide à la création indépendant, non affilié à YouTube
+        ou Google. Vous êtes seul responsable de l'utilisation des suggestions générées
+        et du respect des
+        <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener">Conditions d'utilisation de YouTube</a>
+        et des politiques de la communauté.
+      </p>
+    </section>
+
+    <section id="propriete">
+      <h2><span class="section-num">08</span> Propriété intellectuelle</h2>
+
+      <h3>8.1 Droits de VidSpark AI</h3>
+      <p>
+        L'ensemble du service VidSpark AI — incluant l'extension Chrome, le code source,
+        les algorithmes, l'interface, les textes, les marques et les logos — est la
+        propriété exclusive de l'éditeur et est protégé par les lois sur la propriété
+        intellectuelle.
+      </p>
+      <p>
+        L'abonnement vous confère une <strong>licence d'utilisation personnelle,
+        non exclusive, non transférable et révocable</strong> pour accéder au service
+        pendant la durée de votre abonnement.
+      </p>
+
+      <h3>8.2 Contenu généré par l'IA</h3>
+      <p>
+        Les titres, descriptions et suggestions générés par l'IA de VidSpark AI à partir
+        de vos données vous sont cédés librement. Vous êtes libre de les utiliser,
+        modifier et publier sans restriction, sous réserve du respect des droits de tiers.
+      </p>
+
+      <h3>8.3 YouTube et Google</h3>
+      <p>
+        YouTube™ est une marque déposée de Google LLC. VidSpark AI n'est pas affilié,
+        approuvé ni sponsorisé par Google LLC ou YouTube.
+      </p>
+    </section>
+
+    <section id="contenu">
+      <h2><span class="section-num">09</span> Contenu utilisateur</h2>
+      <p>
+        Les titres et descriptions YouTube que vous soumettez à VidSpark AI pour analyse
+        restent votre propriété exclusive. Vous nous accordez une licence limitée,
+        non exclusive et non transférable pour traiter ces contenus uniquement afin
+        de vous fournir le service demandé.
+      </p>
+      <p>
+        Ces contenus peuvent être transmis à notre prestataire IA (Anthropic) pour
+        la génération de suggestions. Ils ne sont pas utilisés pour entraîner des
+        modèles d'IA ni partagés avec d'autres utilisateurs.
+      </p>
+    </section>
+
+    <section id="disponibilite">
+      <h2><span class="section-num">10</span> Disponibilité et maintenance</h2>
+      <p>
+        Nous nous engageons à maintenir le service disponible avec un objectif de
+        disponibilité de <strong>99,5 %</strong> par mois calendaire, hors maintenances
+        planifiées et cas de force majeure.
+      </p>
+      <p>
+        Des maintenances peuvent être effectuées, de préférence en dehors des heures
+        de forte utilisation. Un préavis sera donné sauf en cas d'urgence.
+      </p>
+      <p>
+        En cas d'indisponibilité prolongée et imputable à VidSpark AI (supérieure à
+        72 heures consécutives), les abonnés Pro et Business pourront bénéficier d'un
+        avoir équivalent sur leur prochaine période.
+      </p>
+      <div class="box box-info">
+        Le service dépend de tiers (Supabase, Anthropic, Stripe) dont la disponibilité
+        est hors de notre contrôle direct. Les interruptions de ces services tiers ne
+        constituent pas un manquement de notre part aux présentes CGU.
+      </div>
+    </section>
+
+    <section id="garanties">
+      <h2><span class="section-num">11</span> Garanties et limitation de responsabilité</h2>
+
+      <h3>11.1 Nature des suggestions IA</h3>
+      <p>
+        Les scores SEO, analyses virales et suggestions générées par VidSpark AI sont
+        des <strong>estimations indicatives</strong> basées sur des algorithmes et un
+        modèle d'IA. Ils ne constituent pas une garantie de performance, de classement
+        ou de résultats sur YouTube.
+      </p>
+      <p>
+        L'algorithme de YouTube est propriétaire et peut évoluer à tout moment.
+        VidSpark AI ne peut être tenu responsable d'une absence d'amélioration
+        des performances après application des suggestions.
+      </p>
+
+      <h3>11.2 Exclusion de garantie</h3>
+      <p>
+        Le service est fourni <strong>"en l'état"</strong>, sans garantie d'adaptation
+        à un usage particulier, d'exactitude des résultats ou d'absence d'erreurs.
+      </p>
+
+      <h3>11.3 Limitation de responsabilité</h3>
+      <p>
+        Dans les limites permises par la loi applicable, la responsabilité totale de
+        VidSpark AI pour tout dommage lié à l'utilisation du service est limitée au
+        montant que vous avez payé pour le service au cours des
+        <strong>3 derniers mois</strong> précédant l'événement donnant lieu au dommage.
+      </p>
+      <p>
+        VidSpark AI ne pourra être tenu responsable des dommages indirects, pertes de
+        revenus, pertes de données ou tout autre préjudice consécutif résultant de
+        l'utilisation ou de l'impossibilité d'utiliser le service.
+      </p>
+
+      <h3>11.4 Force majeure</h3>
+      <p>
+        VidSpark AI ne pourra être tenu responsable des retards ou inexécutions
+        résultant d'événements hors de son contrôle raisonnable, incluant les pannes
+        d'infrastructure internet, modifications des APIs YouTube ou Google, actes
+        gouvernementaux ou catastrophes naturelles.
+      </p>
+    </section>
+
+    <section id="modifications">
+      <h2><span class="section-num">12</span> Modifications des CGU</h2>
+      <p>
+        Nous nous réservons le droit de modifier les présentes CGU à tout moment.
+        En cas de modification substantielle, vous serez notifié par email et/ou via
+        l'extension <strong>au moins 30 jours à l'avance</strong>.
+      </p>
+      <p>
+        Si vous n'acceptez pas les nouvelles conditions, vous pouvez résilier votre
+        abonnement avant leur entrée en vigueur et obtenir un remboursement au prorata
+        de la période non consommée. L'utilisation continue du service après la date
+        d'entrée en vigueur vaut acceptation des nouvelles CGU.
+      </p>
+    </section>
+
+    <section id="droit">
+      <h2><span class="section-num">13</span> Droit applicable et juridiction</h2>
+      <p>
+        Les présentes CGU sont régies par le <strong>droit français</strong>.
+        En cas de litige, les parties s'engagent à rechercher une résolution amiable
+        dans un délai de 30 jours avant toute action judiciaire.
+      </p>
+      <p>
+        À défaut de résolution amiable, tout litige relatif à la validité, l'interprétation
+        ou l'exécution des présentes CGU sera soumis à la compétence exclusive des
+        <strong>tribunaux du ressort du siège social de l'éditeur</strong>.
+      </p>
+      <p>
+        Pour les consommateurs résidant dans l'Union Européenne, la résolution en ligne
+        des litiges est accessible via la plateforme de la Commission Européenne :
+        <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener">
+          ec.europa.eu/consumers/odr
+        </a>
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Texte de référence</th>
+              <th>Application</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Règlement RGPD (UE) 2016/679</td>
+              <td>Protection des données personnelles</td>
+            </tr>
+            <tr>
+              <td>Directive 2011/83/UE</td>
+              <td>Droits des consommateurs, droit de rétractation</td>
+            </tr>
+            <tr>
+              <td>Loi Informatique et Libertés (France)</td>
+              <td>Traitement des données personnelles en France</td>
+            </tr>
+            <tr>
+              <td>Code de la consommation (France)</td>
+              <td>Pratiques commerciales, information pré-contractuelle</td>
+            </tr>
+            <tr>
+              <td>Chrome Web Store Developer Program Policies</td>
+              <td>Distribution et conformité de l'extension</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="contact">
+      <h2><span class="section-num">14</span> Contact</h2>
+      <p>Pour toute question relative aux présentes CGU :</p>
+      <ul>
+        <li><strong>Support général :</strong> <a href="mailto:support@vidspark.ai">support@vidspark.ai</a></li>
+        <li><strong>Facturation :</strong> <a href="mailto:billing@vidspark.ai">billing@vidspark.ai</a></li>
+        <li><strong>Données personnelles :</strong> <a href="mailto:privacy@vidspark.ai">privacy@vidspark.ai</a></li>
+        <li><strong>Abus / signalements :</strong> <a href="mailto:abuse@vidspark.ai">abuse@vidspark.ai</a></li>
+      </ul>
+      <p>
+        Délai de réponse : <strong>72 heures ouvrées</strong> pour le support standard,
+        <strong>24 heures</strong> pour le plan Business.
+      </p>
+
+      <div class="box box-green">
+        Ces CGU constituent l'intégralité de l'accord entre vous et VidSpark AI concernant
+        le service. Elles remplacent tout accord antérieur oral ou écrit relatif au même objet.
+      </div>
+    </section>
+
+  </article>
+</div>
+
+<footer>
+  <p style="margin-bottom:8px">
+    <a href="https://vidspark.ai">VidSpark AI</a> ·
+    <a href="/privacy.html">Confidentialité</a> ·
+    <a href="/terms.html">CGU</a> ·
+    <a href="mailto:support@vidspark.ai">Contact</a>
+  </p>
+  <p>© 2026 VidSpark AI. Tous droits réservés. Conforme RGPD · Droit français.</p>
+</footer>
+
+</body>
+</html>

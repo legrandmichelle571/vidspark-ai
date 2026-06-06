@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="index, follow">
+<title>Politique de confidentialité — VidSpark AI</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #07070a;
+    --surface:  #0e0e12;
+    --border:   #1e1e28;
+    --text:     #e8e8f0;
+    --muted:    #8888a0;
+    --purple:   #7c6dfa;
+    --purple-l: #a78bfa;
+    --green:    #22c55e;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.75;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .logo-icon {
+    width: 34px;
+    height: 34px;
+    background: rgba(124,109,250,.15);
+    border: 1px solid rgba(124,109,250,.4);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+  }
+  .logo-name  { font-size: 15px; font-weight: 800; color: var(--purple-l); }
+  .logo-sub   { font-size: 11px; color: var(--muted); }
+  header nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    margin-left: 20px;
+    transition: color .15s;
+  }
+  header nav a:hover { color: var(--text); }
+
+  /* ── Hero ── */
+  .hero {
+    border-bottom: 1px solid var(--border);
+    padding: 56px 24px 48px;
+    text-align: center;
+    background: linear-gradient(160deg, rgba(124,109,250,.06) 0%, transparent 60%);
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(124,109,250,.12);
+    border: 1px solid rgba(124,109,250,.3);
+    color: var(--purple-l);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    letter-spacing: .04em;
+  }
+  .hero h1 {
+    font-size: clamp(26px, 4vw, 38px);
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .hero p {
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  .hero-date {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ── Layout ── */
+  .layout {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+  @media (max-width: 720px) {
+    .layout { grid-template-columns: 1fr; }
+    .toc    { display: none; }
+  }
+
+  /* ── Table of contents ── */
+  .toc {
+    position: sticky;
+    top: 80px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .toc-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .toc a {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 4px 0;
+    border-left: 2px solid transparent;
+    padding-left: 10px;
+    transition: all .15s;
+  }
+  .toc a:hover { color: var(--purple-l); border-color: var(--purple); }
+
+  /* ── Article ── */
+  article section { margin-bottom: 44px; }
+
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2 .section-num {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--purple);
+    background: rgba(124,109,250,.12);
+    border: 1px solid rgba(124,109,250,.25);
+    padding: 2px 8px;
+    border-radius: 6px;
+    min-width: 32px;
+    text-align: center;
+  }
+
+  h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--purple-l);
+    margin: 20px 0 8px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+
+  p { color: var(--muted); margin-bottom: 12px; }
+  p:last-child { margin-bottom: 0; }
+  strong { color: var(--text); font-weight: 600; }
+
+  /* ── Tables ── */
+  .table-wrap { overflow-x: auto; margin: 16px 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th {
+    background: rgba(124,109,250,.08);
+    color: var(--purple-l);
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    border: 1px solid var(--border);
+  }
+  td {
+    padding: 9px 14px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+  td strong { color: var(--text); }
+  tr:hover td { background: rgba(255,255,255,.02); }
+
+  /* ── Info boxes ── */
+  .box {
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .box-info  { background: rgba(59,130,246,.08);  border: 1px solid rgba(59,130,246,.25);  color: #93c5fd; }
+  .box-green { background: rgba(34,197,94,.08);   border: 1px solid rgba(34,197,94,.25);   color: #86efac; }
+  .box-warn  { background: rgba(245,158,11,.08);  border: 1px solid rgba(245,158,11,.25);  color: #fcd34d; }
+
+  /* ── Lists ── */
+  ul, ol { padding-left: 20px; color: var(--muted); }
+  li { margin-bottom: 6px; }
+  li::marker { color: var(--purple); }
+
+  /* ── Rights cards ── */
+  .rights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .right-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .right-card .icon { font-size: 20px; margin-bottom: 8px; }
+  .right-card .title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .right-card p { font-size: 12px; margin: 0; }
+
+  /* ── Footer ── */
+  footer {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 28px 24px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  footer a { color: var(--purple-l); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="https://vidspark.ai" class="logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div class="logo-name">VidSpark AI</div>
+      <div class="logo-sub">YouTube SEO Intelligence</div>
+    </div>
+  </a>
+  <nav>
+    <a href="https://vidspark.ai">Accueil</a>
+    <a href="/terms.html">CGU</a>
+    <a href="mailto:privacy@vidspark.ai">Contact</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <div class="hero-badge">🔒 RGPD · Chrome Web Store</div>
+  <h1>Politique de confidentialité</h1>
+  <p>Comment VidSpark AI collecte, utilise et protège vos données personnelles.</p>
+  <div class="hero-date">Dernière mise à jour : 31 mai 2026 · En vigueur immédiatement</div>
+</div>
+
+<div class="layout">
+
+  <!-- Table of contents -->
+  <aside class="toc">
+    <div class="toc-title">Sommaire</div>
+    <a href="#responsable">1. Responsable du traitement</a>
+    <a href="#collecte">2. Données collectées</a>
+    <a href="#permissions">3. Permissions extension</a>
+    <a href="#finalites">4. Finalités</a>
+    <a href="#base-legale">5. Base légale</a>
+    <a href="#tiers">6. Tiers et sous-traitants</a>
+    <a href="#conservation">7. Conservation</a>
+    <a href="#transferts">8. Transferts hors UE</a>
+    <a href="#droits">9. Vos droits</a>
+    <a href="#cookies">10. Stockage local</a>
+    <a href="#mineurs">11. Mineurs</a>
+    <a href="#modifications">12. Modifications</a>
+    <a href="#contact">13. Contact</a>
+  </aside>
+
+  <!-- Main article -->
+  <article>
+
+    <section id="responsable">
+      <h2><span class="section-num">01</span> Responsable du traitement</h2>
+      <p>
+        Le responsable du traitement des données à caractère personnel collectées via
+        VidSpark AI est :
+      </p>
+      <p>
+        <strong>[NOM DE LA SOCIÉTÉ OU DE L'ÉDITEUR]</strong><br>
+        [Adresse complète]<br>
+        [Code postal, Ville, Pays]<br>
+        Email : <strong>privacy@vidspark.ai</strong>
+      </p>
+      <div class="box box-info">
+        Pour toute question relative à vos données, contactez-nous à
+        <strong>privacy@vidspark.ai</strong> — nous répondons sous 72 heures.
+      </div>
+    </section>
+
+    <section id="collecte">
+      <h2><span class="section-num">02</span> Données collectées</h2>
+      <p>
+        VidSpark AI collecte uniquement les données strictement nécessaires à la fourniture
+        du service. Aucune donnée n'est vendue ni cédée à des tiers à des fins commerciales.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Catégorie</th>
+              <th>Données</th>
+              <th>Source</th>
+              <th>Obligatoire</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Compte</strong></td>
+              <td>Adresse email, nom d'affichage, avatar (optionnel)</td>
+              <td>Inscription manuelle ou Google OAuth</td>
+              <td>Oui</td>
+            </tr>
+            <tr>
+              <td><strong>Authentification</strong></td>
+              <td>JWT Supabase, token de rafraîchissement</td>
+              <td>Supabase Auth</td>
+              <td>Oui</td>
+            </tr>
+            <tr>
+              <td><strong>Utilisation</strong></td>
+              <td>Historique d'analyses (titre vidéo, scores SEO/Viral, identifiant YouTube)</td>
+              <td>Actions dans l'extension</td>
+              <td>Non (fonctionnalité Pro)</td>
+            </tr>
+            <tr>
+              <td><strong>Abonnement</strong></td>
+              <td>Plan (Free/Pro/Business), statut, dates de période</td>
+              <td>Stripe / PayPal via webhook</td>
+              <td>Si abonnement payant</td>
+            </tr>
+            <tr>
+              <td><strong>Paiement</strong></td>
+              <td>Identifiant client Stripe, identifiant abonnement PayPal</td>
+              <td>Stripe / PayPal — les coordonnées bancaires ne nous parviennent jamais</td>
+              <td>Si abonnement payant</td>
+            </tr>
+            <tr>
+              <td><strong>Quotas</strong></td>
+              <td>Compteur d'analyses journalières (plan Free)</td>
+              <td>Généré automatiquement</td>
+              <td>Plan Free uniquement</td>
+            </tr>
+            <tr>
+              <td><strong>Langue</strong></td>
+              <td>Langue d'interface sélectionnée</td>
+              <td>Préférence utilisateur</td>
+              <td>Non</td>
+            </tr>
+            <tr>
+              <td><strong>Connexion</strong></td>
+              <td>Date et heure de la dernière connexion</td>
+              <td>Automatique à la connexion</td>
+              <td>Non</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box box-green">
+        <strong>Ce que nous ne collectons pas :</strong> contenu des vidéos YouTube, commentaires,
+        informations financières, données de navigation autres que les pages YouTube analysées,
+        adresse IP (non stockée).
+      </div>
+    </section>
+
+    <section id="permissions">
+      <h2><span class="section-num">03</span> Permissions de l'extension Chrome</h2>
+      <p>
+        L'extension VidSpark AI demande les permissions suivantes lors de l'installation.
+        Chacune est justifiée par un usage précis et limité :
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Permission</th>
+              <th>Justification</th>
+              <th>Données accédées</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>activeTab</strong></td>
+              <td>Accéder à l'onglet YouTube actif pour lire le titre et la description de la vidéo en cours</td>
+              <td>Titre, description, URL de la vidéo courante uniquement</td>
+            </tr>
+            <tr>
+              <td><strong>tabs</strong></td>
+              <td>Ouvrir la page de paiement dans un nouvel onglet lorsque l'utilisateur clique sur "Passer à Pro"</td>
+              <td>Aucune donnée lue — création d'onglet uniquement</td>
+            </tr>
+            <tr>
+              <td><strong>storage</strong></td>
+              <td>Stocker localement le JWT d'authentification, la langue choisie et le cache du plan utilisateur</td>
+              <td>JWT Supabase, préférences — stockage local uniquement (chrome.storage.local)</td>
+            </tr>
+            <tr>
+              <td><strong>clipboardWrite</strong></td>
+              <td>Permettre la copie du titre, de la description ou des tags générés par l'IA dans le presse-papiers</td>
+              <td>Texte généré par l'IA uniquement — sur action explicite de l'utilisateur</td>
+            </tr>
+            <tr>
+              <td><strong>alarms</strong></td>
+              <td>Rafraîchir automatiquement le cache du plan utilisateur toutes les heures pour refléter les changements d'abonnement</td>
+              <td>Aucune donnée externe</td>
+            </tr>
+            <tr>
+              <td><strong>identity</strong></td>
+              <td>Permettre la connexion via Google OAuth sans quitter l'extension</td>
+              <td>Email et nom Google — uniquement si l'utilisateur clique sur "Continuer avec Google"</td>
+            </tr>
+            <tr>
+              <td><strong>host: *.youtube.com</strong></td>
+              <td>Injecter l'interface VidSpark AI dans les pages YouTube (/watch et /shorts)</td>
+              <td>Titre et description de la vidéo affichée — lecture uniquement</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="finalites">
+      <h2><span class="section-num">04</span> Finalités du traitement</h2>
+      <ul>
+        <li><strong>Fournir le service :</strong> analyser les métadonnées YouTube et générer des suggestions d'optimisation SEO via l'IA.</li>
+        <li><strong>Gérer les comptes :</strong> création, authentification, maintien de la session.</li>
+        <li><strong>Gérer les abonnements :</strong> suivi des plans, facturation, renouvellements via Stripe et PayPal.</li>
+        <li><strong>Appliquer les quotas :</strong> limiter l'usage du plan Free à 5 analyses par jour.</li>
+        <li><strong>Historique :</strong> permettre aux utilisateurs Pro de consulter leurs analyses passées.</li>
+        <li><strong>Support :</strong> répondre aux demandes d'assistance liées au compte.</li>
+        <li><strong>Sécurité :</strong> détecter et prévenir les abus, suspendre les comptes frauduleux.</li>
+        <li><strong>Obligations légales :</strong> facturation, conservation des données comptables.</li>
+      </ul>
+      <p>
+        Les données ne sont <strong>jamais</strong> utilisées à des fins publicitaires,
+        de profilage commercial ou revendues à des tiers.
+      </p>
+    </section>
+
+    <section id="base-legale">
+      <h2><span class="section-num">05</span> Base légale (RGPD)</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Traitement</th>
+              <th>Base légale</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Création et gestion du compte</td>
+              <td><strong>Exécution du contrat</strong> (Art. 6.1.b RGPD)</td>
+            </tr>
+            <tr>
+              <td>Analyse des vidéos YouTube (service principal)</td>
+              <td><strong>Exécution du contrat</strong> (Art. 6.1.b RGPD)</td>
+            </tr>
+            <tr>
+              <td>Facturation et gestion des abonnements</td>
+              <td><strong>Exécution du contrat + Obligation légale</strong> (Art. 6.1.b et 6.1.c RGPD)</td>
+            </tr>
+            <tr>
+              <td>Gestion des quotas (plan Free)</td>
+              <td><strong>Intérêt légitime</strong> — prévention des abus (Art. 6.1.f RGPD)</td>
+            </tr>
+            <tr>
+              <td>Sécurité et prévention des fraudes</td>
+              <td><strong>Intérêt légitime</strong> (Art. 6.1.f RGPD)</td>
+            </tr>
+            <tr>
+              <td>Google OAuth (si utilisé)</td>
+              <td><strong>Consentement</strong> — déclenchement explicite par l'utilisateur (Art. 6.1.a RGPD)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tiers">
+      <h2><span class="section-num">06</span> Tiers et sous-traitants</h2>
+      <p>
+        VidSpark AI utilise les services tiers suivants. Chaque sous-traitant a été
+        sélectionné pour ses garanties en matière de protection des données.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Sous-traitant</th>
+              <th>Rôle</th>
+              <th>Données transmises</th>
+              <th>Localisation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Supabase</strong><br><small>supabase.com</small></td>
+              <td>Base de données, authentification</td>
+              <td>Email, nom, plan, historique d'analyses</td>
+              <td>UE (AWS eu-west-1)</td>
+            </tr>
+            <tr>
+              <td><strong>Anthropic</strong><br><small>anthropic.com</small></td>
+              <td>Modèle IA (Claude Sonnet)</td>
+              <td>Titre et description de la vidéo — pour génération de suggestions uniquement</td>
+              <td>États-Unis (Clauses contractuelles types)</td>
+            </tr>
+            <tr>
+              <td><strong>Stripe</strong><br><small>stripe.com</small></td>
+              <td>Paiements par carte</td>
+              <td>Email, identifiant client, données de facturation</td>
+              <td>UE / États-Unis (Privacy Shield successor)</td>
+            </tr>
+            <tr>
+              <td><strong>PayPal</strong><br><small>paypal.com</small></td>
+              <td>Paiements alternatifs</td>
+              <td>Identifiant d'abonnement uniquement</td>
+              <td>UE / États-Unis</td>
+            </tr>
+            <tr>
+              <td><strong>Google</strong><br><small>accounts.google.com</small></td>
+              <td>Authentification OAuth (optionnel)</td>
+              <td>Email et nom du compte Google — uniquement si connexion Google utilisée</td>
+              <td>UE / États-Unis (Privacy Shield successor)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box box-warn">
+        Les contenus envoyés à Anthropic (titre et description YouTube) sont utilisés
+        uniquement pour générer la réponse et ne sont pas utilisés pour entraîner les
+        modèles d'IA d'Anthropic selon leurs conditions d'utilisation API.
+      </div>
+    </section>
+
+    <section id="conservation">
+      <h2><span class="section-num">07</span> Durée de conservation</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Données</th>
+              <th>Durée de conservation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Données de compte (email, nom)</td>
+              <td>Pendant toute la durée du compte actif + 30 jours après suppression</td>
+            </tr>
+            <tr>
+              <td>Historique d'analyses</td>
+              <td>Pendant la durée de l'abonnement Pro/Business actif</td>
+            </tr>
+            <tr>
+              <td>Données de facturation</td>
+              <td>10 ans (obligation légale comptable)</td>
+            </tr>
+            <tr>
+              <td>Logs de sécurité (actions admin)</td>
+              <td>12 mois glissants</td>
+            </tr>
+            <tr>
+              <td>JWT / tokens (stockage local extension)</td>
+              <td>Jusqu'à déconnexion ou expiration (max. 1 heure)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Lors de la suppression du compte, toutes les données personnelles sont effacées
+        dans un délai de 30 jours, à l'exception des données de facturation conservées
+        conformément aux obligations légales.
+      </p>
+    </section>
+
+    <section id="transferts">
+      <h2><span class="section-num">08</span> Transferts hors Union Européenne</h2>
+      <p>
+        Certaines données peuvent être transférées vers des pays hors de l'Union Européenne,
+        notamment pour les services Anthropic, Stripe et Google basés aux États-Unis.
+        Ces transferts sont encadrés par des <strong>Clauses Contractuelles Types (CCT)</strong>
+        approuvées par la Commission Européenne (décision 2021/914), garantissant un
+        niveau de protection équivalent à celui offert par le RGPD.
+      </p>
+      <p>
+        Supabase traite les données dans la région <strong>EU (eu-west-1)</strong>
+        par défaut — aucun transfert hors UE pour la base de données.
+      </p>
+    </section>
+
+    <section id="droits">
+      <h2><span class="section-num">09</span> Vos droits (RGPD)</h2>
+      <p>
+        Conformément au Règlement Général sur la Protection des Données (RGPD),
+        vous disposez des droits suivants concernant vos données personnelles :
+      </p>
+
+      <div class="rights-grid">
+        <div class="right-card">
+          <div class="icon">👁</div>
+          <div class="title">Accès</div>
+          <p>Obtenir une copie de toutes vos données détenues par VidSpark AI.</p>
+        </div>
+        <div class="right-card">
+          <div class="icon">✏️</div>
+          <div class="title">Rectification</div>
+          <p>Corriger des données inexactes ou incomplètes vous concernant.</p>
+        </div>
+        <div class="right-card">
+          <div class="icon">🗑</div>
+          <div class="title">Effacement</div>
+          <p>Demander la suppression de votre compte et de vos données ("droit à l'oubli").</p>
+        </div>
+        <div class="right-card">
+          <div class="icon">⏸</div>
+          <div class="title">Limitation</div>
+          <p>Demander la suspension temporaire du traitement de vos données.</p>
+        </div>
+        <div class="right-card">
+          <div class="icon">📦</div>
+          <div class="title">Portabilité</div>
+          <p>Recevoir vos données dans un format structuré et lisible par machine.</p>
+        </div>
+        <div class="right-card">
+          <div class="icon">✋</div>
+          <div class="title">Opposition</div>
+          <p>Vous opposer à un traitement basé sur l'intérêt légitime.</p>
+        </div>
+        <div class="right-card">
+          <div class="icon">↩️</div>
+          <div class="title">Retrait du consentement</div>
+          <p>Retirer à tout moment un consentement donné (ex : Google OAuth).</p>
+        </div>
+        <div class="right-card">
+          <div class="icon">🏛</div>
+          <div class="title">Réclamation</div>
+          <p>Saisir la CNIL (France) ou toute autorité de protection compétente.</p>
+        </div>
+      </div>
+
+      <div class="box box-info" style="margin-top:20px">
+        Pour exercer vos droits, envoyez votre demande à <strong>privacy@vidspark.ai</strong>.
+        Vous pouvez également supprimer votre compte directement depuis l'extension
+        (Profil → Supprimer mon compte). Délai de réponse : 30 jours maximum.
+        <br><br>
+        En cas de non-réponse ou de litige, vous pouvez saisir la CNIL :
+        <strong>https://www.cnil.fr/fr/plaintes</strong>
+      </div>
+    </section>
+
+    <section id="cookies">
+      <h2><span class="section-num">10</span> Stockage local (extension Chrome)</h2>
+      <p>
+        VidSpark AI <strong>n'utilise pas de cookies</strong>. L'extension utilise
+        exclusivement <strong>chrome.storage.local</strong> pour stocker des données
+        localement dans votre navigateur. Ces données ne sont jamais transmises à des
+        tiers et restent sur votre appareil :
+      </p>
+      <ul>
+        <li><strong>accessToken / refreshToken</strong> : jetons d'authentification Supabase (expiration : 1 heure)</li>
+        <li><strong>userPlan / userData</strong> : plan et profil utilisateur mis en cache</li>
+        <li><strong>planCache / planCacheTime</strong> : cache du statut d'abonnement (1 heure)</li>
+        <li><strong>vidsparkLanguage</strong> : langue d'interface choisie</li>
+      </ul>
+      <p>
+        Toutes ces données sont supprimées lors de la déconnexion ou de la désinstallation
+        de l'extension.
+      </p>
+    </section>
+
+    <section id="mineurs">
+      <h2><span class="section-num">11</span> Mineurs</h2>
+      <p>
+        VidSpark AI est destiné aux créateurs de contenu YouTube professionnels ou
+        semi-professionnels. Le service n'est <strong>pas destiné aux personnes de moins
+        de 16 ans</strong>. Si vous avez connaissance qu'un mineur nous a communiqué
+        des données personnelles sans autorisation parentale, contactez-nous à
+        <strong>privacy@vidspark.ai</strong> pour procéder à la suppression.
+      </p>
+    </section>
+
+    <section id="modifications">
+      <h2><span class="section-num">12</span> Modifications de cette politique</h2>
+      <p>
+        Nous pouvons mettre à jour cette politique de confidentialité pour refléter
+        des changements dans nos pratiques ou obligations légales. En cas de modification
+        substantielle, vous serez informé par email ou via une notification dans l'extension
+        au moins <strong>15 jours avant</strong> l'entrée en vigueur.
+      </p>
+      <p>
+        La date de dernière mise à jour est indiquée en haut de cette page.
+        L'utilisation continue du service après cette date vaut acceptation des modifications.
+      </p>
+    </section>
+
+    <section id="contact">
+      <h2><span class="section-num">13</span> Contact et délégué à la protection des données</h2>
+      <p>
+        Pour toute question, exercice de droits ou signalement concernant vos données
+        personnelles :
+      </p>
+      <ul>
+        <li><strong>Email :</strong> <a href="mailto:privacy@vidspark.ai" style="color:var(--purple-l)">privacy@vidspark.ai</a></li>
+        <li><strong>Objet recommandé :</strong> [RGPD] + nature de votre demande</li>
+        <li><strong>Délai de réponse :</strong> 72 heures pour accusé de réception, 30 jours pour traitement complet</li>
+      </ul>
+      <p>
+        Autorité de contrôle compétente (France) :<br>
+        <strong>Commission Nationale de l'Informatique et des Libertés (CNIL)</strong><br>
+        3 Place de Fontenoy — TSA 80715 — 75334 Paris Cedex 07<br>
+        <a href="https://www.cnil.fr" style="color:var(--purple-l)">www.cnil.fr</a>
+      </p>
+    </section>
+
+  </article>
+</div>
+
+<footer>
+  <p style="margin-bottom:8px">
+    <a href="https://vidspark.ai">VidSpark AI</a> ·
+    <a href="/privacy.html">Confidentialité</a> ·
+    <a href="/terms.html">CGU</a> ·
+    <a href="mailto:privacy@vidspark.ai">Contact</a>
+  </p>
+  <p>© 2026 VidSpark AI. Tous droits réservés. Conforme RGPD · Chrome Web Store.</p>
+</footer>
+
+</body>
+</html>
