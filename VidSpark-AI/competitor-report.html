@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EchoRank AI — Analyse Concurrentielle</title>
+<link rel="stylesheet" href="report.css">
+</head>
+<body>
+<div class="page-wrap">
+  <div class="page-header">
+    <span class="logo">⚡</span>
+    <div><h1>Analyse concurrentielle</h1><div class="subtitle">EchoRank AI</div></div>
+    <button class="back-btn" onclick="window.close()">✕ Fermer</button>
+  </div>
+
+  <div id="video-bar"></div>
+  <div id="main-content"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Analyse de la concurrence…</div></div></div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="report.js"></script>
+<script>
+(async () => {
+  const { data, token, language } = await getReportData();
+  if (!data) { document.getElementById("main-content").innerHTML = errorHTML("Aucune donnée vidéo."); return; }
+  document.getElementById("video-bar").innerHTML = buildVideoBar(data);
+
+  const seo = data.seoScore || 50;
+
+  const keywords = (data.title || "").split(/\s+/).filter(w => w.length > 3);
+
+  document.getElementById("main-content").innerHTML = `
+    <div class="section">
+      <div class="section-title">Votre position</div>
+      <div class="score-hero">
+        <div class="score-card featured">
+          <div class="score-num" style="color:${scoreColor(seo)}">${seo}</div>
+          <div class="score-label">Votre score SEO</div>
+        </div>
+        <div class="score-card">
+          <div class="score-num" style="color:#888">—</div>
+          <div class="score-label">Moyenne concurrence</div>
+        </div>
+        <div class="score-card">
+          <div class="score-num" style="color:#22c55e">${keywords.length}</div>
+          <div class="score-label">Mots-clés détectés</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Mots-clés de votre vidéo</div>
+      <div class="card">
+        <div style="margin-bottom:8px;font-size:12px;color:#888">Mots-clés présents dans votre titre :</div>
+        <div class="tag-cloud">
+          ${keywords.map(w => `<span class="tag keyword">${esc(w)}</span>`).join("")}
+        </div>
+        <div style="margin-top:14px;margin-bottom:8px;font-size:12px;color:#888">Mots-clés suggérés à ajouter :</div>
+        <div class="tag-cloud" id="suggested-tags">
+          <span class="tag missing">tuto</span>
+          <span class="tag missing">gratuit</span>
+          <span class="tag missing">complet</span>
+          <span class="tag missing">2024</span>
+          <span class="tag missing">débutant</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Analyse concurrentielle IA</div>
+      <div id="ai-comp-result" class="card">
+        <div class="loading-state"><div class="spinner"></div><div class="loading-text">Génération de l'analyse concurrentielle…</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Opportunités détectées</div>
+      <div class="card">
+        ${[
+          { title: "Créneaux sous-exploités", detail: "Basé sur votre titre, des angles moins concurrentiels existent — l'IA peut suggérer des variantes" },
+          { title: "Format long vs court", detail: "Analyser si la durée de votre vidéo correspond aux meilleures performances de la niche" },
+          { title: "Heure de publication", detail: "Publier aux heures de pic de votre audience cible peut augmenter la visibilité initiale de 2x" },
+          { title: "Mots-clés longue traîne", detail: "Cibler des variations plus précises du mot-clé principal réduit la concurrence directe" },
+        ].map((r, i) => `
+          <div class="rec-item">
+            <div class="rec-num">${i+1}</div>
+            <div class="rec-body">
+              <div class="rec-title">${r.title}</div>
+              <div class="rec-detail">${r.detail}</div>
+            </div>
+          </div>`).join("")}
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Note importante</div>
+      <div class="card">
+        <div class="ai-box">
+          <div class="ai-label">ℹ Information</div>
+          L'analyse des vidéos concurrentes en temps réel nécessite l'API YouTube Data v3 (quota quotidien limité). Cette fonctionnalité sera disponible dans la version Pro d'EchoRank AI avec accès illimité aux données concurrentielles.
+        </div>
+      </div>
+    </div>
+  `;
+
+  try {
+    const res = await callProxy("seo_report", data, language, token);
+    const suggs = (res.suggestions || []).map((s, i) => `
+      <div class="rec-item">
+        <div class="rec-num">${i+1}</div>
+        <div class="rec-body"><div class="rec-title">${esc(s)}</div></div>
+      </div>`).join("");
+    document.getElementById("ai-comp-result").innerHTML = `
+      <div class="ai-box"><div class="ai-label">✨ Analyse IA</div>
+        Basé sur votre titre "${esc(data.title?.slice(0,60))}…", voici l'analyse de positionnement concurrentiel.
+        ${esc(res.viral_reason || "")}
+      </div>
+      ${suggs ? `<div style="margin-top:10px">${suggs}</div>` : ""}`;
+  } catch(e) {
+    document.getElementById("ai-comp-result").innerHTML = `<div style="color:#888;font-size:13px">Analyse IA non disponible — ${esc(e.message)}</div>`;
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EchoRank AI — Analyse SEO</title>
+<link rel="stylesheet" href="report.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="page-header">
+    <span class="logo">⚡</span>
+    <div>
+      <h1>Analyse SEO complète</h1>
+      <div class="subtitle" id="page-subtitle">EchoRank AI</div>
+    </div>
+    <button class="back-btn" onclick="window.close()">✕ Fermer</button>
+  </div>
+
+  <div id="video-bar"></div>
+  <div id="main-content"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Chargement…</div></div></div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="report.js"></script>
+<script>
+(async () => {
+  const { data, token, language } = await getReportData();
+
+  if (!data) {
+    document.getElementById("main-content").innerHTML = errorHTML("Aucune donnée vidéo. Ouvre ce rapport depuis l'extension EchoRank AI.");
+    return;
+  }
+
+  document.getElementById("video-bar").innerHTML = buildVideoBar(data);
+  document.getElementById("page-subtitle").textContent = data.title?.slice(0, 60) + (data.title?.length > 60 ? "…" : "");
+
+  const score = data.seoScore || 0;
+  const sc = scoreColor(score);
+  const tLen = (data.title || "").length;
+  const dLen = data.descLength || 0;
+
+  const checks = [
+    { ok: tLen >= 45 && tLen <= 75, label: "Longueur titre (45–75 car.)", detail: tLen >= 45 && tLen <= 75 ? `${tLen} caractères — parfait` : `${tLen} caractères — ${tLen < 45 ? "trop court, allonger" : "trop long, raccourcir"}`, action: tLen < 45 ? "Ajouter des mots-clés dans le titre" : tLen > 75 ? "Supprimer les mots non essentiels" : null },
+    { ok: /\d/.test(data.title), label: "Chiffre dans le titre", detail: /\d/.test(data.title) ? "Chiffre détecté — boost CTR" : 'Ajouter un nombre augmente le CTR de 15% en moyenne', action: 'Essayer : "5 astuces...", "100% gratuit...", "2024"' },
+    { ok: /[?!]/.test(data.title), label: "Ponctuation CTR (? ou !)", detail: /[?!]/.test(data.title) ? "Ponctuation engageante présente" : "Aucune ponctuation CTR détectée", action: "Ajouter une question augmente l'engagement" },
+    { ok: dLen >= 500, label: "Description riche (500+ car.)", detail: `${dLen} caractères`, action: dLen < 500 ? `Ajouter ${500 - dLen} caractères pour optimiser le référencement` : null },
+    { ok: dLen >= 150, label: "Description présente (150+ car.)", detail: dLen >= 150 ? "Description suffisante" : "Description trop courte", action: dLen < 150 ? "Rédiger une description complète avec mots-clés" : null },
+  ];
+
+  const okCount = checks.filter(c => c.ok).length;
+
+  document.getElementById("main-content").innerHTML = `
+    <div class="score-hero">
+      <div class="score-card featured">
+        <div class="score-num" style="color:${sc}">${score}</div>
+        <div class="score-label">Score SEO Global</div>
+      </div>
+      <div class="score-card">
+        <div class="score-num" style="color:#7c6dfa">${okCount}/${checks.length}</div>
+        <div class="score-label">Critères validés</div>
+      </div>
+      <div class="score-card">
+        <div class="score-num" style="color:${tLen>=45&&tLen<=75?'#22c55e':'#ef4444'}">${tLen}</div>
+        <div class="score-label">Car. dans le titre</div>
+      </div>
+      <div class="score-card">
+        <div class="score-num" style="color:${dLen>=500?'#22c55e':dLen>=200?'#eab308':'#ef4444'}">${dLen}</div>
+        <div class="score-label">Car. description</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Analyse du titre</div>
+      <div class="card">
+        <div style="font-size:15px;font-weight:600;margin-bottom:12px;line-height:1.5">"${esc(data.title)}"</div>
+        ${progressRow("Longueur titre", tLen, 100, tLen >= 45 && tLen <= 75 ? "#22c55e" : "#ef4444")}
+        ${progressRow("Score lisibilité", Math.min(100, Math.round(tLen * 0.8 + (data.title?.split(" ").length || 0) * 2)), 100, "#7c6dfa")}
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Checklist SEO détaillée</div>
+      <div class="card">
+        ${checks.map(c => `
+          <div class="check-item">
+            <div class="check-icon ${c.ok ? 'ok' : 'fix'}">${c.ok ? '✓' : '⚠'}</div>
+            <div class="check-body">
+              <div class="check-label">${c.label}</div>
+              <div class="check-detail">${c.detail}</div>
+              ${c.action && !c.ok ? `<span class="check-action">→ ${c.action}</span>` : ''}
+            </div>
+          </div>`).join("")}
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Analyse mots-clés</div>
+      <div class="card">
+        <div style="margin-bottom:10px;font-size:12px;color:#888">Mots-clés détectés dans le titre :</div>
+        <div class="tag-cloud">
+          ${(data.title || "").split(/\s+/).filter(w => w.length > 3).map(w =>
+            `<span class="tag keyword">${esc(w)}</span>`
+          ).join("")}
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Rapport IA détaillé</div>
+      <div id="ai-seo-result" class="card"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Génération du rapport IA…</div></div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Actions prioritaires</div>
+      <div class="card" id="actions-list">
+        ${checks.filter(c => !c.ok && c.action).map((c, i) => `
+          <div class="rec-item">
+            <div class="rec-num">${i + 1}</div>
+            <div class="rec-body">
+              <div class="rec-title">${c.label}</div>
+              <div class="rec-detail">${c.action}</div>
+              <div class="rec-impact"><span class="badge badge-amber">Impact élevé</span></div>
+            </div>
+          </div>`).join("") || '<div style="color:#888;font-size:13px;padding:8px 0">✓ Tous les critères principaux sont validés</div>'}
+      </div>
+    </div>
+  `;
+
+  try {
+    const res = await callProxy("seo_report", data, language, token);
+    const rs = res.score || score;
+    const rc = scoreColor(rs);
+    const items = (res.checklist || []).map(c => `
+      <div class="check-item">
+        <div class="check-icon ${c.status === 'ok' ? 'ok' : 'fix'}">${c.status === 'ok' ? '✓' : '⚠'}</div>
+        <div class="check-body">
+          <div class="check-label">${esc(c.item)}</div>
+          <div class="check-detail">${esc(c.detail)}</div>
+        </div>
+      </div>`).join("");
+    const suggs = (res.suggestions || []).map((s, i) => `
+      <div class="rec-item">
+        <div class="rec-num">${i + 1}</div>
+        <div class="rec-body"><div class="rec-title">${esc(s)}</div></div>
+      </div>`).join("");
+    document.getElementById("ai-seo-result").innerHTML = `
+      <div class="ai-box"><div class="ai-label">✨ Analyse IA</div>${esc(res.viral_reason || "Analyse générée avec succès.")}</div>
+      ${items}
+      ${suggs ? `<div style="margin-top:12px">${suggs}</div>` : ""}
+      <div style="margin-top:12px;display:flex;align-items:center;gap:8px">
+        <span style="font-size:28px;font-weight:800;color:${rc}">${rs}/100</span>
+        <span style="font-size:12px;color:#888">Score IA · Potentiel viral : ${res.viral_score || "—"}/100</span>
+      </div>`;
+  } catch (e) {
+    document.getElementById("ai-seo-result").innerHTML = `<div style="color:#888;font-size:13px">Rapport IA non disponible — ${esc(e.message)}</div>`;
+  }
+})();
+</script>
+</body>
+</html>

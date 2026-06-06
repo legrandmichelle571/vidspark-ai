@@ -1,0 +1,17 @@
+name = "echorank-proxy"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "ECHORANK_CACHE"
+id = "REMPLACER_PAR_VOTRE_KV_ID"
+preview_id = "REMPLACER_PAR_VOTRE_KV_PREVIEW_ID"
+
+[vars]
+ENVIRONMENT = "production"
+
+# Secrets à configurer avec :
+#   wrangler secret put ANTHROPIC_API_KEY
+#   wrangler secret put ECHORANK_SECRET
+#
+# Ne jamais mettre les vraies clés dans ce fichier !

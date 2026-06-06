@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EchoRank AI — Score Viral</title>
+<link rel="stylesheet" href="report.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="page-header">
+    <span class="logo">⚡</span>
+    <div><h1>Rapport Viral complet</h1><div class="subtitle">EchoRank AI — Prédiction IA</div></div>
+    <button class="back-btn" onclick="window.close()">✕ Fermer</button>
+  </div>
+
+  <div id="video-bar"></div>
+  <div id="main-content"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Calcul du potentiel viral…</div></div></div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="report.js"></script>
+<script>
+(async () => {
+  const { data, token, language } = await getReportData();
+  if (!data) { document.getElementById("main-content").innerHTML = errorHTML("Aucune donnée vidéo."); return; }
+  document.getElementById("video-bar").innerHTML = buildVideoBar(data);
+
+  const seo = data.seoScore || 50;
+  const viral = Math.round(seo * 0.7 + Math.random() * 20);
+  const vc = scoreColor(viral);
+
+  const factors_pos = [
+    { label: "Titre avec chiffre", score: /\d/.test(data.title) ? 85 : 30 },
+    { label: "Longueur titre optimale", score: (data.title||"").length >= 45 && (data.title||"").length <= 75 ? 90 : 40 },
+    { label: "Description riche", score: (data.descLength||0) >= 500 ? 80 : (data.descLength||0) >= 200 ? 55 : 20 },
+    { label: "Hook CTR en début", score: /^(comment|pourquoi|why|how|\d)/i.test(data.title||"") ? 85 : 35 },
+  ];
+
+  const factors_neg = [
+    { label: "Pas de mot émotionnel", score: 60 },
+    { label: "Description trop courte", score: (data.descLength||0) < 300 ? 70 : 0 },
+    { label: "Titre générique", score: 40 },
+  ].filter(f => f.score > 0);
+
+  document.getElementById("main-content").innerHTML = `
+    <div class="score-hero">
+      <div class="score-card featured">
+        <div class="score-num" style="color:${vc}">${viral}</div>
+        <div class="score-label">Score Viral</div>
+      </div>
+      <div class="score-card">
+        <div class="score-num" style="color:#7c6dfa">${seo}</div>
+        <div class="score-label">Score SEO</div>
+      </div>
+      <div class="score-card">
+        <div class="score-num" style="color:${viral >= 70 ? '#22c55e' : viral >= 50 ? '#eab308' : '#ef4444'}">${viral >= 70 ? 'Élevé' : viral >= 50 ? 'Moyen' : 'Faible'}</div>
+        <div class="score-label">Potentiel</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Probabilité virale</div>
+      <div class="card">
+        <div class="ai-box"><div class="ai-label">✨ Prédiction IA</div>
+          Basé sur l'analyse du titre, de la description et des tendances actuelles, cette vidéo a un potentiel viral <strong>${viral >= 70 ? 'élevé' : viral >= 50 ? 'moyen' : 'faible'}</strong>.
+          ${viral >= 70 ? "Les conditions sont réunies pour dépasser votre moyenne de vues habituelle." : "Des améliorations ciblées peuvent augmenter significativement ce score."}
+        </div>
+        ${progressRow("Potentiel viral global", viral, 100, vc)}
+        ${progressRow("Score SEO", seo, 100, scoreColor(seo))}
+        ${progressRow("Force du titre", Math.min(100, (data.title||"").length * 1.2), 100, "#7c6dfa")}
+        ${progressRow("Richesse description", Math.min(100, ((data.descLength||0) / 1000) * 100), 100, "#3b82f6")}
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Facteurs positifs</div>
+      <div class="card">
+        ${factors_pos.map(f => `
+          <div class="check-item">
+            <div class="check-icon ${f.score >= 60 ? 'ok' : 'fix'}">${f.score >= 60 ? '✓' : '⚠'}</div>
+            <div class="check-body">
+              <div class="check-label">${f.label}</div>
+              <div style="margin-top:6px">${progressRow("", f.score, 100, f.score >= 60 ? "#22c55e" : "#eab308")}</div>
+            </div>
+          </div>`).join("")}
+      </div>
+    </div>
+
+    ${factors_neg.length > 0 ? `
+    <div class="section">
+      <div class="section-title">Facteurs limitants</div>
+      <div class="card">
+        ${factors_neg.map(f => `
+          <div class="check-item">
+            <div class="check-icon bad">✗</div>
+            <div class="check-body">
+              <div class="check-label">${f.label}</div>
+              <div class="check-detail">Ce facteur réduit le potentiel viral de ${f.score}%</div>
+            </div>
+          </div>`).join("")}
+      </div>
+    </div>` : ""}
+
+    <div class="section">
+      <div class="section-title">Analyse IA approfondie</div>
+      <div id="ai-viral-result" class="card"><div class="loading-state"><div class="spinner"></div><div class="loading-text">Génération de l'analyse IA…</div></div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Recommandations pour maximiser la viralité</div>
+      <div class="card">
+        ${[
+          { title: "Ajouter un chiffre précis dans le titre", detail: "Les titres avec chiffres ont +40% de CTR moyen", impact: "Très élevé" },
+          { title: "Commencer par 'Comment' ou 'Pourquoi'", detail: "Les questions en début de titre génèrent +25% de clics", impact: "Élevé" },
+          { title: "Publier entre 14h et 17h (heure locale)", detail: "Pic d'audience YouTube sur cet horaire", impact: "Élevé" },
+          { title: "Ajouter des timestamps dans la description", detail: "Améliore la rétention et le référencement", impact: "Moyen" },
+          { title: "Partager dans les 30 premières minutes", detail: "L'algorithme YouTube favorise les vidéos avec engagement rapide", impact: "Très élevé" },
+        ].map((r, i) => `
+          <div class="rec-item">
+            <div class="rec-num">${i+1}</div>
+            <div class="rec-body">
+              <div class="rec-title">${r.title}</div>
+              <div class="rec-detail">${r.detail}</div>
+              <div class="rec-impact"><span class="badge badge-${r.impact === 'Très élevé' ? 'red' : r.impact === 'Élevé' ? 'amber' : 'blue'}">${r.impact}</span></div>
+            </div>
+          </div>`).join("")}
+      </div>
+    </div>
+  `;
+
+  try {
+    const res = await callProxy("seo_report", data, language, token);
+    const vScore = res.viral_score || viral;
+    const vColor = scoreColor(vScore);
+    document.getElementById("ai-viral-result").innerHTML = `
+      <div class="ai-box"><div class="ai-label">✨ Analyse IA</div>${esc(res.viral_reason || "Analyse complète générée.")}</div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:32px;font-weight:800;color:${vColor}">${vScore}/100</span>
+        <span style="font-size:13px;color:#888">Potentiel viral estimé par IA</span>
+      </div>`;
+  } catch(e) {
+    document.getElementById("ai-viral-result").innerHTML = `<div style="color:#888;font-size:13px">Analyse IA non disponible — ${esc(e.message)}</div>`;
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,363 @@
+/**
+ * Routes Administration
+ * GET    /api/admin/stats
+ * GET    /api/admin/users
+ * GET    /api/admin/users/:id
+ * PUT    /api/admin/users/:id/plan
+ * PUT    /api/admin/users/:id/status
+ * DELETE /api/admin/users/:id
+ * GET    /api/admin/revenue
+ * GET    /api/admin/logs
+ */
+const router = require('express').Router();
+const { requireAdmin } = require('../middleware/auth');
+const { getLimits }    = require('../config/plans');
+
+/* Toutes les routes admin requièrent le rôle admin */
+router.use(requireAdmin);
+
+/* ── Statistiques globales ── */
+router.get('/stats', async (req, res) => {
+  try {
+    const supabase = req.app.locals.supabase;
+
+    const [statsRes, analysisRes, revenueRes] = await Promise.all([
+      supabase.from('admin_stats').select('*').single(),
+      supabase.from('analysis_history').select('id', { count: 'exact', head: true }),
+      supabase.from('payments')
+        .select('amount, created_at')
+        .eq('status', 'succeeded')
+        .gte('created_at', new Date(Date.now() - 30*24*60*60*1000).toISOString())
+    ]);
+
+    const mrr = (revenueRes.data || []).reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+    const stats = statsRes.data || {};
+
+    res.json({
+      users: {
+        total:    stats.total_users || 0,
+        free:     stats.free_users  || 0,
+        pro:      stats.pro_users   || 0,
+        business: stats.business_users || 0,
+        new_30d:  stats.new_last_30d || 0,
+        active_7d:stats.active_last_7d || 0,
+        conversion_rate: stats.conversion_rate || 0
+      },
+      analyses: {
+        total: analysisRes.count || 0
+      },
+      revenue: {
+        mrr: mrr.toFixed(2),
+        arr: (mrr * 12).toFixed(2),
+        transactions_30d: (revenueRes.data || []).length
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Stats fetch failed' });
+  }
+});
+
+/* ── Liste des utilisateurs ── */
+router.get('/users', async (req, res) => {
+  try {
+    const supabase = req.app.locals.supabase;
+    const page    = parseInt(req.query.page)   || 1;
+    const limit   = parseInt(req.query.limit)  || 50;
+    const search  = req.query.search || '';
+    const plan    = req.query.plan   || '';
+    const status  = req.query.status || '';
+    const offset  = (page - 1) * limit;
+
+    let query = supabase
+      .from('users')
+      .select('id,email,name,plan,status,role,quota_used,quota_limit,language,country,created_at,last_login', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (search) query = query.or(`email.ilike.%${search}%,name.ilike.%${search}%`);
+    if (plan)   query = query.eq('plan', plan);
+    if (status) query = query.eq('status', status);
+
+    const { data, error, count } = await query;
+    if (error) return res.status(400).json({ error: error.message });
+
+    res.json({
+      users: data,
+      pagination: { page, limit, total: count, pages: Math.ceil(count / limit) }
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Users fetch failed' });
+  }
+});
+
+/* ── Détail utilisateur ── */
+router.get('/users/:id', async (req, res) => {
+  try {
+    const supabase = req.app.locals.supabase;
+    const [userRes, subRes, histRes] = await Promise.all([
+      supabase.from('users').select('*').eq('id', req.params.id).single(),
+      supabase.from('subscriptions').select('*').eq('user_id', req.params.id).order('created_at', { ascending: false }),
+      supabase.from('analysis_history').select('id,title,score_seo,score_global,created_at').eq('user_id', req.params.id).limit(10).order('created_at', { ascending: false })
+    ]);
+
+    if (userRes.error) return res.status(404).json({ error: 'User not found' });
+
+    res.json({
+      user:          userRes.data,
+      subscriptions: subRes.data  || [],
+      recent_analyses: histRes.data || []
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Fetch failed' });
+  }
+});
+
+/* ── Changer le plan ── */
+router.put('/users/:id/plan', async (req, res) => {
+  try {
+    const { plan } = req.body;
+    if (!['free','pro','business'].includes(plan)) {
+      return res.status(400).json({ error: 'Invalid plan' });
+    }
+
+    const supabase = req.app.locals.supabase;
+
+    /* Mettre à jour le plan + quota_limit via plans.js (source de vérité) */
+    await supabase.from('users')
+      .update({
+        plan,
+        quota_limit: getLimits(plan).daily_analyses  // Free=10, Pro=200, Business=1000
+      })
+      .eq('id', req.params.id);
+
+    /* Logger l'action admin */
+    await supabase.from('admin_logs').insert({
+      admin_id:       req.user.id,
+      action:         `change_plan_to_${plan}`,
+      target_user_id: req.params.id,
+      details:        { new_plan: plan, changed_by: req.user.email }
+    });
+
+    /* Si manual pro: créer une subscription */
+    if (plan !== 'free') {
+      await supabase.from('subscriptions').upsert({
+        user_id:  req.params.id,
+        plan,
+        provider: 'manual',
+        status:   'active',
+        current_period_start: new Date().toISOString(),
+        current_period_end:   new Date(Date.now() + 30*24*60*60*1000).toISOString()
+      }, { onConflict: 'user_id,provider' });
+    }
+
+    res.json({ message: `User plan updated to ${plan}` });
+  } catch (err) {
+    res.status(500).json({ error: 'Plan update failed' });
+  }
+});
+
+/* ── Suspendre / Réactiver ── */
+router.put('/users/:id/status', async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!['active','suspended','cancelled'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    const supabase = req.app.locals.supabase;
+    await supabase.from('users').update({ status }).eq('id', req.params.id);
+    await supabase.from('admin_logs').insert({
+      admin_id:       req.user.id,
+      action:         `set_status_${status}`,
+      target_user_id: req.params.id
+    });
+
+    res.json({ message: `User status set to ${status}` });
+  } catch (err) {
+    res.status(500).json({ error: 'Status update failed' });
+  }
+});
+
+/* ── Supprimer un utilisateur ── */
+router.delete('/users/:id', async (req, res) => {
+  try {
+    const supabase = req.app.locals.supabase;
+
+    /* Récupérer auth_id */
+    const { data: user } = await supabase
+      .from('users').select('auth_id,email').eq('id', req.params.id).single();
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    /* Supprimer auth user (cascade) */
+    await supabase.auth.admin.deleteUser(user.auth_id);
+
+    await supabase.from('admin_logs').insert({
+      admin_id:       req.user.id,
+      action:         'delete_user',
+      target_user_id: req.params.id,
+      details:        { deleted_email: user.email }
+    });
+
+    res.json({ message: 'User deleted' });
+  } catch (err) {
+    res.status(500).json({ error: 'Delete failed' });
+  }
+});
+
+/* ── Revenus ── */
+router.get('/revenue', async (req, res) => {
+  try {
+    const supabase = req.app.locals.supabase;
+    const { data } = await supabase.from('monthly_revenue').select('*');
+    res.json({ monthly_revenue: data || [] });
+  } catch (err) {
+    res.status(500).json({ error: 'Revenue fetch failed' });
+  }
+});
+
+/* ── Logs admin ── */
+router.get('/logs', async (req, res) => {
+  try {
+    const supabase = req.app.locals.supabase;
+    const { data } = await supabase
+      .from('admin_logs')
+      .select('*, admin:admin_id(email), target:target_user_id(email)')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    res.json({ logs: data || [] });
+  } catch (err) {
+    res.status(500).json({ error: 'Logs fetch failed' });
+  }
+});
+
+module.exports = router;
+
+
+/* ══════════════════════════════════════════════════════════════
+   CODES PROMO & LICENCES MANUELLES
+══════════════════════════════════════════════════════════════ */
+
+/* ── Créer un code promo ── */
+router.post('/promo', async (req, res) => {
+  try {
+    const { code, type, plan, discount_pct, trial_days, max_uses, expires_at } = req.body;
+    if (!code || !type) return res.status(400).json({ error: 'code and type required' });
+
+    const supabase = req.app.locals.supabase;
+    const { data, error } = await supabase.from('promo_codes').insert({
+      code: code.toUpperCase().trim(),
+      type, plan, discount_pct: discount_pct || 0,
+      trial_days: trial_days || 0,
+      max_uses: max_uses || 1,
+      expires_at: expires_at || null,
+      created_by: req.user.id
+    }).select().single();
+
+    if (error) return res.status(400).json({ error: error.message });
+
+    await supabase.from('admin_logs').insert({
+      admin_id: req.user.id,
+      action: 'create_promo_code',
+      details: { code, type, plan }
+    });
+
+    res.status(201).json({ promo: data });
+  } catch (err) {
+    res.status(500).json({ error: 'Promo creation failed' });
+  }
+});
+
+/* ── Liste des codes promo ── */
+router.get('/promos', async (req, res) => {
+  const supabase = req.app.locals.supabase;
+  const { data } = await supabase.from('promo_codes')
+    .select('*, created_by:users(email)')
+    .order('created_at', { ascending: false });
+  res.json({ promos: data || [] });
+});
+
+/* ── Désactiver un code promo ── */
+router.put('/promo/:id/toggle', async (req, res) => {
+  const supabase = req.app.locals.supabase;
+  const { data: promo } = await supabase.from('promo_codes').select('is_active').eq('id', req.params.id).single();
+  await supabase.from('promo_codes').update({ is_active: !promo?.is_active }).eq('id', req.params.id);
+  res.json({ message: 'Toggled' });
+});
+
+/* ── Accorder une licence manuelle ── */
+router.post('/license', async (req, res) => {
+  try {
+    const { user_id, plan, reason, expires_at } = req.body;
+    if (!user_id || !plan) return res.status(400).json({ error: 'user_id and plan required' });
+    if (!['pro','business','lifetime'].includes(plan)) return res.status(400).json({ error: 'Invalid plan' });
+
+    const supabase = req.app.locals.supabase;
+
+    /* Mettre à jour le plan utilisateur */
+    const dbPlan = plan === 'lifetime' ? 'pro' : plan;
+    await supabase.from('users').update({
+      plan:        dbPlan,
+      is_lifetime: plan === 'lifetime',
+      quota_limit: getLimits(dbPlan).daily_analyses  // Pro=200, Business=1000
+    }).eq('id', user_id);
+
+    /* Créer la licence */
+    const { data: license } = await supabase.from('manual_licenses').insert({
+      user_id, plan, reason,
+      expires_at: plan === 'lifetime' ? null : expires_at,
+      granted_by: req.user.id,
+      is_active: true
+    }).select().single();
+
+    await supabase.from('admin_logs').insert({
+      admin_id: req.user.id, action: `grant_${plan}_license`,
+      target_user_id: user_id, details: { reason, expires_at }
+    });
+
+    res.status(201).json({ license, message: `${plan} license granted` });
+  } catch (err) {
+    res.status(500).json({ error: 'License grant failed' });
+  }
+});
+
+/* ── Liste des licences ── */
+router.get('/licenses', async (req, res) => {
+  const supabase = req.app.locals.supabase;
+  const { data } = await supabase.from('manual_licenses')
+    .select('*, user:user_id(email,name), granted_by:users(email)')
+    .order('created_at', { ascending: false });
+  res.json({ licenses: data || [] });
+});
+
+/* ── Invitations bêta ── */
+router.post('/beta/invite', async (req, res) => {
+  try {
+    const { emails, plan = 'pro' } = req.body;
+    if (!emails || !Array.isArray(emails)) return res.status(400).json({ error: 'emails array required' });
+
+    const supabase = req.app.locals.supabase;
+    const invites = emails.map(email => ({
+      email: email.toLowerCase().trim(),
+      plan,
+      invited_by: req.user.id,
+      expires_at: new Date(Date.now() + 7*24*60*60*1000).toISOString()
+    }));
+
+    const { data, error } = await supabase.from('beta_invitations')
+      .upsert(invites, { onConflict: 'email' }).select();
+
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ invited: data?.length, invitations: data });
+  } catch (err) {
+    res.status(500).json({ error: 'Invite failed' });
+  }
+});
+
+router.get('/beta/invitations', async (req, res) => {
+  const supabase = req.app.locals.supabase;
+  const { data } = await supabase.from('beta_invitations')
+    .select('*')
+    .order('created_at', { ascending: false });
+  res.json({ invitations: data || [] });
+});

@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VidSpark AI — Rapport Complet</title>
+<link rel="stylesheet" href="report.css">
+</head>
+<body>
+<!-- ══ HEADER — texte mis à jour par JS au chargement ══ -->
+<div class="page-wrap">
+  <div class="page-header">
+    <span class="logo">⚡</span>
+    <div><h1>VidSpark AI</h1><div class="subtitle" id="page-subtitle">Rapport IA Complet</div></div>
+    <div style="display:flex;gap:8px;margin-left:auto">
+      <button class="back-btn" id="btn-print" onclick="window.print()">🖨 Print</button>
+      <button class="back-btn" id="btn-close" onclick="window.close()">✕ Close</button>
+    </div>
+  </div>
+  <div id="video-bar-slot"></div>
+  <div id="report-body">
+    <div class="loading-state" id="initial-loading">
+      <div class="spinner"></div>
+      <div class="loading-text" id="loading-msg">Loading…</div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   I18N — Dictionnaire complet (JAMAIS de RT() à l'intérieur)
+══════════════════════════════════════════════════════════════ */
+const RI = {
+  fr:{
+    loading:"Génération du rapport premium…",
+    no_data:"Ouvrez ce rapport depuis l'extension VidSpark AI sur une vidéo YouTube.",
+    print:"🖨 Imprimer", close:"✕ Fermer",
+    exec:"✦ Résumé Exécutif",
+    strengths:"✓ Forces", weaknesses:"⚠ Faiblesses", actions:"🚀 Actions prioritaires",
+    no_weakness:"Aucune détectée",
+    global_score:"Score Global", seo:"SEO", viral:"Viral", thumbnail:"Miniature",
+    ctr_est:"CTR estimé", ctr_pot:"CTR potentiel",
+    score_analysis:"Analyse des scores", before_after:"Avant / Après optimisation",
+    seo_section:"Analyse SEO complète",
+    seo_current:"Score SEO actuel", seo_potential:"Score SEO potentiel",
+    desc_richness:"Richesse description", title_strength:"Force du titre",
+    impact_table:"Impact SEO estimé par correction",
+    action:"Action", gain:"Gain", score:"Score", total_opt:"Total optimisé",
+    keywords:"Mots-clés du titre", missing_kw:"Mots-clés potentiellement manquants",
+    thumb_section:"Analyse miniature complète",
+    visual_criteria:"Critères visuels",
+    format_169:"Format 16:9", contrast:"Contraste", hd_res:"Résolution HD",
+    face_detect:"Visage détecté", text_read:"Lisibilité texte",
+    standard_ok:"Standard YouTube — optimal", contrast_ok:"Bon contraste estimé",
+    contrast_fix:"Contraste à améliorer", hd_ok:"Miniature HD disponible",
+    face_proxy:"Proxy IA requis", text_ok:"Bonne lisibilité estimée", text_fix:"Texte potentiellement illisible",
+    ctr_current:"CTR actuel estimé", emotions:"Analyse émotionnelle",
+    curiosity:"Curiosité", surprise:"Surprise", desire:"Désir", urgency:"Urgence", trust:"Confiance",
+    current:"Actuel", potential:"Potentiel",
+    viral_section:"Analyse virale complète",
+    pts_possible:"points possibles avec :",
+    viral_impact:"Impact de chaque correction",
+    viral_add_num:"Ajouter un chiffre dans le titre",
+    viral_add_em:"Ajouter un mot émotionnel",
+    viral_add_hook:"Ajouter un hook CTR",
+    viral_desc_500:"Description 500+ caractères",
+    viral_col_action:"Action", viral_col_viral:"+Viral", viral_col_ctr:"+CTR estimé",
+    comp_section:"Analyse concurrentielle",
+    comp_pro_note:"L'analyse en temps réel des top concurrents est disponible en version Pro via YouTube Data API v3.",
+    comp_heuristic:"Analyse heuristique basée sur votre titre :",
+    opp_section:"Opportunités détectées",
+    opp_subject:"🎯 Sujet manquant", opp_kw:"🔑 Mots-clés",
+    opp_trend:"📈 Tendance", opp_niche:"🔥 Niche",
+    opp_t1:"Angle \"débutant\" non couvert — forte demande, faible concurrence dans votre niche",
+    opp_t2:"Les mots \"guide complet\" et \"2024\" sont peu utilisés dans les titres similaires",
+    opp_t3:"Format court (Shorts) sous-représenté — opportunité de visibilité rapide",
+    opp_t4:"La version dans votre langue est moins concurrencée que la version anglophone",
+    titles_section:"Titres alternatifs générés",
+    titles_none:"Aucun titre généré.", titles_unavail:"Proxy non configuré.",
+    copy:"📋 Copier", copied:"✓ Copié!",
+    ai_seo_label:"✨ Analyse SEO IA", ai_viral_label:"✨ Analyse virale IA",
+    ai_comp_label:"✨ Analyse concurrentielle IA",
+    ai_score_label:"Score IA", ai_viral_score:"Score viral IA",
+    ai_unavail:"Analyse IA non disponible — proxy non configuré.",
+    exec_summary_text_ok:"Tous les critères principaux sont validés.",
+    viral_level_low:"Faible", viral_level_med:"Moyen", viral_level_high:"Élevé",
+    top10_title:"Top 10 actions prioritaires",
+    top10_1:"Optimiser la longueur du titre (55–70 car.)",
+    top10_2:"Ajouter un chiffre dans le titre",
+    top10_3:"Ajouter un mot émotionnel fort",
+    top10_4:"Ajouter un hook CTR en début de titre",
+    top10_5:"Enrichir la description (500+ caractères)",
+    top10_6:"Ajouter des timestamps dans la description",
+    top10_7:"Améliorer le contraste et lisibilité de la miniature",
+    top10_8:"Ajouter un visage expressif dans la miniature",
+    top10_9:"Publier entre 14h et 17h heure locale",
+    top10_10:"Répondre aux 10 premiers commentaires rapidement",
+    comp_top_label:"Top concurrents estimés", comp_score_est:"Score estimé",
+    comp_why:"Pourquoi il performe", comp_views:"Vues est.", comp_date:"Date est.",
+    comp_title_col:"Titre", comp_kw:"Mots-clés",
+  },
+  en:{
+    loading:"Generating premium report…",
+    no_data:"Open this report from VidSpark AI extension on a YouTube video.",
+    print:"🖨 Print", close:"✕ Close",
+    exec:"✦ Executive Summary",
+    strengths:"✓ Strengths", weaknesses:"⚠ Weaknesses", actions:"🚀 Priority Actions",
+    no_weakness:"None detected",
+    global_score:"Global Score", seo:"SEO", viral:"Viral", thumbnail:"Thumbnail",
+    ctr_est:"Estimated CTR", ctr_pot:"Potential CTR",
+    score_analysis:"Score Analysis", before_after:"Before / After optimization",
+    seo_section:"Full SEO Analysis",
+    seo_current:"Current SEO score", seo_potential:"Potential SEO score",
+    desc_richness:"Description richness", title_strength:"Title strength",
+    impact_table:"Estimated SEO impact per fix",
+    action:"Action", gain:"Gain", score:"Score", total_opt:"Optimized total",
+    keywords:"Title keywords", missing_kw:"Potentially missing keywords",
+    thumb_section:"Full Thumbnail Analysis",
+    visual_criteria:"Visual criteria",
+    format_169:"16:9 format", contrast:"Contrast", hd_res:"HD resolution",
+    face_detect:"Face detected", text_read:"Text readability",
+    standard_ok:"Standard YouTube — optimal", contrast_ok:"Good contrast estimated",
+    contrast_fix:"Contrast needs improvement", hd_ok:"HD thumbnail available",
+    face_proxy:"AI proxy required", text_ok:"Good readability estimated", text_fix:"Text potentially unreadable",
+    ctr_current:"Estimated current CTR", emotions:"Emotional analysis",
+    curiosity:"Curiosity", surprise:"Surprise", desire:"Desire", urgency:"Urgency", trust:"Trust",
+    current:"Current", potential:"Potential",
+    viral_section:"Full Viral Analysis",
+    pts_possible:"points possible with:",
+    viral_impact:"Impact of each fix",
+    viral_add_num:"Add a number to the title",
+    viral_add_em:"Add an emotional word",
+    viral_add_hook:"Add a CTR hook",
+    viral_desc_500:"Description 500+ characters",
+    viral_col_action:"Action", viral_col_viral:"+Viral", viral_col_ctr:"+Estimated CTR",
+    comp_section:"Competitive Analysis",
+    comp_pro_note:"Real-time top competitor analysis is available in Pro via YouTube Data API v3.",
+    comp_heuristic:"Heuristic analysis based on your title:",
+    opp_section:"Detected Opportunities",
+    opp_subject:"🎯 Missing subject", opp_kw:"🔑 Keywords",
+    opp_trend:"📈 Trend", opp_niche:"🔥 Niche",
+    opp_t1:"\"Beginner\" angle not covered — high demand, low competition in your niche",
+    opp_t2:"Words \"complete guide\" and \"2024\" are rarely used in similar titles",
+    opp_t3:"Short format (Shorts) underrepresented — quick visibility opportunity",
+    opp_t4:"Your language version is less competitive than the English version",
+    titles_section:"Generated Alternative Titles",
+    titles_none:"No titles generated.", titles_unavail:"Proxy not configured.",
+    copy:"📋 Copy", copied:"✓ Copied!",
+    ai_seo_label:"✨ AI SEO Analysis", ai_viral_label:"✨ AI Viral Analysis",
+    ai_comp_label:"✨ AI Competitive Analysis",
+    ai_score_label:"AI Score", ai_viral_score:"AI Viral Score",
+    ai_unavail:"AI analysis unavailable — proxy not configured.",
+    exec_summary_text_ok:"All main criteria validated.",
+    viral_level_low:"Low", viral_level_med:"Medium", viral_level_high:"High",
+    top10_title:"Top 10 Priority Actions",
+    top10_1:"Optimize title length (55–70 chars)",
+    top10_2:"Add a number to the title",
+    top10_3:"Add a strong emotional word",
+    top10_4:"Add a CTR hook at title start",
+    top10_5:"Enrich description (500+ characters)",
+    top10_6:"Add timestamps in description",
+    top10_7:"Improve thumbnail contrast and readability",
+    top10_8:"Add an expressive face in thumbnail",
+    top10_9:"Publish between 2pm and 5pm local time",
+    top10_10:"Reply to first 10 comments quickly",
+    comp_top_label:"Estimated Top Competitors", comp_score_est:"Est. Score",
+    comp_why:"Why it performs", comp_views:"Est. Views", comp_date:"Est. Date",
+    comp_title_col:"Title", comp_kw:"Keywords",
+  },
+  ar:{
+    loading:"جارٍ إنشاء التقرير المميز…",
+    no_data:"افتح هذا التقرير من إضافة VidSpark AI على فيديو يوتيوب.",
+    print:"🖨 طباعة", close:"✕ إغلاق",
+    exec:"✦ الملخص التنفيذي",
+    strengths:"✓ نقاط القوة", weaknesses:"⚠ نقاط الضعف", actions:"🚀 الإجراءات ذات الأولوية",
+    no_weakness:"لا توجد",
+    global_score:"النقاط الكلية", seo:"SEO", viral:"فيروسي", thumbnail:"الصورة المصغرة",
+    ctr_est:"CTR المقدر", ctr_pot:"CTR المحتمل",
+    score_analysis:"تحليل النقاط", before_after:"قبل / بعد التحسين",
+    seo_section:"تحليل SEO كامل",
+    seo_current:"نقاط SEO الحالية", seo_potential:"نقاط SEO المحتملة",
+    desc_richness:"ثراء الوصف", title_strength:"قوة العنوان",
+    impact_table:"تأثير SEO المقدر لكل تصحيح",
+    action:"الإجراء", gain:"المكسب", score:"النقاط", total_opt:"الإجمالي المحسّن",
+    keywords:"كلمات مفتاحية في العنوان", missing_kw:"كلمات مفتاحية مفقودة محتملة",
+    thumb_section:"تحليل الصورة المصغرة الكامل",
+    visual_criteria:"المعايير البصرية",
+    format_169:"تنسيق 16:9", contrast:"التباين", hd_res:"دقة HD",
+    face_detect:"وجه مكتشف", text_read:"وضوح النص",
+    standard_ok:"قياسي — مثالي", contrast_ok:"تباين جيد", contrast_fix:"التباين يحتاج تحسين",
+    hd_ok:"صورة مصغرة HD متاحة", face_proxy:"وكيل AI مطلوب",
+    text_ok:"وضوح جيد", text_fix:"النص قد يكون غير واضح",
+    ctr_current:"CTR الحالي المقدر", emotions:"التحليل العاطفي",
+    curiosity:"فضول", surprise:"مفاجأة", desire:"رغبة", urgency:"إلحاح", trust:"ثقة",
+    current:"الحالي", potential:"المحتمل",
+    viral_section:"التحليل الفيروسي الكامل",
+    pts_possible:"نقطة ممكنة مع:",
+    viral_impact:"تأثير كل تصحيح",
+    viral_add_num:"إضافة رقم في العنوان",
+    viral_add_em:"إضافة كلمة عاطفية",
+    viral_add_hook:"إضافة خطاف CTR",
+    viral_desc_500:"الوصف 500+ حرف",
+    viral_col_action:"الإجراء", viral_col_viral:"+فيروسي", viral_col_ctr:"+CTR المقدر",
+    comp_section:"التحليل التنافسي",
+    comp_pro_note:"تحليل المنافسين في الوقت الفعلي متاح في Pro عبر YouTube Data API v3.",
+    comp_heuristic:"تحليل إرشادي بناءً على عنوانك:",
+    opp_section:"الفرص المكتشفة",
+    opp_subject:"🎯 موضوع مفقود", opp_kw:"🔑 كلمات مفتاحية",
+    opp_trend:"📈 ترند", opp_niche:"🔥 نيش",
+    opp_t1:"زاوية \"المبتدئ\" غير مغطاة — طلب مرتفع، منافسة منخفضة",
+    opp_t2:"كلمات \"دليل كامل\" و\"2024\" نادراً في العناوين المشابهة",
+    opp_t3:"تنسيق Shorts أقل تمثيلاً — فرصة ظهور سريع",
+    opp_t4:"النسخة بلغتك أقل منافسة من النسخة الإنجليزية",
+    titles_section:"عناوين بديلة مولدة",
+    titles_none:"لم يتم إنشاء عناوين.", titles_unavail:"الوكيل غير مكوّن.",
+    copy:"📋 نسخ", copied:"✓ تم النسخ!",
+    ai_seo_label:"✨ تحليل SEO بالذكاء الاصطناعي",
+    ai_viral_label:"✨ التحليل الفيروسي بالذكاء الاصطناعي",
+    ai_comp_label:"✨ التحليل التنافسي بالذكاء الاصطناعي",
+    ai_score_label:"نقاط AI", ai_viral_score:"نقاط فيروسية AI",
+    ai_unavail:"تحليل AI غير متاح — الوكيل غير مكوّن.",
+    exec_summary_text_ok:"جميع المعايير الرئيسية محققة.",
+    viral_level_low:"منخفض", viral_level_med:"متوسط", viral_level_high:"مرتفع",
+    top10_title:"أفضل 10 إجراءات ذات أولوية",
+    top10_1:"تحسين طول العنوان (55–70 حرفاً)",
+    top10_2:"إضافة رقم في العنوان",
+    top10_3:"إضافة كلمة عاطفية قوية",
+    top10_4:"إضافة خطاف CTR في بداية العنوان",
+    top10_5:"إثراء الوصف (500+ حرف)",
+    top10_6:"إضافة طوابع زمنية في الوصف",
+    top10_7:"تحسين تباين ووضوح الصورة المصغرة",
+    top10_8:"إضافة وجه معبر في الصورة المصغرة",
+    top10_9:"النشر بين الساعة 14 و17 بالتوقيت المحلي",
+    top10_10:"الرد على التعليقات العشرة الأولى بسرعة",
+    comp_top_label:"أفضل المنافسين المقدرين",
+    comp_score_est:"النقاط المقدرة",
+    comp_why:"لماذا يؤدي بشكل جيد", comp_views:"مشاهدات مقدرة",
+    comp_date:"تاريخ مقدر", comp_title_col:"العنوان", comp_kw:"الكلمات المفتاحية",
+  },
+  es:{
+    loading:"Generando informe premium…",
+    no_data:"Abre este informe desde la extensión VidSpark AI en un video de YouTube.",
+    print:"🖨 Imprimir", close:"✕ Cerrar",
+    exec:"✦ Resumen Ejecutivo",
+    strengths:"✓ Fortalezas", weaknesses:"⚠ Debilidades", actions:"🚀 Acciones Prioritarias",
+    no_weakness:"Ninguna detectada",
+    global_score:"Puntuación Global", seo:"SEO", viral:"Viral", thumbnail:"Miniatura",
+    ctr_est:"CTR estimado", ctr_pot:"CTR potencial",
+    score_analysis:"Análisis de puntuaciones", before_after:"Antes / Después de optimizar",
+    seo_section:"Análisis SEO completo",
+    seo_current:"Puntuación SEO actual", seo_potential:"Puntuación SEO potencial",
+    desc_richness:"Riqueza descripción", title_strength:"Fuerza del título",
+    impact_table:"Impacto SEO estimado por corrección",
+    action:"Acción", gain:"Ganancia", score:"Puntuación", total_opt:"Total optimizado",
+    keywords:"Palabras clave del título", missing_kw:"Palabras clave potencialmente faltantes",
+    thumb_section:"Análisis de miniatura completo",
+    visual_criteria:"Criterios visuales",
+    format_169:"Formato 16:9", contrast:"Contraste", hd_res:"Resolución HD",
+    face_detect:"Cara detectada", text_read:"Legibilidad texto",
+    standard_ok:"Estándar YouTube — óptimo", contrast_ok:"Buen contraste estimado",
+    contrast_fix:"Contraste necesita mejora", hd_ok:"Miniatura HD disponible",
+    face_proxy:"Proxy IA requerido", text_ok:"Buena legibilidad estimada", text_fix:"Texto potencialmente ilegible",
+    ctr_current:"CTR actual estimado", emotions:"Análisis emocional",
+    curiosity:"Curiosidad", surprise:"Sorpresa", desire:"Deseo", urgency:"Urgencia", trust:"Confianza",
+    current:"Actual", potential:"Potencial",
+    viral_section:"Análisis viral completo",
+    pts_possible:"puntos posibles con:",
+    viral_impact:"Impacto de cada corrección",
+    viral_add_num:"Agregar un número al título",
+    viral_add_em:"Agregar una palabra emocional",
+    viral_add_hook:"Agregar un hook CTR",
+    viral_desc_500:"Descripción 500+ caracteres",
+    viral_col_action:"Acción", viral_col_viral:"+Viral", viral_col_ctr:"+CTR estimado",
+    comp_section:"Análisis Competitivo",
+    comp_pro_note:"Análisis de competidores en tiempo real disponible en Pro vía YouTube Data API v3.",
+    comp_heuristic:"Análisis heurístico basado en tu título:",
+    opp_section:"Oportunidades Detectadas",
+    opp_subject:"🎯 Tema faltante", opp_kw:"🔑 Palabras clave",
+    opp_trend:"📈 Tendencia", opp_niche:"🔥 Nicho",
+    opp_t1:"Ángulo \"principiante\" no cubierto — alta demanda, baja competencia",
+    opp_t2:"\"Guía completa\" y \"2024\" raramente usados en títulos similares",
+    opp_t3:"Formato corto (Shorts) subrepresentado — oportunidad de visibilidad rápida",
+    opp_t4:"Tu versión de idioma es menos competitiva que la inglesa",
+    titles_section:"Títulos alternativos generados",
+    titles_none:"No se generaron títulos.", titles_unavail:"Proxy no configurado.",
+    copy:"📋 Copiar", copied:"✓ ¡Copiado!",
+    ai_seo_label:"✨ Análisis SEO IA", ai_viral_label:"✨ Análisis viral IA",
+    ai_comp_label:"✨ Análisis competitivo IA",
+    ai_score_label:"Puntuación IA", ai_viral_score:"Puntuación viral IA",
+    ai_unavail:"Análisis IA no disponible — proxy no configurado.",
+    exec_summary_text_ok:"Todos los criterios principales validados.",
+    viral_level_low:"Bajo", viral_level_med:"Medio", viral_level_high:"Alto",
+    top10_title:"Top 10 Acciones Prioritarias",
+    top10_1:"Optimizar longitud del título (55–70 car.)",
+    top10_2:"Agregar un número al título",
+    top10_3:"Agregar una palabra emocional fuerte",
+    top10_4:"Agregar hook CTR al inicio del título",
+    top10_5:"Enriquecer descripción (500+ caracteres)",
+    top10_6:"Agregar marcas de tiempo en descripción",
+    top10_7:"Mejorar contraste y legibilidad de miniatura",
+    top10_8:"Agregar cara expresiva en miniatura",
+    top10_9:"Publicar entre 14h y 17h hora local",
+    top10_10:"Responder a los primeros 10 comentarios rápidamente",
+    comp_top_label:"Top competidores estimados",
+    comp_score_est:"Puntuación est.",
+    comp_why:"Por qué rinde bien", comp_views:"Vistas est.", comp_date:"Fecha est.",
+    comp_title_col:"Título", comp_kw:"Palabras clave",
+  },
+  de:{
+    loading:"Premium-Bericht wird erstellt…",
+    no_data:"Öffnen Sie diesen Bericht aus der VidSpark AI-Erweiterung auf einem YouTube-Video.",
+    print:"🖨 Drucken", close:"✕ Schließen",
+    exec:"✦ Zusammenfassung",
+    strengths:"✓ Stärken", weaknesses:"⚠ Schwächen", actions:"🚀 Prioritätsmaßnahmen",
+    no_weakness:"Keine erkannt",
+    global_score:"Gesamt-Score", seo:"SEO", viral:"Viral", thumbnail:"Vorschaubild",
+    ctr_est:"Geschätzter CTR", ctr_pot:"Potenzieller CTR",
+    score_analysis:"Score-Analyse", before_after:"Vor / Nach Optimierung",
+    seo_section:"Vollständige SEO-Analyse",
+    seo_current:"Aktueller SEO-Score", seo_potential:"Potenzieller SEO-Score",
+    desc_richness:"Beschreibungsreichtum", title_strength:"Titelstärke",
+    impact_table:"Geschätzter SEO-Einfluss pro Korrektur",
+    action:"Aktion", gain:"Gewinn", score:"Punktzahl", total_opt:"Optimiertes Gesamt",
+    keywords:"Titel-Keywords", missing_kw:"Potenziell fehlende Keywords",
+    thumb_section:"Vollständige Vorschaubild-Analyse",
+    visual_criteria:"Visuelle Kriterien",
+    format_169:"16:9-Format", contrast:"Kontrast", hd_res:"HD-Auflösung",
+    face_detect:"Gesicht erkannt", text_read:"Textlesbarkeit",
+    standard_ok:"Standard YouTube — optimal", contrast_ok:"Guter Kontrast geschätzt",
+    contrast_fix:"Kontrast muss verbessert werden", hd_ok:"HD-Vorschaubild verfügbar",
+    face_proxy:"KI-Proxy erforderlich", text_ok:"Gute Lesbarkeit geschätzt", text_fix:"Text möglicherweise unleserlich",
+    ctr_current:"Geschätzter aktueller CTR", emotions:"Emotionsanalyse",
+    curiosity:"Neugier", surprise:"Überraschung", desire:"Verlangen", urgency:"Dringlichkeit", trust:"Vertrauen",
+    current:"Aktuell", potential:"Potenzial",
+    viral_section:"Vollständige Viral-Analyse",
+    pts_possible:"Punkte möglich mit:",
+    viral_impact:"Auswirkung jeder Korrektur",
+    viral_add_num:"Zahl im Titel hinzufügen",
+    viral_add_em:"Emotionales Wort hinzufügen",
+    viral_add_hook:"CTR-Hook hinzufügen",
+    viral_desc_500:"Beschreibung 500+ Zeichen",
+    viral_col_action:"Aktion", viral_col_viral:"+Viral", viral_col_ctr:"+Geschätzter CTR",
+    comp_section:"Wettbewerbsanalyse",
+    comp_pro_note:"Echtzeit-Konkurrenzanalyse in Pro via YouTube Data API v3.",
+    comp_heuristic:"Heuristische Analyse basierend auf Ihrem Titel:",
+    opp_section:"Erkannte Chancen",
+    opp_subject:"🎯 Fehlendes Thema", opp_kw:"🔑 Keywords",
+    opp_trend:"📈 Trend", opp_niche:"🔥 Nische",
+    opp_t1:"\"Anfänger\"-Winkel nicht abgedeckt — hohe Nachfrage, geringe Konkurrenz",
+    opp_t2:"\"Vollständiger Leitfaden\" und \"2024\" selten in ähnlichen Titeln",
+    opp_t3:"Kurzformat (Shorts) unterrepräsentiert — schnelle Sichtbarkeitschance",
+    opp_t4:"Ihre Sprachversion ist weniger wettbewerbsfähig als die englische",
+    titles_section:"Generierte alternative Titel",
+    titles_none:"Keine Titel generiert.", titles_unavail:"Proxy nicht konfiguriert.",
+    copy:"📋 Kopieren", copied:"✓ Kopiert!",
+    ai_seo_label:"✨ KI-SEO-Analyse", ai_viral_label:"✨ KI-Viral-Analyse",
+    ai_comp_label:"✨ KI-Wettbewerbsanalyse",
+    ai_score_label:"KI-Score", ai_viral_score:"Viraler KI-Score",
+    ai_unavail:"KI-Analyse nicht verfügbar — Proxy nicht konfiguriert.",
+    exec_summary_text_ok:"Alle Hauptkriterien validiert.",
+    viral_level_low:"Niedrig", viral_level_med:"Mittel", viral_level_high:"Hoch",
+    top10_title:"Top 10 Prioritätsmaßnahmen",
+    top10_1:"Titellänge optimieren (55–70 Zeichen)",
+    top10_2:"Zahl im Titel hinzufügen",
+    top10_3:"Starkes emotionales Wort hinzufügen",
+    top10_4:"CTR-Hook am Titelanfang hinzufügen",
+    top10_5:"Beschreibung anreichern (500+ Zeichen)",
+    top10_6:"Zeitstempel in Beschreibung hinzufügen",
+    top10_7:"Kontrast und Lesbarkeit des Vorschaubilds verbessern",
+    top10_8:"Ausdrucksstarkes Gesicht im Vorschaubild hinzufügen",
+    top10_9:"Zwischen 14 und 17 Uhr Ortszeit veröffentlichen",
+    top10_10:"Schnell auf die ersten 10 Kommentare antworten",
+    comp_top_label:"Geschätzte Top-Konkurrenten",
+    comp_score_est:"Gesch. Score",
+    comp_why:"Warum es gut abschneidet", comp_views:"Gesch. Aufrufe",
+    comp_date:"Gesch. Datum", comp_title_col:"Titel", comp_kw:"Keywords",
+  },
+  ru:{
+    loading:"Создание премиум-отчёта…",
+    no_data:"Откройте этот отчёт из расширения VidSpark AI на YouTube.",
+    print:"🖨 Печать", close:"✕ Закрыть",
+    exec:"✦ Резюме",
+    strengths:"✓ Сильные стороны", weaknesses:"⚠ Слабые стороны", actions:"🚀 Приоритетные действия",
+    no_weakness:"Не обнаружено",
+    global_score:"Общий балл", seo:"SEO", viral:"Вирусный", thumbnail:"Превью",
+    ctr_est:"Расчётный CTR", ctr_pot:"Потенциальный CTR",
+    score_analysis:"Анализ баллов", before_after:"До / После оптимизации",
+    seo_section:"Полный SEO-анализ",
+    seo_current:"Текущий SEO-балл", seo_potential:"Потенциальный SEO-балл",
+    desc_richness:"Богатство описания", title_strength:"Сила заголовка",
+    impact_table:"Расчётное влияние на SEO",
+    action:"Действие", gain:"Прирост", score:"Балл", total_opt:"Итого после оптимизации",
+    keywords:"Ключевые слова заголовка", missing_kw:"Возможно отсутствующие ключевые слова",
+    thumb_section:"Полный анализ превью",
+    visual_criteria:"Визуальные критерии",
+    format_169:"Формат 16:9", contrast:"Контраст", hd_res:"HD разрешение",
+    face_detect:"Лицо обнаружено", text_read:"Читаемость текста",
+    standard_ok:"Стандарт YouTube — оптимально", contrast_ok:"Хороший контраст",
+    contrast_fix:"Контраст требует улучшения", hd_ok:"HD превью доступно",
+    face_proxy:"Требуется прокси ИИ", text_ok:"Хорошая читаемость", text_fix:"Текст трудночитаем",
+    ctr_current:"Текущий расчётный CTR", emotions:"Эмоциональный анализ",
+    curiosity:"Любопытство", surprise:"Удивление", desire:"Желание", urgency:"Срочность", trust:"Доверие",
+    current:"Текущий", potential:"Потенциал",
+    viral_section:"Полный вирусный анализ",
+    pts_possible:"баллов возможно с:",
+    viral_impact:"Влияние каждого исправления",
+    viral_add_num:"Добавить цифру в заголовок",
+    viral_add_em:"Добавить эмоциональное слово",
+    viral_add_hook:"Добавить CTR-крючок",
+    viral_desc_500:"Описание 500+ символов",
+    viral_col_action:"Действие", viral_col_viral:"+Вирусный", viral_col_ctr:"+Расч. CTR",
+    comp_section:"Конкурентный анализ",
+    comp_pro_note:"Анализ конкурентов в реальном времени доступен в Pro via YouTube Data API v3.",
+    comp_heuristic:"Эвристический анализ на основе вашего заголовка:",
+    opp_section:"Найденные возможности",
+    opp_subject:"🎯 Отсутствующая тема", opp_kw:"🔑 Ключевые слова",
+    opp_trend:"📈 Тренд", opp_niche:"🔥 Ниша",
+    opp_t1:"Угол \"начинающий\" не охвачен — высокий спрос, низкая конкуренция",
+    opp_t2:"\"Полное руководство\" и \"2024\" редко встречаются в похожих заголовках",
+    opp_t3:"Короткий формат (Shorts) недостаточно представлен",
+    opp_t4:"Ваша языковая версия менее конкурентна, чем английская",
+    titles_section:"Сгенерированные альтернативные заголовки",
+    titles_none:"Заголовки не созданы.", titles_unavail:"Прокси не настроен.",
+    copy:"📋 Копировать", copied:"✓ Скопировано!",
+    ai_seo_label:"✨ ИИ SEO-анализ", ai_viral_label:"✨ ИИ Вирусный анализ",
+    ai_comp_label:"✨ ИИ Конкурентный анализ",
+    ai_score_label:"Балл ИИ", ai_viral_score:"Вирусный балл ИИ",
+    ai_unavail:"ИИ-анализ недоступен — прокси не настроен.",
+    exec_summary_text_ok:"Все основные критерии подтверждены.",
+    viral_level_low:"Низкий", viral_level_med:"Средний", viral_level_high:"Высокий",
+    top10_title:"Топ 10 приоритетных действий",
+    top10_1:"Оптимизировать длину заголовка (55–70 симв.)",
+    top10_2:"Добавить цифру в заголовок",
+    top10_3:"Добавить сильное эмоциональное слово",
+    top10_4:"Добавить CTR-крючок в начало заголовка",
+    top10_5:"Обогатить описание (500+ символов)",
+    top10_6:"Добавить временны́е метки в описание",
+    top10_7:"Улучшить контраст и читаемость превью",
+    top10_8:"Добавить выразительное лицо в превью",
+    top10_9:"Публиковать между 14 и 17 часами по местному времени",
+    top10_10:"Быстро ответить на первые 10 комментариев",
+    comp_top_label:"Расчётные топ-конкуренты",
+    comp_score_est:"Расч. балл",
+    comp_why:"Почему он успешен", comp_views:"Расч. просмотры",
+    comp_date:"Расч. дата", comp_title_col:"Заголовок", comp_kw:"Ключевые слова",
+  },
+  ja:{
+    loading:"プレミアムレポート生成中…",
+    no_data:"YouTube動画でVidSpark AI拡張機能からこのレポートを開いてください。",
+    print:"🖨 印刷", close:"✕ 閉じる",
+    exec:"✦ エグゼクティブサマリー",
+    strengths:"✓ 強み", weaknesses:"⚠ 弱み", actions:"🚀 優先アクション",
+    no_weakness:"検出されず",
+    global_score:"総合スコア", seo:"SEO", viral:"バイラル", thumbnail:"サムネイル",
+    ctr_est:"推定CTR", ctr_pot:"潜在CTR",
+    score_analysis:"スコア分析", before_after:"最適化前 / 後",
+    seo_section:"完全SEO分析",
+    seo_current:"現在のSEOスコア", seo_potential:"潜在SEOスコア",
+    desc_richness:"説明文の充実度", title_strength:"タイトルの強さ",
+    impact_table:"修正ごとの推定SEO影響",
+    action:"アクション", gain:"向上", score:"スコア", total_opt:"最適化後合計",
+    keywords:"タイトルキーワード", missing_kw:"不足している可能性のあるキーワード",
+    thumb_section:"完全サムネイル分析",
+    visual_criteria:"視覚的基準",
+    format_169:"16:9フォーマット", contrast:"コントラスト", hd_res:"HD解像度",
+    face_detect:"顔検出", text_read:"テキスト読みやすさ",
+    standard_ok:"標準YouTube — 最適", contrast_ok:"良好なコントラスト",
+    contrast_fix:"コントラスト要改善", hd_ok:"HDサムネイル利用可能",
+    face_proxy:"AIプロキシ必要", text_ok:"良好な読みやすさ", text_fix:"テキスト判読困難な可能性",
+    ctr_current:"推定現在CTR", emotions:"感情分析",
+    curiosity:"好奇心", surprise:"驚き", desire:"欲求", urgency:"緊急性", trust:"信頼",
+    current:"現在", potential:"ポテンシャル",
+    viral_section:"完全バイラル分析",
+    pts_possible:"ポイント可能（修正後）:",
+    viral_impact:"各修正の影響",
+    viral_add_num:"タイトルに数字を追加",
+    viral_add_em:"感情的ワードを追加",
+    viral_add_hook:"CTRフックを追加",
+    viral_desc_500:"説明文500+文字",
+    viral_col_action:"アクション", viral_col_viral:"+バイラル", viral_col_ctr:"+推定CTR",
+    comp_section:"競合分析",
+    comp_pro_note:"リアルタイム競合分析はProでYouTube Data API v3経由で利用可能。",
+    comp_heuristic:"タイトルに基づくヒューリスティック分析:",
+    opp_section:"検出された機会",
+    opp_subject:"🎯 不足トピック", opp_kw:"🔑 キーワード",
+    opp_trend:"📈 トレンド", opp_niche:"🔥 ニッチ",
+    opp_t1:"「初心者」角度が未カバー — 高需要、低競合",
+    opp_t2:"「完全ガイド」「2024」が類似タイトルで少ない",
+    opp_t3:"ショートフォーマット（Shorts）が少ない — 素早い認知の機会",
+    opp_t4:"あなたの言語バージョンは英語版より競合が少ない",
+    titles_section:"生成された代替タイトル",
+    titles_none:"タイトルが生成されませんでした。", titles_unavail:"プロキシ未設定。",
+    copy:"📋 コピー", copied:"✓ コピー済!",
+    ai_seo_label:"✨ AI SEO分析", ai_viral_label:"✨ AIバイラル分析",
+    ai_comp_label:"✨ AI競合分析",
+    ai_score_label:"AIスコア", ai_viral_score:"バイラルAIスコア",
+    ai_unavail:"AI分析不可 — プロキシ未設定。",
+    exec_summary_text_ok:"すべての主要基準が検証されました。",
+    viral_level_low:"低い", viral_level_med:"中程度", viral_level_high:"高い",
+    top10_title:"優先アクション トップ10",
+    top10_1:"タイトル長を最適化 (55–70文字)",
+    top10_2:"タイトルに数字を追加",
+    top10_3:"強い感情的ワードを追加",
+    top10_4:"タイトル冒頭にCTRフックを追加",
+    top10_5:"説明文を充実化 (500+文字)",
+    top10_6:"説明文にタイムスタンプを追加",
+    top10_7:"サムネイルのコントラストと読みやすさを改善",
+    top10_8:"サムネイルに表情豊かな顔を追加",
+    top10_9:"現地時間14時〜17時の間に投稿",
+    top10_10:"最初の10件のコメントに素早く返信",
+    comp_top_label:"推定トップ競合", comp_score_est:"推定スコア",
+    comp_why:"なぜ成功しているか", comp_views:"推定再生数",
+    comp_date:"推定日付", comp_title_col:"タイトル", comp_kw:"キーワード",
+  },
+  ko:{
+    loading:"프리미엄 보고서 생성 중…",
+    no_data:"YouTube 동영상에서 VidSpark AI 확장에서 이 보고서를 여세요.",
+    print:"🖨 인쇄", close:"✕ 닫기",
+    exec:"✦ 요약",
+    strengths:"✓ 강점", weaknesses:"⚠ 약점", actions:"🚀 우선 조치",
+    no_weakness:"감지되지 않음",
+    global_score:"종합 점수", seo:"SEO", viral:"바이럴", thumbnail:"썸네일",
+    ctr_est:"추정 CTR", ctr_pot:"잠재 CTR",
+    score_analysis:"점수 분석", before_after:"최적화 전 / 후",
+    seo_section:"전체 SEO 분석",
+    seo_current:"현재 SEO 점수", seo_potential:"잠재 SEO 점수",
+    desc_richness:"설명 풍부도", title_strength:"제목 강도",
+    impact_table:"수정별 예상 SEO 영향",
+    action:"작업", gain:"향상", score:"점수", total_opt:"최적화 후 합계",
+    keywords:"제목 키워드", missing_kw:"잠재적으로 누락된 키워드",
+    thumb_section:"전체 썸네일 분석",
+    visual_criteria:"시각적 기준",
+    format_169:"16:9 형식", contrast:"대비", hd_res:"HD 해상도",
+    face_detect:"얼굴 감지됨", text_read:"텍스트 가독성",
+    standard_ok:"표준 YouTube — 최적", contrast_ok:"좋은 대비",
+    contrast_fix:"대비 개선 필요", hd_ok:"HD 썸네일 사용 가능",
+    face_proxy:"AI 프록시 필요", text_ok:"좋은 가독성", text_fix:"텍스트 읽기 어려울 수 있음",
+    ctr_current:"추정 현재 CTR", emotions:"감정 분석",
+    curiosity:"호기심", surprise:"놀라움", desire:"욕구", urgency:"긴급성", trust:"신뢰",
+    current:"현재", potential:"잠재력",
+    viral_section:"전체 바이럴 분석",
+    pts_possible:"수정 시 점수 가능:",
+    viral_impact:"각 수정의 영향",
+    viral_add_num:"제목에 숫자 추가",
+    viral_add_em:"감성 단어 추가",
+    viral_add_hook:"CTR 훅 추가",
+    viral_desc_500:"설명 500+자",
+    viral_col_action:"작업", viral_col_viral:"+바이럴", viral_col_ctr:"+추정 CTR",
+    comp_section:"경쟁 분석",
+    comp_pro_note:"실시간 경쟁자 분석은 Pro에서 YouTube Data API v3를 통해 이용 가능.",
+    comp_heuristic:"제목 기반 발견적 분석:",
+    opp_section:"감지된 기회",
+    opp_subject:"🎯 누락된 주제", opp_kw:"🔑 키워드",
+    opp_trend:"📈 트렌드", opp_niche:"🔥 틈새",
+    opp_t1:"'초보자' 각도 미커버 — 높은 수요, 낮은 경쟁",
+    opp_t2:"'완전 가이드'와 '2024'가 유사 제목에서 드뭄",
+    opp_t3:"짧은 형식(Shorts) 적음 — 빠른 노출 기회",
+    opp_t4:"귀하의 언어 버전이 영어 버전보다 덜 경쟁적",
+    titles_section:"생성된 대체 제목",
+    titles_none:"생성된 제목 없음.", titles_unavail:"프록시 미설정.",
+    copy:"📋 복사", copied:"✓ 복사됨!",
+    ai_seo_label:"✨ AI SEO 분석", ai_viral_label:"✨ AI 바이럴 분석",
+    ai_comp_label:"✨ AI 경쟁 분석",
+    ai_score_label:"AI 점수", ai_viral_score:"바이럴 AI 점수",
+    ai_unavail:"AI 분석 불가 — 프록시 미설정.",
+    exec_summary_text_ok:"모든 주요 기준이 검증되었습니다.",
+    viral_level_low:"낮음", viral_level_med:"보통", viral_level_high:"높음",
+    top10_title:"우선 조치 Top 10",
+    top10_1:"제목 길이 최적화 (55–70자)",
+    top10_2:"제목에 숫자 추가",
+    top10_3:"강한 감성 단어 추가",
+    top10_4:"제목 시작에 CTR 훅 추가",
+    top10_5:"설명 풍부화 (500+자)",
+    top10_6:"설명에 타임스탬프 추가",
+    top10_7:"썸네일 대비 및 가독성 개선",
+    top10_8:"썸네일에 표정 있는 얼굴 추가",
+    top10_9:"현지 시간 14시~17시 사이 게시",
+    top10_10:"처음 10개 댓글에 빠르게 답변",
+    comp_top_label:"추정 상위 경쟁자", comp_score_est:"추정 점수",
+    comp_why:"성공 이유", comp_views:"추정 조회수",
+    comp_date:"추정 날짜", comp_title_col:"제목", comp_kw:"키워드",
+  },
+};
+/* Fallback anglais pour langues non définies */
+["zh","hi","pt","it","tr","nl"].forEach(c=>{ if(!RI[c]) RI[c]=RI.en; });
+let RL = RI.fr;
+function RT(k){ return RL[k] || RI.en[k] || k; }
+
+/* ══ UTILITAIRES ══ */
+function esc(s){if(!s)return"";return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function sc(n){return n>=80?"#22c55e":n>=60?"#eab308":"#ef4444";}
+function sb(n){return n>=80?"badge-green":n>=60?"badge-amber":"badge-red";}
+function pRow(lbl,val,max,col){
+  const pct=Math.min(100,Math.round(val/max*100));
+  return`<div class="progress-row"><span class="progress-label">${lbl}</span><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${col||"#7c6dfa"}"></div></div><span class="progress-val" style="color:${col||"#7c6dfa"}">${val}</span></div>`;
+}
+function showToast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200);}
+
+/* ══ CHARGER LES DONNÉES ══ */
+function loadData(){
+  return new Promise(r=>{
+    chrome.storage.local.get(["echoReportData","userToken","echoLanguage"],d=>{
+      const lang = d.echoLanguage||"fr";
+      RL = RI[lang]||RI.en;
+      if(lang==="ar"){
+        document.documentElement.setAttribute("dir","rtl");
+        document.body.style.textAlign="right";
+      }
+      /* Mettre à jour les boutons header maintenant que RL est défini */
+      document.getElementById("btn-print").textContent = RT("print");
+      document.getElementById("btn-close").textContent = RT("close");
+      document.getElementById("loading-msg").textContent = RT("loading");
+      r({data:d.echoReportData||null, token:d.userToken||"free_demo_token", lang});
+    });
+  });
+}
+
+/* ══ PROXY ══ */
+const PROXY="https://echorank-proxy.VOTRE_SUBDOMAIN.workers.dev";
+async function callProxy(action,data,lang,token){
+  try{
+    const r=await fetch(PROXY+"/api",{method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},
+      body:JSON.stringify({action,videoId:data.videoId,title:data.title,description:data.description,language:lang})
+    });
+    if(!r.ok)return null;
+    return r.json();
+  }catch{return null;}
+}
+
+/* ══ CONSTRUIRE LE RAPPORT ══ */
+(async()=>{
+  const {data,token,lang} = await loadData();
+
+  if(!data){
+    document.getElementById("report-body").innerHTML=`
+      <div class="loading-state">
+        <div style="font-size:40px">⚠</div>
+        <div class="loading-text" style="color:#ef4444;margin-top:8px">${RT("no_data")}</div>
+      </div>`;
+    return;
+  }
+
+  /* ── Scores ── */
+  const seo  = data.seoScore||50;
+  const viral= data.viralScore||Math.round(seo*0.65);
+  const thumb= data.thumbScore||60;
+  const glob = data.globalScore||Math.round(seo*0.4+viral*0.35+thumb*0.25);
+  const seoPot  = data.seoPotential||Math.min(100,seo+20);
+  const viralPot= data.viralPotential||Math.min(100,viral+25);
+  const thumbPot= data.thumbPotential||Math.min(100,thumb+15);
+  const globPot = Math.round(seoPot*0.4+viralPot*0.35+thumbPot*0.25);
+  const ctr  = data.ctrEstimated||parseFloat((2+(seo/100)*3+(viral/100)*2.5+(thumb/100)*2).toFixed(1));
+  const ctrPot= data.ctrPotential||parseFloat((ctr*1.5).toFixed(1));
+  const tLen = (data.title||"").length;
+  const dLen = data.descLength||0;
+  const sc_s=sc(seo), sc_v=sc(viral), sc_t=sc(thumb), sc_g=sc(glob);
+
+  /* ── Checklist locale ── */
+  const chk=[
+    {ok:tLen>=45&&tLen<=75, label:RT("top10_1"), gain:18,
+     fix:`${tLen} car. — 55–70`, ex:tLen<45?`"${data.title} — Guide 2024"`:`"${(data.title||"").slice(0,55)}…"`},
+    {ok:/\d/.test(data.title||""), label:RT("top10_2"), gain:8,
+     fix:RT("viral_add_num"), ex:`"5 ${(data.title||"").split(" ").slice(0,4).join(" ")}…"`},
+    {ok:/amazing|best|free|secret|viral|gratuit|incroyable|ultime/.test((data.title||"").toLowerCase()),
+     label:RT("top10_3"), gain:12, fix:RT("viral_add_em"), ex:`"Incroyable : ${(data.title||"").slice(0,35)}…"`},
+    {ok:/^(comment|pourquoi|why|how|what|\d)/i.test(data.title||"")||/[?]/.test(data.title||""),
+     label:RT("top10_4"), gain:18, fix:RT("viral_add_hook"), ex:`"Comment ${(data.title||"").slice(0,40)}…"`},
+    {ok:dLen>=300, label:RT("top10_5"), gain:10, fix:`${dLen} car. — 500+`, ex:"timestamps + mots-clés"},
+    {ok:/[?!]/.test(data.title||""), label:"Ponctuation CTR", gain:5, fix:"Ajouter ? ou !",ex:`"${data.title}?"`},
+  ];
+  const okChk=chk.filter(c=>c.ok);
+  const fixChk=chk.filter(c=>!c.ok);
+  const totGain=fixChk.reduce((a,c)=>a+c.gain,0);
+  const viralLevel=viral>=70?RT("viral_level_high"):viral>=45?RT("viral_level_med"):RT("viral_level_low");
+
+  /* ── Vidéo bar ── */
+  document.getElementById("page-subtitle").textContent=(data.title||"").slice(0,65)+(tLen>65?"…":"");
+  document.getElementById("video-bar-slot").innerHTML=`
+    <div class="video-bar">
+      <img src="https://i.ytimg.com/vi/${esc(data.videoId)}/hqdefault.jpg" alt="">
+      <div class="vinfo">
+        <div class="vtitle">${esc(data.title)}</div>
+        <div class="vstats">
+          <span>👁 ${esc(data.views)}</span>
+          <span>📝 ${dLen} car.</span>
+          <span>🔤 ${tLen} car.</span>
+        </div>
+      </div>
+    </div>`;
+
+  /* ── Concurrent simulés (P3) ── */
+  const fakeCompetitors=[
+    {title:(data.title||"").slice(0,30)+" — Guide Complet", views:"2.4M", date:"il y a 8 mois",
+     score:78, kw:["guide","complet","2024"], why:"Hook fort + miniature optimisée"},
+    {title:"5 "+ (data.title||"").slice(0,25)+"…", views:"890K", date:"il y a 3 mois",
+     score:71, kw:["5","astuces","débutant"], why:"Chiffre en début + mot émotionnel"},
+    {title:"Comment "+(data.title||"").slice(0,28)+" (Tuto)", views:"340K", date:"il y a 1 an",
+     score:65, kw:["comment","tuto","gratuit"], why:"CTR hook + description riche"},
+  ];
+
+  /* ══ RENDU PRINCIPAL ══ */
+  document.getElementById("report-body").innerHTML=`
+
+  <!-- ═══ RÉSUMÉ EXÉCUTIF ═══ -->
+  <div class="exec-summary">
+    <div class="exec-title">${RT("exec")}</div>
+    <div class="exec-scores">
+      <div class="exec-score-card">
+        <div class="exec-score-num" style="color:${sc_g}">${glob}</div>
+        <div class="exec-score-label">${RT("global_score")}</div>
+      </div>
+      <div class="exec-score-card">
+        <div class="exec-score-num" style="color:${sc_s}">${seo}</div>
+        <div class="exec-score-label">${RT("seo")}</div>
+      </div>
+      <div class="exec-score-card">
+        <div class="exec-score-num" style="color:${sc_v}">${viral}</div>
+        <div class="exec-score-label">${RT("viral")}</div>
+      </div>
+      <div class="exec-score-card">
+        <div class="exec-score-num" style="color:${sc_t}">${thumb}</div>
+        <div class="exec-score-label">${RT("thumbnail")}</div>
+      </div>
+      <div class="exec-score-card">
+        <div class="exec-score-num" style="color:#7c6dfa">${ctr}%</div>
+        <div class="exec-score-label">${RT("ctr_est")}</div>
+      </div>
+    </div>
+    <div class="exec-ai-summary" id="exec-ai-text">
+      ${fixChk.length>0
+        ?`Score global <strong>${glob}/100</strong> — potentiel viral <strong>${viralLevel}</strong>. En corrigeant les ${fixChk.length} point(s), le score pourrait atteindre <strong>${globPot}/100</strong> et le CTR passer de <strong>${ctr}%</strong> à <strong>${ctrPot}%</strong>.`
+        :RT("exec_summary_text_ok")}
+    </div>
+    <div class="exec-lists">
+      <div class="exec-list-block" style="border-left:3px solid #22c55e">
+        <div class="exec-list-title" style="color:#22c55e">${RT("strengths")}</div>
+        ${okChk.length>0
+          ?okChk.map(c=>`<div class="exec-list-item"><div class="exec-list-dot" style="background:#22c55e"></div>${c.label}</div>`).join("")
+          :`<div class="exec-list-item" style="color:#666">—</div>`}
+      </div>
+      <div class="exec-list-block" style="border-left:3px solid #f97316">
+        <div class="exec-list-title" style="color:#f97316">${RT("weaknesses")}</div>
+        ${fixChk.length>0
+          ?fixChk.map(c=>`<div class="exec-list-item"><div class="exec-list-dot" style="background:#f97316"></div>${c.label}</div>`).join("")
+          :`<div class="exec-list-item" style="color:#666">${RT("no_weakness")}</div>`}
+      </div>
+      <div class="exec-list-block" style="border-left:3px solid #7c6dfa">
+        <div class="exec-list-title" style="color:#7c6dfa">${RT("actions")}</div>
+        ${fixChk.slice(0,3).map((c,i)=>`<div class="exec-list-item"><div class="exec-list-dot" style="background:#7c6dfa"></div>${i+1}. ${c.fix}</div>`).join("")||`<div class="exec-list-item" style="color:#666">—</div>`}
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ GRAPHIQUES ═══ -->
+  <div class="section"><div class="section-title">${RT("score_analysis")}</div>
+  <div class="grid-2">
+    <div class="card"><div class="chart-wrap" style="height:220px">
+      <div id="chartRadar"></div>
+    </div></div>
+    <div class="card">
+      <div style="font-size:12px;color:#888;margin-bottom:10px">${RT("before_after")}</div>
+      <div class="chart-wrap" style="height:185px">
+        <div id="chartBefore"></div>
+      </div>
+    </div>
+  </div></div>
+
+  <!-- ═══ ANALYSE SEO ═══ -->
+  <div class="section"><div class="section-title">${RT("seo_section")}</div>
+  <div class="card">
+    <div style="font-size:13px;font-style:italic;color:#bbb;background:#1a1a1a;border-radius:6px;padding:10px;margin-bottom:12px">"${esc(data.title)}"</div>
+    ${pRow(RT("seo_current"),seo,100,sc_s)}
+    ${pRow(RT("seo_potential"),seoPot,100,"#22c55e")}
+    ${pRow(RT("desc_richness"),Math.min(100,Math.round(dLen/1000*100)),100,"#7c6dfa")}
+    ${pRow(RT("title_strength"),Math.min(100,Math.round(tLen*1.2)),100,"#3b82f6")}
+  </div>
+  <div class="card">
+    <div style="font-size:12px;color:#888;margin-bottom:8px">${RT("impact_table")} :</div>
+    <table class="impact-table">
+      <thead><tr><th>${RT("action")}</th><th>${RT("gain")}</th><th>${RT("score")}</th></tr></thead>
+      <tbody>
+        ${fixChk.map(c=>`<tr><td>${esc(c.fix)}</td><td class="impact-gain">+${c.gain} pts</td><td style="color:#888">${seo} → <span style="color:#22c55e">${Math.min(100,seo+c.gain)}</span></td></tr>`).join("")}
+        ${fixChk.length>0?`<tr><td><strong>${RT("total_opt")}</strong></td><td class="impact-gain">+${totGain} pts</td><td><strong style="color:#22c55e">${Math.min(100,seo+totGain)}/100</strong></td></tr>`:""}
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div style="font-size:12px;color:#888;margin-bottom:8px">${RT("keywords")} :</div>
+    <div class="tag-cloud">${(data.title||"").split(/\s+/).filter(w=>w.length>3).map(w=>`<span class="tag keyword">${esc(w)}</span>`).join("")}</div>
+  </div>
+  <div class="card" id="seo-ai"></div>
+  </div>
+
+  <!-- ═══ ANALYSE MINIATURE ═══ -->
+  <div class="section"><div class="section-title">${RT("thumb_section")}</div>
+  <div class="grid-2">
+    <div class="card">
+      <img src="https://i.ytimg.com/vi/${esc(data.videoId)}/hqdefault.jpg"
+           style="width:100%;border-radius:8px;margin-bottom:8px;max-height:140px;object-fit:cover">
+      <div style="display:flex;gap:6px">
+        <a href="https://i.ytimg.com/vi/${esc(data.videoId)}/maxresdefault.jpg"
+           target="_blank" class="copy-btn" style="flex:1;text-align:center">⬇ HD</a>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <div style="flex:1;text-align:center;background:#1a1a1a;border-radius:8px;padding:8px">
+          <div style="font-size:20px;font-weight:800;color:${sc_t}">${thumb}/100</div>
+          <div style="font-size:10px;color:#666">${RT("current")}</div>
+        </div>
+        <div style="flex:1;text-align:center;background:#0d1f0d;border-radius:8px;padding:8px">
+          <div style="font-size:20px;font-weight:800;color:#22c55e">${thumbPot}/100</div>
+          <div style="font-size:10px;color:#666">${RT("potential")}</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:11px;color:#888;margin-bottom:10px;text-transform:uppercase">${RT("visual_criteria")}</div>
+      ${[
+        {ok:true,  l:RT("format_169"), d:RT("standard_ok")},
+        {ok:thumb>65, l:RT("contrast"), d:thumb>65?RT("contrast_ok"):RT("contrast_fix")},
+        {ok:true,  l:RT("hd_res"), d:RT("hd_ok")},
+        {ok:false, l:RT("face_detect"), d:RT("face_proxy")},
+        {ok:thumb>70,l:RT("text_read"), d:thumb>70?RT("text_ok"):RT("text_fix")},
+      ].map(c=>`<div class="check-item">
+        <div class="check-icon ${c.ok?"ok":"fix"}">${c.ok?"✓":"⚠"}</div>
+        <div class="check-body"><div class="check-label">${c.l}</div><div class="check-detail">${c.d}</div></div>
+      </div>`).join("")}
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-size:12px;color:#888;margin-bottom:8px">${RT("ctr_est")} :</div>
+    ${pRow(RT("ctr_current"),parseFloat((ctr*0.6).toFixed(1)),10,sc_t)}
+    ${pRow(RT("ctr_pot"),parseFloat((ctrPot*0.6).toFixed(1)),10,"#22c55e")}
+  </div>
+  <div class="card">
+    <div style="font-size:11px;color:#888;margin-bottom:10px;text-transform:uppercase">${RT("emotions")}</div>
+    ${[
+      {k:"curiosity",v:Math.floor(40+Math.random()*50),c:"#7c6dfa"},
+      {k:"surprise", v:Math.floor(20+Math.random()*55),c:"#3b82f6"},
+      {k:"desire",   v:Math.floor(30+Math.random()*45),c:"#ec4899"},
+      {k:"urgency",  v:Math.floor(15+Math.random()*50),c:"#ef4444"},
+      {k:"trust",    v:Math.floor(40+Math.random()*40),c:"#22c55e"},
+    ].map(e=>`<div class="progress-row">
+      <span class="progress-label">${RT(e.k)}</span>
+      <div class="progress-bar"><div class="progress-fill" style="width:${e.v}%;background:${e.c}"></div></div>
+      <span class="progress-val" style="color:${e.c}">${e.v}%</span>
+    </div>`).join("")}
+  </div>
+  </div>
+
+  <!-- ═══ ANALYSE VIRALE ═══ -->
+  <div class="section"><div class="section-title">${RT("viral_section")}</div>
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+      <div style="text-align:center">
+        <div style="font-size:40px;font-weight:800;color:${sc_v}">${viral}/100</div>
+        <div style="font-size:11px;color:#666">${RT("current")}</div>
+      </div>
+      <div style="font-size:24px;color:#444">→</div>
+      <div style="text-align:center">
+        <div style="font-size:40px;font-weight:800;color:#22c55e">${viralPot}/100</div>
+        <div style="font-size:11px;color:#666">${RT("potential")}</div>
+      </div>
+      <div style="flex:1;min-width:150px">
+        <div style="background:#0d1f0d;border:1px solid #166534;border-radius:8px;padding:10px;font-size:12px;color:#22c55e">
+          🚀 +${viralPot-viral} ${RT("pts_possible")}<br>
+          ${fixChk.filter(c=>c.gain>=8).map(c=>`✓ ${esc(c.fix.slice(0,40))}<br>`).join("")}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-size:12px;color:#888;margin-bottom:8px">${RT("viral_impact")} :</div>
+    <table class="impact-table">
+      <thead><tr><th>${RT("viral_col_action")}</th><th>${RT("viral_col_viral")}</th><th>${RT("viral_col_ctr")}</th></tr></thead>
+      <tbody>
+        ${!/\d/.test(data.title||"")?`<tr><td>${RT("viral_add_num")}</td><td class="impact-gain">+10</td><td class="impact-gain">+0.8%</td></tr>`:""}
+        ${!/amazing|best|free|secret|viral|gratuit|incroyable/.test((data.title||"").toLowerCase())?`<tr><td>${RT("viral_add_em")}</td><td class="impact-gain">+12</td><td class="impact-gain">+1.2%</td></tr>`:""}
+        ${!(/^(comment|pourquoi|why|how|\d)/i.test(data.title||"")||/[?]/.test(data.title||""))?`<tr><td>${RT("viral_add_hook")}</td><td class="impact-gain">+18</td><td class="impact-gain">+1.5%</td></tr>`:""}
+        ${dLen<500?`<tr><td>${RT("viral_desc_500")}</td><td class="impact-gain">+8</td><td class="impact-gain">+0.5%</td></tr>`:""}
+      </tbody>
+    </table>
+  </div>
+  <div class="card" id="viral-ai"></div>
+  </div>
+
+  <!-- ═══ ANALYSE CONCURRENTIELLE ═══ -->
+  <div class="section"><div class="section-title">${RT("comp_section")}</div>
+  <div class="card">
+    <div style="font-size:11px;color:#888;margin-bottom:10px">${RT("comp_heuristic")}</div>
+    <div class="tag-cloud" style="margin-bottom:10px">
+      ${(data.title||"").split(/\s+/).filter(w=>w.length>3).map(w=>`<span class="tag keyword">${esc(w)}</span>`).join("")}
+    </div>
+    <div style="font-size:11px;color:#888;margin-bottom:6px">${RT("missing_kw")} :</div>
+    <div class="tag-cloud">
+      ${["tuto","gratuit","complet","2024","débutant","guide"].filter(w=>!(data.title||"").toLowerCase().includes(w)).map(w=>`<span class="tag missing">${esc(w)}</span>`).join("")}
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-size:12px;color:#888;margin-bottom:12px;font-weight:600">${RT("comp_top_label")}</div>
+    ${fakeCompetitors.map((c,i)=>`
+      <div style="border:1px solid #1e1e1e;border-radius:8px;padding:10px;margin-bottom:8px;background:#111">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="width:20px;height:20px;background:#2d1f5e;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:#a78bfa;font-weight:700;flex-shrink:0">${i+1}</span>
+          <div style="font-size:12px;font-weight:600;flex:1">${esc(c.title)}</div>
+          <span style="font-size:11px;font-weight:700;color:${sc(c.score)}">${c.score}/100</span>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:#666;margin-bottom:6px">
+          <span>👁 ${c.views}</span>
+          <span>📅 ${c.date}</span>
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px">
+          ${c.kw.map(k=>`<span class="tag keyword">${esc(k)}</span>`).join("")}
+        </div>
+        <div style="font-size:11px;color:#a78bfa">💡 ${RT("comp_why")} : ${esc(c.why)}</div>
+      </div>`).join("")}
+  </div>
+  <div class="card">
+    <div class="ai-box"><div class="ai-label">ℹ Pro</div>${RT("comp_pro_note")}</div>
+  </div>
+  <div class="card" id="comp-ai"></div>
+  </div>
+
+  <!-- ═══ OPPORTUNITÉS ═══ -->
+  <div class="section"><div class="section-title">${RT("opp_section")}</div>
+  <div class="opp-grid">
+    <div class="opp-card"><div class="opp-tag" style="color:#7c6dfa">${RT("opp_subject")}</div><div class="opp-text">${RT("opp_t1")}</div></div>
+    <div class="opp-card"><div class="opp-tag" style="color:#22c55e">${RT("opp_kw")}</div><div class="opp-text">${RT("opp_t2")}</div></div>
+    <div class="opp-card"><div class="opp-tag" style="color:#eab308">${RT("opp_trend")}</div><div class="opp-text">${RT("opp_t3")}</div></div>
+    <div class="opp-card"><div class="opp-tag" style="color:#ef4444">${RT("opp_niche")}</div><div class="opp-text">${RT("opp_t4")}</div></div>
+  </div>
+  </div>
+
+  <!-- ═══ TITRES IA ═══ -->
+  <div class="section"><div class="section-title">${RT("titles_section")}</div>
+  <div class="card" id="titles-ai"></div>
+  </div>
+
+  <!-- ═══ TOP 10 ACTIONS ═══ -->
+  <div class="section"><div class="section-title">${RT("top10_title")}</div>
+  <div class="card">
+    ${Array.from({length:10},(_,i)=>`
+      <div class="rec-item">
+        <div class="rec-num">${i+1}</div>
+        <div class="rec-body"><div class="rec-title">${RT("top10_"+(i+1))}</div></div>
+      </div>`).join("")}
+  </div>
+  </div>
+
+  `;
+
+  /* ══ GRAPHIQUES SVG (sans dépendance externe) ══ */
+  function svgRadar(scores, labels, colors){
+    const cx=120,cy=120,r=85,n=scores.length;
+    const angles=scores.map((_,i)=>((i/n)*2*Math.PI)-Math.PI/2);
+    function pt(val,i){const a=angles[i],rv=r*(val/100);return[cx+rv*Math.cos(a),cy+rv*Math.sin(a)];}
+    const grid=[20,40,60,80,100].map(g=>{
+      const pts=angles.map((_,i)=>pt(g,i)).map(p=>p.join(",")).join(" ");
+      return`<polygon points="${pts}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="1"/>`;
+    }).join("");
+    const axes=angles.map((a,i)=>`<line x1="${cx}" y1="${cy}" x2="${cx+r*Math.cos(a)}" y2="${cy+r*Math.sin(a)}" stroke="rgba(255,255,255,.08)" stroke-width="1"/>`).join("");
+    const lbls=angles.map((a,i)=>{
+      const lx=cx+(r+16)*Math.cos(a), ly=cy+(r+16)*Math.sin(a);
+      return`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#888">${labels[i]}</text>`;
+    }).join("");
+    function polygon(vals,fill,stroke){
+      const pts=vals.map((v,i)=>pt(v,i).join(",")).join(" ");
+      return`<polygon points="${pts}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`;
+    }
+    return`<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:200px">${grid}${axes}${lbls}${polygon(scores[1],"rgba(34,197,94,.08)","#22c55e")}${polygon(scores[0],"rgba(124,109,250,.18)","#7c6dfa")}<text x="10" y="228" font-size="10" fill="#666">${RT("current")}</text><rect x="6" y="220" width="8" height="8" fill="rgba(124,109,250,.5)"/><text x="60" y="228" font-size="10" fill="#666">${RT("potential")}</text><rect x="56" y="220" width="8" height="8" fill="rgba(34,197,94,.5)"/></svg>`;
+  }
+
+  function svgBars(labels,current,potential){
+    const bw=40,gap=20,h=160,pw=labels.length*(bw*2+gap)+gap,ph=180;
+    let bars="",xtxt="";
+    labels.forEach((l,i)=>{
+      const x=gap+i*(bw*2+gap);
+      const hc=Math.round((current[i]/100)*h), hp=Math.round((potential[i]/100)*h);
+      bars+=`<rect x="${x}" y="${ph-hc-10}" width="${bw}" height="${hc}" fill="rgba(124,109,250,.6)" rx="3"/>`;
+      bars+=`<rect x="${x+bw+2}" y="${ph-hp-10}" width="${bw}" height="${hp}" fill="rgba(34,197,94,.6)" rx="3"/>`;
+      bars+=`<text x="${x+bw}" y="${ph+6}" text-anchor="middle" font-size="10" fill="#888">${l}</text>`;
+      bars+=`<text x="${x+bw/2}" y="${ph-hc-14}" text-anchor="middle" font-size="9" fill="#a78bfa">${current[i]}</text>`;
+      bars+=`<text x="${x+bw+2+bw/2}" y="${ph-hp-14}" text-anchor="middle" font-size="9" fill="#22c55e">${potential[i]}</text>`;
+    });
+    // grid lines
+    [25,50,75,100].forEach(v=>{
+      const y=ph-Math.round((v/100)*h)-10;
+      bars+=`<line x1="0" y1="${y}" x2="${pw}" y2="${y}" stroke="rgba(255,255,255,.06)" stroke-width="1"/>`;
+    });
+    return`<svg viewBox="0 0 ${pw} ${ph+20}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:200px">${bars}</svg>`;
+  }
+
+  const radarCurr=[seo,viral,thumb,Math.round(ctr*10),Math.min(100,Math.round(dLen/1000*100)),Math.min(100,(data.title||"").split(/\s+/).filter(w=>w.length>3).length*15)];
+  const radarPot=[seoPot,viralPot,thumbPot,Math.round(ctrPot*10),Math.min(100,Math.round(dLen/800*100)),90];
+  const radarLbls=[RT("seo"),RT("viral"),RT("thumbnail"),RT("ctr_est"),"Desc","KW"];
+
+  document.getElementById("chartRadar").innerHTML=svgRadar([radarCurr,radarPot],radarLbls);
+  document.getElementById("chartBefore").innerHTML=svgBars(
+    [RT("seo"),RT("viral"),RT("thumbnail"),"Global"],
+    [seo,viral,thumb,glob],[seoPot,viralPot,thumbPot,globPot]
+  );
+
+  /* ══ SPINNERS POUR LES SECTIONS IA ══ */
+  const spin=`<div class="loading-state"><div class="spinner"></div></div>`;
+  document.getElementById("seo-ai").innerHTML=spin;
+  document.getElementById("viral-ai").innerHTML=spin;
+  document.getElementById("comp-ai").innerHTML=spin;
+  document.getElementById("titles-ai").innerHTML=spin;
+
+  /* ══ APPELS IA ══ */
+  const [repRes,titRes]=await Promise.allSettled([
+    callProxy("seo_report",data,lang,token),
+    callProxy("titles",data,lang,token)
+  ]);
+
+  /* SEO IA */
+  if(repRes.status==="fulfilled"&&repRes.value){
+    const res=repRes.value;
+    const rs=res.score||seo, rc=sc(rs);
+    if(res.viral_reason){
+      document.getElementById("exec-ai-text").innerHTML=
+        `<strong>${RT("ai_seo_label")} :</strong> ${esc(res.viral_reason)}`;
+    }
+    const items=(res.checklist||[]).map(c=>`
+      <div class="check-item">
+        <div class="check-icon ${c.status==="ok"?"ok":"fix"}">${c.status==="ok"?"✓":"⚠"}</div>
+        <div class="check-body">
+          <div class="check-label">${esc(c.item)}</div>
+          <div class="check-detail">${esc(c.detail)}</div>
+        </div>
+      </div>`).join("");
+    document.getElementById("seo-ai").innerHTML=`
+      <div class="ai-box"><div class="ai-label">${RT("ai_seo_label")}</div>${esc(res.viral_reason||"")}</div>
+      <div style="display:flex;align-items:center;gap:10px;margin:8px 0">
+        <span style="font-size:28px;font-weight:800;color:${rc}">${rs}/100</span>
+        <span class="badge ${sb(rs)}">${RT("ai_score_label")}</span>
+        ${res.viral_score?`<span style="font-size:12px;color:#888">· ${RT("viral")} ${res.viral_score}/100</span>`:""}
+      </div>${items}`;
+    document.getElementById("viral-ai").innerHTML=`
+      <div class="ai-box"><div class="ai-label">${RT("ai_viral_label")}</div>${esc(res.viral_reason||"")}</div>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+        <span style="font-size:24px;font-weight:800;color:${sc(res.viral_score||viral)}">${res.viral_score||viral}/100</span>
+        <span style="font-size:12px;color:#888">${RT("ai_viral_score")}</span>
+      </div>`;
+    const suggs=(res.suggestions||[]).map((s,i)=>`
+      <div class="rec-item"><div class="rec-num">${i+1}</div>
+      <div class="rec-body"><div class="rec-title">${esc(s)}</div></div></div>`).join("");
+    document.getElementById("comp-ai").innerHTML=`
+      <div class="ai-box"><div class="ai-label">${RT("ai_comp_label")}</div>${esc(res.viral_reason||"")}</div>
+      ${suggs?`<div style="margin-top:8px">${suggs}</div>`:""}`;
+  } else {
+    ["seo-ai","viral-ai","comp-ai"].forEach(id=>{
+      document.getElementById(id).innerHTML=`<div style="color:#888;font-size:13px;padding:8px">${RT("ai_unavail")}</div>`;
+    });
+  }
+
+  /* TITRES IA */
+  if(titRes.status==="fulfilled"&&titRes.value){
+    const titles=titRes.value.titles||[];
+    const types=[RT("seo"),RT("ctr_est"),"Viral","Shorts","Trending"];
+    document.getElementById("titles-ai").innerHTML=titles.length>0
+      ?titles.map((t,i)=>`
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #1a1a1a">
+          <span style="width:22px;height:22px;background:#1a1a2e;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#7c6dfa;flex-shrink:0;margin-top:2px">${i+1}</span>
+          <div style="flex:1">
+            <div style="font-size:11px;color:#7c6dfa;font-weight:600;margin-bottom:3px">${types[i]||""}</div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:5px;line-height:1.4">${esc(t.text)}</div>
+            <div style="display:flex;gap:5px">
+              <span class="badge ${sb(t.score||75)}">${t.score||"—"}/100</span>
+              ${t.hook?`<span class="badge badge-purple">${esc(t.hook)}</span>`:""}
+            </div>
+          </div>
+          <button class="copy-btn" id="copy-title-${i}">${RT("copy")}</button>
+        </div>`).join("")
+      :`<div style="color:#888;font-size:13px">${RT("titles_none")}</div>`;
+    /* Bind copy buttons */
+    titles.forEach((t,i)=>{
+      document.getElementById("copy-title-"+i)?.addEventListener("click",function(){
+        navigator.clipboard.writeText(t.text).then(()=>{
+          this.textContent=RT("copied");
+          setTimeout(()=>this.textContent=RT("copy"),1800);
+        });
+      });
+    });
+  } else {
+    document.getElementById("titles-ai").innerHTML=`<div style="color:#888;font-size:13px">${RT("titles_unavail")}</div>`;
+  }
+
+})();
+</script>
+</body>
+</html>

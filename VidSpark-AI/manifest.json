@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "VidSpark AI",
+  "version": "4.0",
+  "description": "YouTube SEO Intelligence — AI-powered analysis",
+  "permissions": ["activeTab", "storage", "clipboardWrite"],
+  "host_permissions": ["*://*.youtube.com/*"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [{
+    "matches": ["*://*.youtube.com/*"],
+    "js": ["content.js"],
+    "css": ["styles.css"],
+    "run_at": "document_idle"
+  }],
+  "web_accessible_resources": [{
+    "resources": ["ai-report.html", "report.css", "icon.png"],
+    "matches": ["<all_urls>"]
+  }],
+  "icons": { "128": "icon.png" }
+}

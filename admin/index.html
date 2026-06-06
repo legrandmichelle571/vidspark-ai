@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VidSpark AI — Admin</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#07070a;--s1:#0e0e12;--s2:#141418;--s3:#1a1a20;
+  --b1:#1e1e26;--b2:#2a2a35;--b3:#3a3a48;
+  --text:#e8e8f0;--muted:#6b6b80;--faint:#3a3a48;
+  --purple:#7c6dfa;--purple-d:#2d1f5e;--purple-l:#a78bfa;
+  --green:#22c55e;--green-d:#0d2d1a;
+  --red:#ef4444;--red-d:#2d0a0a;
+  --amber:#f59e0b;--amber-d:#2d1e00;
+  --blue:#3b82f6;--blue-d:#0d1e3a;
+  --r:8px;--r2:12px;--r3:16px;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:flex;min-height:100vh;font-size:14px}
+
+/* ── SIDEBAR ── */
+.sb{width:240px;background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;position:fixed;height:100vh;overflow-y:auto;z-index:100}
+.sb-logo{padding:20px 18px;border-bottom:1px solid var(--b1)}
+.sb-logo-top{display:flex;align-items:center;gap:10px}
+.sb-logo-icon{width:36px;height:36px;background:var(--purple-d);border:1px solid var(--purple);border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:18px}
+.sb-logo-text h2{font-size:15px;font-weight:800;color:var(--purple-l)}
+.sb-logo-text span{font-size:10px;color:var(--muted);display:block}
+.sb-logo-badge{margin-top:8px;display:inline-block;background:var(--purple-d);color:var(--purple-l);border:1px solid var(--purple);font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600}
+.nav-group{padding:8px 10px 0}
+.nav-group-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:6px 8px 4px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:500;border-radius:var(--r);margin:1px 0;transition:all .12s;position:relative}
+.nav-item:hover{background:var(--s2);color:var(--text)}
+.nav-item.active{background:var(--purple-d);color:var(--purple-l);border:1px solid rgba(124,109,250,.3)}
+.nav-item .nav-icon{font-size:15px;width:20px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--purple);color:#fff;font-size:10px;padding:1px 6px;border-radius:20px;font-weight:700}
+.sb-bottom{margin-top:auto;padding:14px;border-top:1px solid var(--b1)}
+.sb-user{display:flex;align-items:center;gap:8px}
+.sb-user-avatar{width:30px;height:30px;background:var(--purple-d);border:1px solid var(--purple);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.sb-user-info{flex:1;min-width:0}
+.sb-user-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-user-role{font-size:10px;color:var(--muted)}
+
+/* ── MAIN ── */
+.main{margin-left:240px;flex:1;min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:var(--s1);border-bottom:1px solid var(--b1);padding:14px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:50}
+.topbar-left{flex:1}
+.topbar-title{font-size:18px;font-weight:700}
+.topbar-sub{font-size:12px;color:var(--muted);margin-top:1px}
+.topbar-right{display:flex;gap:8px;align-items:center}
+.content{padding:24px;flex:1}
+
+/* ── STATS GRID ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px}
+.stat{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r2);padding:16px;transition:border-color .15s;cursor:default}
+.stat:hover{border-color:var(--b2)}
+.stat-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.stat-icon{width:38px;height:38px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:16px}
+.stat-icon.p{background:var(--purple-d);border:1px solid rgba(124,109,250,.3)}
+.stat-icon.g{background:var(--green-d);border:1px solid rgba(34,197,94,.3)}
+.stat-icon.a{background:var(--amber-d);border:1px solid rgba(245,158,11,.3)}
+.stat-icon.b{background:var(--blue-d);border:1px solid rgba(59,130,246,.3)}
+.stat-icon.r{background:var(--red-d);border:1px solid rgba(239,68,68,.3)}
+.stat-change{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600}
+.stat-change.up{background:var(--green-d);color:var(--green)}
+.stat-change.neutral{background:var(--s2);color:var(--muted)}
+.stat-val{font-size:30px;font-weight:800;line-height:1;margin-bottom:4px}
+.stat-label{font-size:12px;color:var(--muted)}
+
+/* ── CARDS ── */
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r2);margin-bottom:16px;overflow:hidden}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--b1)}
+.card-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.card-actions{display:flex;gap:6px}
+.card-body{padding:18px}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{padding:10px 14px;text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;background:var(--s2);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--b1);vertical-align:middle}
+tr:last-child td{border:none}
+tbody tr:hover td{background:var(--s2)}
+.truncate{max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-free    {background:rgba(107,107,128,.15);color:#888;border:1px solid rgba(107,107,128,.2)}
+.badge-pro     {background:var(--purple-d);color:var(--purple-l);border:1px solid rgba(124,109,250,.3)}
+.badge-business{background:var(--green-d);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.badge-lifetime{background:var(--amber-d);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
+.badge-active  {background:var(--green-d);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.badge-suspended{background:var(--amber-d);color:var(--amber);border:1px solid rgba(245,158,11,.2)}
+.badge-cancelled{background:var(--red-d);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.badge-admin   {background:var(--red-d);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.badge-beta    {background:var(--blue-d);color:var(--blue);border:1px solid rgba(59,130,246,.2)}
+.badge-pending {background:var(--s2);color:var(--muted);border:1px solid var(--b2)}
+.badge-used    {background:var(--green-d);color:var(--green)}
+.badge-expired {background:var(--red-d);color:var(--red)}
+.badge-discount{background:var(--purple-d);color:var(--purple-l)}
+.badge-trial   {background:var(--blue-d);color:var(--blue)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r);border:none;cursor:pointer;font-size:12px;font-weight:600;transition:all .12s;white-space:nowrap}
+.btn:hover{opacity:.88;transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn-primary{background:var(--purple);color:#fff}
+.btn-green  {background:var(--green);color:#000}
+.btn-red    {background:var(--red);color:#fff}
+.btn-amber  {background:var(--amber);color:#000}
+.btn-ghost  {background:transparent;border:1px solid var(--b2);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--purple);color:var(--purple-l)}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-icon{width:28px;height:28px;padding:0;justify-content:center}
+
+/* ── SEARCH BAR ── */
+.search-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.search-input{background:var(--s2);border:1px solid var(--b1);color:var(--text);padding:8px 14px;border-radius:var(--r);font-size:13px;outline:none;transition:border-color .15s}
+.search-input:focus{border-color:var(--purple)}
+.search-input.flex1{flex:1;min-width:180px}
+select.search-input{max-width:140px;cursor:pointer}
+
+/* ── SECTIONS ── */
+.section{display:none}
+.section.active{display:block}
+
+/* ── REVENUE CHART ── */
+.rev-chart{display:flex;gap:8px;align-items:flex-end;height:160px;padding:8px 0 0}
+.rev-bar-w{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:40px}
+.rev-bar{background:linear-gradient(180deg,var(--purple),rgba(124,109,250,.5));border-radius:6px 6px 0 0;width:100%;min-height:4px;transition:height .4s ease}
+.rev-bar-label{font-size:10px;color:var(--muted);text-align:center}
+.rev-bar-val{font-size:10px;color:var(--purple-l);font-weight:600}
+
+/* ── PLAN DISTRIBUTION ── */
+.plan-dist{display:flex;gap:16px;flex-wrap:wrap}
+.plan-dist-item{flex:1;min-width:120px;background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:12px;text-align:center}
+.plan-dist-val{font-size:24px;font-weight:800;line-height:1}
+.plan-dist-label{font-size:11px;color:var(--muted);margin-top:3px}
+.plan-dist-bar{height:4px;background:var(--b2);border-radius:99px;margin-top:8px;overflow:hidden}
+.plan-dist-fill{height:100%;border-radius:99px}
+
+/* ── QUOTA BAR ── */
+.quota-bar{height:5px;background:var(--b2);border-radius:99px;overflow:hidden;margin-top:4px}
+.quota-fill{height:100%;border-radius:99px;background:var(--green)}
+.quota-fill.warn{background:var(--amber)}
+.quota-fill.full{background:var(--red)}
+
+/* ── PAGINATION ── */
+.pagination{display:flex;gap:4px;align-items:center;justify-content:center;padding:14px 0 0}
+.page-btn{background:var(--s2);border:1px solid var(--b1);color:var(--muted);padding:5px 11px;border-radius:var(--r);cursor:pointer;font-size:12px;font-weight:500;transition:all .12s}
+.page-btn:hover:not(:disabled){border-color:var(--purple);color:var(--purple-l)}
+.page-btn.active{background:var(--purple);border-color:var(--purple);color:#fff}
+.page-btn:disabled{opacity:.3;cursor:not-allowed}
+.page-info{font-size:12px;color:var(--muted);padding:0 8px}
+
+/* ── MODAL ── */
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center}
+#modal-overlay.open{display:flex}
+.modal{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r3);width:90%;max-width:520px;max-height:90vh;overflow-y:auto;animation:zoomIn .2s ease}
+@keyframes zoomIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal-header{padding:18px 20px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--s1);z-index:5}
+.modal-title{font-size:15px;font-weight:700}
+.modal-body{padding:20px}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--b1);display:flex;justify-content:flex-end;gap:8px}
+
+/* ── FORM ── */
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block;font-weight:500}
+.form-input{width:100%;background:var(--s2);border:1px solid var(--b1);color:var(--text);padding:9px 14px;border-radius:var(--r);font-size:13px;outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--purple)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ── USER DETAIL ── */
+.user-detail-hero{display:flex;align-items:center;gap:14px;padding:14px;background:var(--s2);border-radius:var(--r);margin-bottom:16px}
+.user-avatar{width:44px;height:44px;background:var(--purple-d);border:2px solid var(--purple);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.user-detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.danger-zone{border:1px solid rgba(239,68,68,.3);border-radius:var(--r);padding:12px;margin-top:14px}
+.danger-zone-title{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--red);margin-bottom:10px;letter-spacing:.05em}
+
+/* ── LOGIN ── */
+#login-view{display:flex;align-items:center;justify-content:center;min-height:100vh;width:100%}
+.login-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r3);padding:32px;width:100%;max-width:360px}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo h1{font-size:22px;font-weight:800;color:var(--purple);margin-top:10px}
+.login-logo p{font-size:13px;color:var(--muted);margin-top:2px}
+.login-err{background:var(--red-d);border:1px solid rgba(239,68,68,.3);color:var(--red);padding:10px;border-radius:var(--r);font-size:12px;margin-bottom:12px;display:none}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:2px;background:var(--s2);border-radius:var(--r);padding:3px;margin-bottom:16px}
+.tab-btn{flex:1;background:none;border:none;color:var(--muted);font-size:12px;font-weight:600;padding:7px;border-radius:6px;cursor:pointer;transition:all .12s}
+.tab-btn.active{background:var(--s3);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:20px;right:20px;background:var(--s2);border:1px solid var(--b2);color:var(--text);padding:12px 18px;border-radius:var(--r);font-size:13px;z-index:9999;transform:translateY(60px);opacity:0;transition:all .25s;max-width:320px}
+#toast.show{transform:translateY(0);opacity:1}
+
+/* ── LOADER ── */
+.overlay-loader{display:none;position:fixed;inset:0;background:rgba(7,7,10,.85);align-items:center;justify-content:center;z-index:5000}
+.overlay-loader.show{display:flex}
+.spin{width:36px;height:36px;border:3px solid var(--b2);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── MISC ── */
+.empty-state{text-align:center;padding:40px;color:var(--muted)}
+.empty-state-icon{font-size:36px;margin-bottom:8px}
+.empty-state-msg{font-size:13px}
+.tag-list{display:flex;gap:4px;flex-wrap:wrap}
+.info-row{display:flex;gap:8px;margin-bottom:6px;font-size:12px}
+.info-label{color:var(--muted);min-width:100px}
+.info-val{color:var(--text);font-weight:500}
+.section-divider{height:1px;background:var(--b1);margin:14px 0}
+</style>
+</head>
+<body>
+
+<div class="overlay-loader" id="loader"><div class="spin"></div></div>
+
+<!-- ── LOGIN ── -->
+<div id="login-view" style="display:none">
+  <div class="login-card">
+    <div class="login-logo">
+      <div style="font-size:36px">⚡</div>
+      <h1>VidSpark AI</h1>
+      <p>Panneau d'Administration</p>
+    </div>
+    <div class="login-err" id="login-err"></div>
+    <div class="form-group">
+      <label class="form-label">Email administrateur</label>
+      <input type="email" id="login-email" class="form-input" placeholder="admin@vidspark.ai" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mot de passe</label>
+      <input type="password" id="login-pwd" class="form-input" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:11px;justify-content:center" id="login-btn">
+      Se connecter
+    </button>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app-view" style="display:none;width:100%">
+
+  <!-- Sidebar -->
+  <nav class="sb">
+    <div class="sb-logo">
+      <div class="sb-logo-top">
+        <div class="sb-logo-icon">⚡</div>
+        <div class="sb-logo-text">
+          <h2>VidSpark AI</h2>
+          <span>Admin Dashboard</span>
+        </div>
+      </div>
+      <span class="sb-logo-badge">🔑 Administrateur</span>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Vue d'ensemble</div>
+      <div class="nav-item active" data-s="dashboard"><span class="nav-icon">📊</span> Dashboard</div>
+      <div class="nav-item" data-s="revenue"><span class="nav-icon">💰</span> Revenus</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Utilisateurs</div>
+      <div class="nav-item" data-s="users"><span class="nav-icon">👥</span> Tous <span class="nav-badge" id="nb-total">—</span></div>
+      <div class="nav-item" data-s="free-users"><span class="nav-icon">🆓</span> Free <span class="nav-badge" style="background:#444" id="nb-free">—</span></div>
+      <div class="nav-item" data-s="pro-users"><span class="nav-icon">⭐</span> Pro/Business <span class="nav-badge" id="nb-pro">—</span></div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Gestion Premium</div>
+      <div class="nav-item" data-s="promos"><span class="nav-icon">🎟</span> Codes Promo</div>
+      <div class="nav-item" data-s="licenses"><span class="nav-icon">📜</span> Licences Manuelles</div>
+      <div class="nav-item" data-s="beta"><span class="nav-icon">🧪</span> Invitations Bêta</div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-label">Données</div>
+      <div class="nav-item" data-s="logs"><span class="nav-icon">📋</span> Logs Admin</div>
+    </div>
+
+    <div class="sb-bottom">
+      <div class="sb-user">
+        <div class="sb-user-avatar">👤</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name" id="sb-username">Administrateur</div>
+          <div class="sb-user-role">Super Admin</div>
+        </div>
+        <button class="btn btn-ghost btn-sm btn-icon" id="logout-btn" title="Déconnexion">→</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="page-title">Dashboard</div>
+        <div class="topbar-sub" id="page-sub">Vue d'ensemble VidSpark AI</div>
+      </div>
+      <div class="topbar-right">
+        <span style="font-size:12px;color:var(--muted)" id="topbar-date"></span>
+        <button class="btn btn-ghost btn-sm" onclick="refreshCurrent()">↻ Actualiser</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ════ DASHBOARD ════ -->
+      <div class="section active" id="s-dashboard">
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat"><div class="stat-top"><div class="stat-icon p">👥</div><span class="stat-change neutral" id="sc-new">+0 ce mois</span></div><div class="stat-val" id="sv-total">—</div><div class="stat-label">Utilisateurs total</div></div>
+          <div class="stat"><div class="stat-top"><div class="stat-icon b">🆓</div></div><div class="stat-val" id="sv-free">—</div><div class="stat-label">Free</div></div>
+          <div class="stat"><div class="stat-top"><div class="stat-icon p">⭐</div></div><div class="stat-val" id="sv-pro">—</div><div class="stat-label">Pro</div></div>
+          <div class="stat"><div class="stat-top"><div class="stat-icon g">🏢</div></div><div class="stat-val" id="sv-biz">—</div><div class="stat-label">Business</div></div>
+          <div class="stat"><div class="stat-top"><div class="stat-icon g">💰</div><span class="stat-change up" id="sc-mrr">MRR</span></div><div class="stat-val" id="sv-mrr">—</div><div class="stat-label">Revenus (30j)</div></div>
+          <div class="stat"><div class="stat-top"><div class="stat-icon a">📈</div></div><div class="stat-val" id="sv-arr">—</div><div class="stat-label">ARR estimé</div></div>
+          <div class="stat"><div class="stat-top"><div class="stat-icon p">🔄</div></div><div class="stat-val" id="sv-conv">—%</div><div class="stat-label">Taux conversion</div></div>
+          <div class="stat"><div class="stat-top"><div class="stat-icon g">✓</div></div><div class="stat-val" id="sv-active">—</div><div class="stat-label">Actifs (7j)</div></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">📊 Répartition des plans</div></div>
+            <div class="card-body">
+              <div class="plan-dist" id="plan-dist"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">💰 Revenus par mois</div></div>
+            <div class="card-body">
+              <div class="rev-chart" id="rev-mini"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <div class="card-header">
+            <div class="card-title">👥 Derniers inscrits</div>
+            <button class="btn btn-ghost btn-sm" onclick="nav('users')">Voir tous →</button>
+          </div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Email</th><th>Plan</th><th>Statut</th><th>Inscrit</th><th></th></tr></thead>
+            <tbody id="recent-users"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ REVENUE ════ -->
+      <div class="section" id="s-revenue">
+        <div class="stats-grid">
+          <div class="stat"><div class="stat-top"><div class="stat-icon g">💰</div></div><div class="stat-val" id="rv-mrr">—</div><div class="stat-label">MRR (30 jours)</div></div>
+          <div class="stat"><div class="stat-top"><div class="stat-icon g">📅</div></div><div class="stat-val" id="rv-arr">—</div><div class="stat-label">ARR estimé</div></div>
+          <div class="stat"><div class="stat-top"><div class="stat-icon p">🔢</div></div><div class="stat-val" id="rv-tx">—</div><div class="stat-label">Transactions (30j)</div></div>
+          <div class="stat"><div class="stat-top"><div class="stat-icon a">⭐</div></div><div class="stat-val" id="rv-pro-rev">—</div><div class="stat-label">Rev. Pro (estimé)</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📈 Revenus mensuels</div></div>
+          <div class="card-body">
+            <div class="rev-chart" id="rev-chart-full"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ USERS ════ -->
+      <div class="section" id="s-users">
+        <div class="search-bar">
+          <input type="text" class="search-input flex1" id="u-search" placeholder="🔍 Rechercher email, nom...">
+          <select class="search-input" id="u-plan">
+            <option value="">Tous les plans</option>
+            <option value="free">Free</option>
+            <option value="pro">Pro</option>
+            <option value="business">Business</option>
+          </select>
+          <select class="search-input" id="u-status">
+            <option value="">Tous statuts</option>
+            <option value="active">Actif</option>
+            <option value="suspended">Suspendu</option>
+            <option value="cancelled">Annulé</option>
+          </select>
+          <button class="btn btn-primary" onclick="loadUsers(1)">Filtrer</button>
+          <button class="btn btn-ghost" onclick="exportCSV()">⬇ CSV</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Email</th><th>Nom</th><th>Plan</th><th>Statut</th>
+                <th>Quota</th><th>Langue</th><th>Inscrit</th><th>Connexion</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="users-tbody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="users-pag"></div>
+        </div>
+      </div>
+
+      <!-- ════ FREE USERS ════ -->
+      <div class="section" id="s-free-users">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🆓 Utilisateurs Free</div>
+            <button class="btn btn-primary btn-sm" onclick="openBulkUpgrade()">↑ Upgrade en masse</button>
+          </div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Email</th><th>Quota utilisé</th><th>Inscrit</th><th>Actions</th></tr></thead>
+            <tbody id="free-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ PRO USERS ════ -->
+      <div class="section" id="s-pro-users">
+        <div class="card">
+          <div class="card-header"><div class="card-title">⭐ Utilisateurs Pro & Business</div></div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Email</th><th>Plan</th><th>Statut</th><th>Inscrit</th><th>Actions</th></tr></thead>
+            <tbody id="pro-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ PROMO CODES ════ -->
+      <div class="section" id="s-promos">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🎟 Codes Promotionnels</div>
+            <button class="btn btn-primary btn-sm" onclick="openModal('create-promo')">+ Créer un code</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Code</th><th>Type</th><th>Plan</th><th>Utilisations</th><th>Expire</th><th>Statut</th><th>Actions</th></tr></thead>
+              <tbody id="promos-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ LICENCES ════ -->
+      <div class="section" id="s-licenses">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📜 Licences Manuelles</div>
+            <button class="btn btn-primary btn-sm" onclick="openModal('grant-license')">+ Accorder une licence</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Utilisateur</th><th>Plan</th><th>Raison</th><th>Accordé par</th><th>Expire</th><th>Statut</th></tr></thead>
+              <tbody id="licenses-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ BETA ════ -->
+      <div class="section" id="s-beta">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🧪 Invitations Bêta</div>
+            <button class="btn btn-primary btn-sm" onclick="openModal('beta-invite')">+ Inviter</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Email</th><th>Plan</th><th>Statut</th><th>Expire</th><th>Token</th></tr></thead>
+              <tbody id="beta-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ LOGS ════ -->
+      <div class="section" id="s-logs">
+        <div class="card">
+          <div class="card-header"><div class="card-title">📋 Journal d'Administration</div></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Date</th><th>Admin</th><th>Action</th><th>Cible</th><th>Détails</th></tr></thead>
+              <tbody id="logs-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ── MODAL ── -->
+<div id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Modal</div>
+      <button class="btn btn-ghost btn-icon" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" id="modal-ok">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   CONFIG — À modifier avant déploiement
+   Remplacer http://localhost:3001/api
+   Exemple : 'https://api.vidspark.ai/api'
+   Même valeur que CONFIG.BACKEND_URL dans background.js
+══════════════════════════════════════════════════════════════ */
+const API = 'http://localhost:3001/api';
+
+if (API.includes('VOTRE_BACKEND_URL')) {
+  console.error('[VidSpark Admin] ⚠️ API non configurée — modifier admin/index.html ligne ~511');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════════════ */
+let token = localStorage.getItem('er_admin_token');
+let adminData = null;
+let currentSection = 'dashboard';
+let currentPage = 1;
+let modalCb = null;
+
+/* ══════════════════════════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════════════════════════ */
+function toast(msg, type = 'ok') {
+  const t = document.getElementById('toast');
+  t.innerHTML = (type==='ok'?'✓ ':type==='err'?'✗ ':type==='warn'?'⚠ ':'')+msg;
+  t.style.borderColor = type==='err'?'rgba(239,68,68,.5)':type==='warn'?'rgba(245,158,11,.5)':'rgba(34,197,94,.5)';
+  t.className = 'show';
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>t.className='', 3000);
+}
+function loader(v){ document.getElementById('loader').classList.toggle('show',v); }
+function fmt(n){ if(!n&&n!==0)return'—'; if(n>=1e6)return(n/1e6).toFixed(1)+'M'; if(n>=1e3)return(n/1e3).toFixed(1)+'K'; return String(n); }
+function fmtE(n){ return n?parseFloat(n).toFixed(2)+'€':'0.00€'; }
+function fmtDate(d){ return d?new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'—'; }
+function fmtDateShort(d){ return d?new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'}):'—'; }
+function planBadge(plan){ return `<span class="badge badge-${plan}">${plan==='business'?'🏢':plan==='pro'?'⭐':plan==='lifetime'?'♾️':'🆓'} ${plan.charAt(0).toUpperCase()+plan.slice(1)}</span>`; }
+function statusBadge(s){ return `<span class="badge badge-${s}">${s==='active'?'● Actif':s==='suspended'?'⚠ Suspendu':'✕ Annulé'}</span>`; }
+
+/* ══════════════════════════════════════════════════════════════
+   API CLIENT
+══════════════════════════════════════════════════════════════ */
+async function api(path, opts={}) {
+  const r = await fetch(API+path, {
+    ...opts,
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,...(opts.headers||{})},
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  const d = await r.json().catch(()=>({}));
+  if (!r.ok) throw new Error(d.error||'Request failed ('+r.status+')');
+  return d;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   AUTH
+══════════════════════════════════════════════════════════════ */
+async function checkAuth() {
+  if (!token) { showLogin(); return; }
+  try {
+    const me = await api('/user/me');
+    if (me.role !== 'admin') throw new Error('Admin only');
+    adminData = me;
+    document.getElementById('sb-username').textContent = me.name||me.email;
+    showApp();
+    nav('dashboard');
+  } catch { showLogin(); }
+}
+function showLogin(){
+  document.getElementById('login-view').style.display='flex';
+  document.getElementById('app-view').style.display='none';
+  loader(false);
+}
+function showApp(){
+  document.getElementById('login-view').style.display='none';
+  document.getElementById('app-view').style.display='flex';
+  loader(false);
+  document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+}
+
+document.getElementById('login-btn').onclick = async()=>{
+  const email=document.getElementById('login-email').value;
+  const pwd=document.getElementById('login-pwd').value;
+  const err=document.getElementById('login-err');
+  err.style.display='none';
+  if(!email||!pwd){err.textContent='Email et mot de passe requis';err.style.display='block';return;}
+  try{
+    loader(true);
+    const d=await fetch(API+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pwd})}).then(r=>r.json());
+    if(d.error)throw new Error(d.error);
+    if(d.user?.role!=='admin')throw new Error('Accès admin requis');
+    token=d.access_token;
+    localStorage.setItem('er_admin_token',token);
+    adminData=d.user;
+    document.getElementById('sb-username').textContent=d.user.name||email;
+    showApp();
+    nav('dashboard');
+  }catch(e){err.textContent=e.message;err.style.display='block';loader(false);}
+};
+document.getElementById('logout-btn').onclick=()=>{localStorage.removeItem('er_admin_token');token=null;showLogin();};
+
+/* ══════════════════════════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════════════════════════ */
+const SECTION_META={
+  dashboard:['Dashboard','Vue d\'ensemble VidSpark AI'],
+  revenue:['Revenus','Analyse financière complète'],
+  users:['Utilisateurs','Gestion de tous les comptes'],
+  'free-users':['Users Free','Comptes gratuits — conversion'],
+  'pro-users':['Users Pro/Business','Abonnés payants'],
+  promos:['Codes Promo','Gérer les remises et offres'],
+  licenses:['Licences Manuelles','Accès gratuits accordés manuellement'],
+  beta:['Invitations Bêta','Programme d\'accès anticipé'],
+  logs:['Logs Admin','Journal des actions administrateur'],
+};
+
+function nav(s){
+  currentSection=s;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.s===s));
+  document.querySelectorAll('.section').forEach(sc=>sc.classList.toggle('active',sc.id==='s-'+s));
+  const [title,sub]=SECTION_META[s]||['Admin',''];
+  document.getElementById('page-title').textContent=title;
+  document.getElementById('page-sub').textContent=sub;
+  loadSection(s);
+}
+document.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',()=>nav(n.dataset.s)));
+function refreshCurrent(){loadSection(currentSection);}
+
+async function loadSection(s){
+  if(s==='dashboard')await loadDashboard();
+  if(s==='revenue')await loadRevenue();
+  if(s==='users')await loadUsers(currentPage);
+  if(s==='free-users')await loadFilteredUsers('free');
+  if(s==='pro-users')await loadFilteredUsers('pro,business');
+  if(s==='promos')await loadPromos();
+  if(s==='licenses')await loadLicenses();
+  if(s==='beta')await loadBeta();
+  if(s==='logs')await loadLogs();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════════════════════════ */
+async function loadDashboard(){
+  try{
+    const [stats,rev]=await Promise.all([api('/admin/stats'),api('/admin/revenue').catch(()=>({monthly_revenue:[]}))]);
+    const u=stats.users,r=stats.revenue;
+    const set=(id,v)=>{ const el=document.getElementById(id); if(el)el.textContent=v; };
+
+    set('sv-total',fmt(u.total)); set('sv-free',fmt(u.free));
+    set('sv-pro',fmt(u.pro)); set('sv-biz',fmt(u.business));
+    set('sv-mrr',fmtE(r.mrr)); set('sv-arr',fmtE(r.arr));
+    set('sv-conv',u.conversion_rate+'%'); set('sv-active',fmt(u.active_7d));
+    set('sc-new','+'+u.new_30d+' ce mois');
+    document.getElementById('sc-new').className='stat-change '+(u.new_30d>0?'up':'neutral');
+    document.getElementById('nb-total').textContent=fmt(u.total);
+    document.getElementById('nb-free').textContent=fmt(u.free);
+    document.getElementById('nb-pro').textContent=fmt(u.pro+u.business);
+
+    /* Plan distribution */
+    const total=Math.max(u.total,1);
+    document.getElementById('plan-dist').innerHTML=[
+      {label:'Free',val:u.free,pct:Math.round(u.free/total*100),fill:'#3b82f6'},
+      {label:'Pro',val:u.pro,pct:Math.round(u.pro/total*100),fill:'#7c6dfa'},
+      {label:'Business',val:u.business,pct:Math.round(u.business/total*100),fill:'#22c55e'},
+    ].map(p=>`<div class="plan-dist-item">
+      <div class="plan-dist-val" style="color:${p.fill}">${fmt(p.val)}</div>
+      <div class="plan-dist-label">${p.label}</div>
+      <div class="plan-dist-bar"><div class="plan-dist-fill" style="width:${p.pct}%;background:${p.fill}"></div></div>
+    </div>`).join('');
+
+    /* Mini revenue chart */
+    const months=(rev.monthly_revenue||[]).slice(0,4).reverse();
+    const maxRev=Math.max(...months.map(m=>parseFloat(m.revenue||0)),1);
+    document.getElementById('rev-mini').innerHTML=months.map(m=>{
+      const pct=Math.round(parseFloat(m.revenue||0)/maxRev*100);
+      const label=new Date(m.month).toLocaleDateString('fr-FR',{month:'short'});
+      return`<div class="rev-bar-w"><div class="rev-bar-val">${parseFloat(m.revenue||0).toFixed(0)}€</div><div class="rev-bar" style="height:${Math.max(pct,3)}%"></div><div class="rev-bar-label">${label}</div></div>`;
+    }).join('')||'<span style="color:var(--muted);font-size:12px">Aucune donnée</span>';
+
+    /* Recent users */
+    const usersData=await api('/admin/users?limit=5');
+    document.getElementById('recent-users').innerHTML=(usersData.users||[]).map(u=>`<tr>
+      <td class="truncate">${u.email}</td>
+      <td>${planBadge(u.plan)}</td>
+      <td>${statusBadge(u.status)}</td>
+      <td style="font-size:11px;color:var(--muted)">${fmtDateShort(u.created_at)}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="openUserModal('${u.id}')">⚙</button></td>
+    </tr>`).join('');
+  }catch(e){toast('Dashboard: '+e.message,'err');}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   REVENUE
+══════════════════════════════════════════════════════════════ */
+async function loadRevenue(){
+  try{
+    const [stats,rev]=await Promise.all([api('/admin/stats'),api('/admin/revenue')]);
+    const r=stats.revenue;
+    const set=(id,v)=>{ const el=document.getElementById(id);if(el)el.textContent=v; };
+    set('rv-mrr',fmtE(r.mrr)); set('rv-arr',fmtE(r.arr));
+    set('rv-tx',r.transactions_30d);
+    set('rv-pro-rev',fmtE(stats.users.pro*9.99+stats.users.business*29.99));
+
+    const months=(rev.monthly_revenue||[]).slice(0,6).reverse();
+    const maxR=Math.max(...months.map(m=>parseFloat(m.revenue||0)),1);
+    document.getElementById('rev-chart-full').innerHTML=months.map(m=>{
+      const pct=Math.round(parseFloat(m.revenue||0)/maxR*100);
+      const label=new Date(m.month).toLocaleDateString('fr-FR',{month:'short',year:'2-digit'});
+      return`<div class="rev-bar-w"><div class="rev-bar-val">${parseFloat(m.revenue||0).toFixed(0)}€</div><div class="rev-bar" style="height:${Math.max(pct,3)}%"></div><div class="rev-bar-label">${label}</div></div>`;
+    }).join('')||'<span style="color:var(--muted);font-size:12px">Aucune donnée de revenus</span>';
+  }catch(e){toast('Revenus: '+e.message,'err');}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   USERS
+══════════════════════════════════════════════════════════════ */
+async function loadUsers(page=1){
+  currentPage=page;
+  try{
+    const search=document.getElementById('u-search')?.value||'';
+    const plan=document.getElementById('u-plan')?.value||'';
+    const status=document.getElementById('u-status')?.value||'';
+    const params=new URLSearchParams({page,limit:25});
+    if(search)params.set('search',search);
+    if(plan)params.set('plan',plan);
+    if(status)params.set('status',status);
+
+    const data=await api('/admin/users?'+params);
+    document.getElementById('users-tbody').innerHTML=(data.users||[]).map(u=>{
+      const quotaPct=Math.round((u.quota_used/u.quota_limit)*100);
+      return`<tr>
+        <td class="truncate" style="max-width:150px" title="${u.email}">${u.email}</td>
+        <td class="truncate" style="max-width:100px">${u.name||'—'}</td>
+        <td>${planBadge(u.is_lifetime?'lifetime':u.plan)}</td>
+        <td>${statusBadge(u.status)}</td>
+        <td style="min-width:80px">
+          <div style="font-size:11px;margin-bottom:3px;color:${quotaPct>=100?'var(--red)':quotaPct>=80?'var(--amber)':'var(--muted)'}">${u.quota_used}/${u.quota_limit}</div>
+          <div class="quota-bar"><div class="quota-fill ${quotaPct>=100?'full':quotaPct>=80?'warn':''}" style="width:${Math.min(quotaPct,100)}%"></div></div>
+        </td>
+        <td><span style="font-size:11px">${(u.language||'—').toUpperCase()}</span></td>
+        <td style="font-size:11px;color:var(--muted)">${fmtDateShort(u.created_at)}</td>
+        <td style="font-size:11px;color:var(--muted)">${fmtDateShort(u.last_login)}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="openUserModal('${u.id}')">⚙ Gérer</button></td>
+      </tr>`;
+    }).join('');
+
+    /* Pagination */
+    const p=data.pagination;
+    if(p&&p.pages>1){
+      let html=`<button class="page-btn" ${p.page<=1?'disabled':''} onclick="loadUsers(${p.page-1})">←</button>`;
+      for(let i=Math.max(1,p.page-2);i<=Math.min(p.pages,p.page+2);i++)
+        html+=`<button class="page-btn ${i===p.page?'active':''}" onclick="loadUsers(${i})">${i}</button>`;
+      html+=`<button class="page-btn" ${p.page>=p.pages?'disabled':''} onclick="loadUsers(${p.page+1})">→</button>`;
+      html+=`<span class="page-info">${p.total} utilisateurs</span>`;
+      document.getElementById('users-pag').innerHTML=html;
+    }
+  }catch(e){toast('Users: '+e.message,'err');}
+}
+
+async function loadFilteredUsers(plan){
+  try{
+    const plans=plan.split(',');
+    const allUsers=[];
+    for(const p of plans){
+      const data=await api('/admin/users?plan='+p+'&limit=100');
+      allUsers.push(...(data.users||[]));
+    }
+    const isPro=plan.includes('pro');
+    const tbId=isPro?'pro-tbody':'free-tbody';
+    document.getElementById(tbId).innerHTML=allUsers.map(u=>{
+      if(!isPro) return`<tr>
+        <td>${u.email}</td>
+        <td><span style="color:${u.quota_used>=u.quota_limit?'var(--red)':'var(--green)'}">
+          ${u.quota_used}/${u.quota_limit}
+        </span></td>
+        <td style="font-size:11px;color:var(--muted)">${fmtDateShort(u.created_at)}</td>
+        <td>
+          <button class="btn btn-primary btn-sm" onclick="quickUpgrade('${u.id}','${u.email}','pro')">↑ Pro</button>
+          <button class="btn btn-ghost btn-sm" onclick="openUserModal('${u.id}')">⚙</button>
+        </td>
+      </tr>`;
+      return`<tr>
+        <td>${u.email}</td>
+        <td>${planBadge(u.plan)}</td>
+        <td>${statusBadge(u.status)}</td>
+        <td style="font-size:11px;color:var(--muted)">${fmtDateShort(u.created_at)}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="openUserModal('${u.id}')">⚙</button></td>
+      </tr>`;
+    }).join('');
+  }catch(e){toast('Erreur: '+e.message,'err');}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PROMO CODES
+══════════════════════════════════════════════════════════════ */
+async function loadPromos(){
+  try{
+    const data=await api('/admin/promos');
+    document.getElementById('promos-tbody').innerHTML=(data.promos||[]).map(p=>`<tr>
+      <td><code style="background:var(--s2);padding:3px 8px;border-radius:4px;font-size:12px;color:var(--purple-l)">${p.code}</code></td>
+      <td><span class="badge badge-${p.type}">${p.type}</span></td>
+      <td>${p.plan?planBadge(p.plan):'<span class="badge">Tous</span>'}</td>
+      <td style="font-size:12px">${p.uses_count}/${p.max_uses===999?'∞':p.max_uses}</td>
+      <td style="font-size:11px;color:var(--muted)">${p.expires_at?fmtDateShort(p.expires_at):'Jamais'}</td>
+      <td><span class="badge ${p.is_active?'badge-active':'badge-cancelled'}">${p.is_active?'Actif':'Inactif'}</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="togglePromo('${p.id}')">${p.is_active?'Désactiver':'Activer'}</button></td>
+    </tr>`).join('')||`<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🎟</div><div class="empty-state-msg">Aucun code promo</div></div></td></tr>`;
+  }catch(e){toast('Promos: '+e.message,'err');}
+}
+
+async function togglePromo(id){
+  try{await api('/admin/promo/'+id+'/toggle',{method:'PUT'});toast('Statut code mis à jour');loadPromos();}
+  catch(e){toast(e.message,'err');}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LICENCES
+══════════════════════════════════════════════════════════════ */
+async function loadLicenses(){
+  try{
+    const data=await api('/admin/licenses');
+    document.getElementById('licenses-tbody').innerHTML=(data.licenses||[]).map(l=>`<tr>
+      <td>${l.user?.email||'—'}</td>
+      <td>${planBadge(l.plan)}</td>
+      <td style="font-size:12px;color:var(--muted)">${l.reason||'—'}</td>
+      <td style="font-size:11px">${l.granted_by?.email||'Admin'}</td>
+      <td style="font-size:11px;color:var(--muted)">${l.expires_at?fmtDateShort(l.expires_at):'♾️ Lifetime'}</td>
+      <td><span class="badge ${l.is_active?'badge-active':'badge-cancelled'}">${l.is_active?'Active':'Inactive'}</span></td>
+    </tr>`).join('')||`<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">📜</div><div class="empty-state-msg">Aucune licence manuelle</div></div></td></tr>`;
+  }catch(e){toast('Licences: '+e.message,'err');}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BETA INVITATIONS
+══════════════════════════════════════════════════════════════ */
+async function loadBeta(){
+  try{
+    const data=await api('/admin/beta/invitations');
+    document.getElementById('beta-tbody').innerHTML=(data.invitations||[]).map(i=>`<tr>
+      <td>${i.email}</td>
+      <td>${planBadge(i.plan||'pro')}</td>
+      <td><span class="badge badge-${i.status}">${i.status}</span></td>
+      <td style="font-size:11px;color:var(--muted)">${fmtDateShort(i.expires_at)}</td>
+      <td><code style="font-size:10px;background:var(--s2);padding:2px 6px;border-radius:4px">${i.token?.slice(0,16)}...</code></td>
+    </tr>`).join('')||`<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">🧪</div><div class="empty-state-msg">Aucune invitation bêta</div></div></td></tr>`;
+  }catch(e){toast('Bêta: '+e.message,'err');}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   LOGS
+══════════════════════════════════════════════════════════════ */
+async function loadLogs(){
+  try{
+    const data=await api('/admin/logs');
+    document.getElementById('logs-tbody').innerHTML=(data.logs||[]).map(l=>`<tr>
+      <td style="font-size:11px;color:var(--muted);white-space:nowrap">${fmtDate(l.created_at)}</td>
+      <td style="font-size:12px">${l.admin?.email||'Système'}</td>
+      <td><span class="badge badge-discount" style="font-family:monospace;font-size:10px">${l.action}</span></td>
+      <td style="font-size:12px">${l.target?.email||'—'}</td>
+      <td style="font-size:11px;color:var(--muted)">${l.details?JSON.stringify(l.details).slice(0,60)+'...':''}</td>
+    </tr>`).join('')||`<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Aucun log</td></tr>`;
+  }catch(e){toast('Logs: '+e.message,'err');}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MODALS
+══════════════════════════════════════════════════════════════ */
+async function openUserModal(userId){
+  try{
+    loader(true);
+    const data=await api('/admin/users/'+userId);
+    loader(false);
+    const u=data.user;
+    document.getElementById('modal-title').textContent='👤 '+u.email;
+    document.getElementById('modal-body').innerHTML=`
+      <div class="user-detail-hero">
+        <div class="user-avatar">${u.name?u.name[0].toUpperCase():'U'}</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600">${u.name||'Sans nom'}</div>
+          <div style="font-size:12px;color:var(--muted)">${u.email}</div>
+          <div style="display:flex;gap:6px;margin-top:6px">${planBadge(u.is_lifetime?'lifetime':u.plan)}${statusBadge(u.status)}${u.role==='admin'?'<span class="badge badge-admin">Admin</span>':''}</div>
+        </div>
+      </div>
+      <div>
+        ${[
+          ['ID',u.id?.slice(0,20)+'...'],
+          ['Langue',(u.language||'—').toUpperCase()],
+          ['Quota',u.quota_used+'/'+u.quota_limit+' ('+Math.round(u.quota_used/u.quota_limit*100)+'%)'],
+          ['Inscrit',fmtDate(u.created_at)],
+          ['Connexion',fmtDate(u.last_login)],
+        ].map(([l,v])=>`<div class="info-row"><span class="info-label">${l}</span><span class="info-val">${v}</span></div>`).join('')}
+      </div>
+      <div class="section-divider"></div>
+      <div class="user-detail-actions">
+        ${['free','pro','business'].map(p=>`<button class="btn ${p==='pro'?'btn-primary':p==='business'?'btn-green':'btn-ghost'} btn-sm" ${u.plan===p?'disabled':''} onclick="changePlan('${u.id}','${p}',this)">
+          ${p==='pro'?'↑ Pro':p==='business'?'↑ Business':'↓ Free'}
+        </button>`).join('')}
+        <button class="btn btn-amber btn-sm" onclick="changeStatus('${u.id}','${u.status==='active'?'suspended':'active'}',this)">
+          ${u.status==='active'?'⚠ Suspendre':'✓ Réactiver'}
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="grantLicenseToUser('${u.id}')">♾️ Lifetime</button>
+        <button class="btn btn-ghost btn-sm" onclick="resetQuota('${u.id}')">↺ Reset quota</button>
+      </div>
+      <div class="danger-zone">
+        <div class="danger-zone-title">⚠ Zone dangereuse</div>
+        <button class="btn btn-red btn-sm" onclick="deleteUser('${u.id}','${u.email}')">🗑 Supprimer définitivement</button>
+      </div>
+      ${data.recent_analyses?.length?`
+      <div class="section-divider"></div>
+      <div style="font-size:12px;font-weight:600;margin-bottom:8px">Dernières analyses</div>
+      ${data.recent_analyses.map(a=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid var(--b1)">
+        <span class="truncate" style="flex:1;color:var(--muted)">${a.title||a.video_id}</span>
+        <span style="color:${a.score_global>=70?'var(--green)':a.score_global>=50?'var(--amber)':'var(--red)'};font-weight:700">${a.score_global||'—'}</span>
+      </div>`).join('')}`:``}
+    `;
+    document.getElementById('modal-footer').innerHTML=`<button class="btn btn-ghost" onclick="closeModal()">Fermer</button>`;
+    document.getElementById('modal-overlay').classList.add('open');
+  }catch(e){loader(false);toast(e.message,'err');}
+}
+
+function openModal(type){
+  const titles={
+    'create-promo':'🎟 Créer un code promo',
+    'grant-license':'📜 Accorder une licence',
+    'beta-invite':'🧪 Invitations Bêta',
+  };
+  document.getElementById('modal-title').textContent=titles[type]||'Action';
+
+  const bodies={
+    'create-promo':`
+      <div class="form-group"><label class="form-label">Code (ex: SUMMER50)</label><input id="pc-code" class="form-input" placeholder="VIDSPARK2024" style="text-transform:uppercase"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Type</label>
+          <select id="pc-type" class="form-input"><option value="discount">Réduction %</option><option value="trial">Essai</option><option value="beta">Bêta</option><option value="lifetime">Lifetime</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Plan accordé</label>
+          <select id="pc-plan" class="form-input"><option value="pro">Pro</option><option value="business">Business</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Réduction (%)</label><input type="number" id="pc-discount" class="form-input" value="0" min="0" max="100"></div>
+        <div class="form-group"><label class="form-label">Essai (jours)</label><input type="number" id="pc-trial" class="form-input" value="30" min="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Utilisations max</label><input type="number" id="pc-max" class="form-input" value="100"></div>
+        <div class="form-group"><label class="form-label">Expire le (optionnel)</label><input type="date" id="pc-expires" class="form-input"></div>
+      </div>`,
+    'grant-license':`
+      <div class="form-group"><label class="form-label">Email utilisateur</label><input id="gl-email" class="form-input" placeholder="user@example.com" type="email"></div>
+      <div class="form-group"><label class="form-label">Type de licence</label>
+        <select id="gl-plan" class="form-input">
+          <option value="pro">Pro (durée limitée)</option>
+          <option value="business">Business (durée limitée)</option>
+          <option value="lifetime">Lifetime (♾️ permanent)</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Expire le (vide = lifetime)</label><input type="date" id="gl-expires" class="form-input"></div>
+      <div class="form-group"><label class="form-label">Raison (interne)</label><input id="gl-reason" class="form-input" placeholder="Partenaire, influenceur, équipe..."></div>`,
+    'beta-invite':`
+      <div class="form-group"><label class="form-label">Emails (un par ligne)</label>
+        <textarea id="bi-emails" class="form-input" rows="6" placeholder="user1@gmail.com&#10;user2@gmail.com&#10;user3@gmail.com" style="resize:vertical"></textarea>
+      </div>
+      <div class="form-group"><label class="form-label">Plan accordé</label>
+        <select id="bi-plan" class="form-input"><option value="pro">Pro</option><option value="business">Business</option></select>
+      </div>
+      <div style="font-size:12px;color:var(--muted)">Chaque email recevra un lien d'invitation valable 7 jours.</div>`,
+  };
+
+  const cbs={
+    'create-promo':async()=>{
+      const code=document.getElementById('pc-code').value.toUpperCase().trim();
+      const type=document.getElementById('pc-type').value;
+      const plan=document.getElementById('pc-plan').value;
+      const discount=parseInt(document.getElementById('pc-discount').value)||0;
+      const trial=parseInt(document.getElementById('pc-trial').value)||0;
+      const max=parseInt(document.getElementById('pc-max').value)||100;
+      const expires=document.getElementById('pc-expires').value||null;
+      if(!code)throw new Error('Code requis');
+      await api('/admin/promo',{method:'POST',body:{code,type,plan,discount_pct:discount,trial_days:trial,max_uses:max,expires_at:expires}});
+      toast('Code promo '+code+' créé ✓');
+      loadPromos();
+    },
+    'grant-license':async()=>{
+      const email=document.getElementById('gl-email').value;
+      const plan=document.getElementById('gl-plan').value;
+      const expires=document.getElementById('gl-expires').value||null;
+      const reason=document.getElementById('gl-reason').value;
+      if(!email)throw new Error('Email requis');
+      // Trouver user_id par email
+      const users=await api('/admin/users?search='+encodeURIComponent(email)+'&limit=1');
+      const u=users.users?.[0];
+      if(!u)throw new Error('Utilisateur '+email+' introuvable');
+      await api('/admin/license',{method:'POST',body:{user_id:u.id,plan,reason,expires_at:expires}});
+      toast('Licence '+plan+' accordée à '+email+' ✓');
+      loadLicenses();
+    },
+    'beta-invite':async()=>{
+      const raw=document.getElementById('bi-emails').value;
+      const plan=document.getElementById('bi-plan').value;
+      const emails=raw.split('\n').map(e=>e.trim()).filter(Boolean);
+      if(!emails.length)throw new Error('Emails requis');
+      const res=await api('/admin/beta/invite',{method:'POST',body:{emails,plan}});
+      toast(res.invited+' invitations envoyées ✓');
+      loadBeta();
+    },
+  };
+
+  document.getElementById('modal-body').innerHTML=bodies[type]||'';
+  document.getElementById('modal-footer').innerHTML=`
+    <button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+    <button class="btn btn-primary" id="modal-ok">Confirmer</button>`;
+  document.getElementById('modal-ok').onclick=async()=>{
+    try{await cbs[type]();closeModal();}
+    catch(e){toast(e.message,'err');}
+  };
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target.id==='modal-overlay')closeModal();});
+
+/* ══════════════════════════════════════════════════════════════
+   USER ACTIONS
+══════════════════════════════════════════════════════════════ */
+async function changePlan(id,plan,btn){
+  try{
+    btn.disabled=true;btn.textContent='⏳';
+    await api('/admin/users/'+id+'/plan',{method:'PUT',body:{plan}});
+    toast('Plan mis à jour → '+plan+' ✓');
+    closeModal();
+    loadSection(currentSection);
+  }catch(e){toast(e.message,'err');btn.disabled=false;}
+}
+
+async function changeStatus(id,status,btn){
+  try{
+    btn.disabled=true;
+    await api('/admin/users/'+id+'/status',{method:'PUT',body:{status}});
+    toast('Statut → '+status+' ✓');
+    closeModal();
+    loadSection(currentSection);
+  }catch(e){toast(e.message,'err');btn.disabled=false;}
+}
+
+async function grantLicenseToUser(userId){
+  try{
+    await api('/admin/license',{method:'POST',body:{user_id:userId,plan:'lifetime',reason:'Admin grant'}});
+    toast('Licence Lifetime accordée ✓');
+    closeModal();
+  }catch(e){toast(e.message,'err');}
+}
+
+async function resetQuota(userId){
+  try{
+    await api('/admin/users/'+userId+'/plan',{method:'PUT',body:{plan:'free'}});
+    toast('Quota réinitialisé ✓');
+  }catch(e){toast(e.message,'err');}
+}
+
+async function deleteUser(id,email){
+  if(!confirm('SUPPRIMER DÉFINITIVEMENT '+email+' ?\n\nCette action est irréversible et supprimera toutes les données.'))return;
+  try{
+    await api('/admin/users/'+id,{method:'DELETE'});
+    toast('Compte supprimé ✓');
+    closeModal();
+    loadUsers(currentPage);
+  }catch(e){toast(e.message,'err');}
+}
+
+async function quickUpgrade(id,email,plan){
+  if(!confirm('Passer '+email+' en '+plan.toUpperCase()+' ?\n(Sans paiement — licence manuelle)'))return;
+  try{
+    await api('/admin/users/'+id+'/plan',{method:'PUT',body:{plan}});
+    toast(email+' → '+plan+' ✓');
+    loadFilteredUsers('free');
+  }catch(e){toast(e.message,'err');}
+}
+
+function openBulkUpgrade(){
+  toast('Sélectionnez les utilisateurs individuellement pour l\'upgrade en masse.','warn');
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EXPORT CSV
+══════════════════════════════════════════════════════════════ */
+function exportCSV(){
+  toast('Export en cours...','warn');
+  api('/admin/users?limit=5000').then(data=>{
+    const rows=[['ID','Email','Nom','Plan','Statut','Quota','Langue','Pays','Inscrit','Dernière connexion']];
+    (data.users||[]).forEach(u=>rows.push([u.id,u.email,u.name||'',u.plan,u.status,u.quota_used+'/'+u.quota_limit,u.language||'',u.country||'',u.created_at,u.last_login]));
+    const csv=rows.map(r=>r.map(c=>`"${(c||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download='vidspark-users-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+    toast('Export téléchargé ✓');
+  }).catch(e=>toast('Export: '+e.message,'err'));
+}
+
+/* ══════════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════════ */
+loader(true);
+checkAuth();
+
+// Keyboard nav
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeModal();
+  if(e.key==='Enter'&&document.getElementById('login-view').style.display!=='none'){
+    document.getElementById('login-btn').click();
+  }
+});
+</script>
+</body>
+</html>
