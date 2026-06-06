@@ -31,6 +31,25 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
+  // 🚪 Message de logout du website-bridge
+  if (message.type === "VIDSPARK_LOGOUT") {
+    console.log("[Background] 🚪 Logout received, clearing storage");
+
+    chrome.storage.local.set({
+      userToken: null,
+      userPlan: 'free',
+      userEmail: null,
+      userAvatar: null,
+      userName: null,
+      authTimestamp: null
+    }, () => {
+      console.log("[Background] ✅ Storage cleared");
+      sendResponse({ success: true, message: "Logged out" });
+    });
+
+    return true;
+  }
+
   // 🔐 Message d'authentification du website-bridge
   if (message.type === "VIDSPARK_SET_AUTH") {
     console.log("[Background] Auth message received:", message.payload);

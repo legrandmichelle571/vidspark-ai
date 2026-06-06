@@ -61,7 +61,21 @@ window.addEventListener('message', (event) => {
     return;
   }
 
-  // Écouter les deux types de messages possibles
+  // LOGOUT — Nettoyer l'extension
+  if (event.data.type === 'VIDSPARK_LOGOUT') {
+    console.log("[Website Bridge] 🚪 Logout message received");
+
+    // Relayer au background script pour nettoyer le storage
+    chrome.runtime.sendMessage({
+      type: 'VIDSPARK_LOGOUT'
+    }, (response) => {
+      console.log("[Website Bridge] Extension logged out");
+    });
+
+    return;
+  }
+
+  // AUTH — Mettre à jour l'authentification
   if (event.data.type === 'VIDSPARK_AUTH' || event.data.type === 'VIDSPARK_AUTH_UPDATE') {
     console.log("[Website Bridge] ✅ Auth message received:", event.data);
 
