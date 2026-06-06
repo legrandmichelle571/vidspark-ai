@@ -2971,14 +2971,35 @@ function createPanel(){
 
   /* ── Vérifier si l'utilisateur est connecté ── */
   if(!currentUserToken || !currentUserEmail){
-    // Afficher un petit banner de connexion au lieu du panel
+    // Afficher un banner de connexion styled avec BOUTON
     const banner=document.createElement("div");
     banner.id="echo-rank-panel";
-    banner.style.cssText="background:#1a1a2e;border:1px solid #333;border-radius:8px;padding:16px;text-align:center;margin-bottom:12px";
+    banner.style.cssText="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border:2px solid #7c6dfa;border-radius:12px;padding:24px;text-align:center;margin-bottom:12px;box-shadow:0 8px 24px rgba(124,109,250,0.2)";
     banner.innerHTML=`
-      <p style="color:#aaa;font-size:14px;margin:0 0 12px;">Connectez-vous pour utiliser VidSpark AI</p>
-      <a href="https://vidsparkpro.com/dashboard.html" target="_blank" style="background:#7c6dfa;color:white;padding:8px 16px;border-radius:6px;text-decoration:none;display:inline-block;font-weight:bold;font-size:13px">Se connecter →</a>
+      <div style="margin-bottom:16px">
+        <div style="font-size:32px;margin-bottom:8px">🔐</div>
+        <h2 style="color:#7c6dfa;margin:0 0 8px;font-size:18px;font-weight:800">VidSpark AI</h2>
+        <p style="color:#aaa;margin:0;font-size:13px">Connectez-vous pour analyser vos vidéos</p>
+      </div>
+      <button id="loginBtn" style="background:#7c6dfa;color:white;padding:12px 32px;border:none;border-radius:8px;font-weight:bold;font-size:14px;cursor:pointer;width:100%;transition:all 0.2s">
+        🔑 Se connecter avec Google
+      </button>
     `;
+
+    // Ajouter event listener au bouton
+    const loginBtn = banner.querySelector('#loginBtn');
+    loginBtn.addEventListener('click', () => {
+      window.open('https://vidsparkpro.com/dashboard.html','_blank');
+    });
+    loginBtn.addEventListener('mouseover', () => {
+      loginBtn.style.background = '#a78bfa';
+      loginBtn.style.transform = 'scale(1.02)';
+    });
+    loginBtn.addEventListener('mouseout', () => {
+      loginBtn.style.background = '#7c6dfa';
+      loginBtn.style.transform = 'scale(1)';
+    });
+
     target.prepend(banner);
     panelMounted=true;
     return;
