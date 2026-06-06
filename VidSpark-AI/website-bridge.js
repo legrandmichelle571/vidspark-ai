@@ -53,12 +53,17 @@ setInterval(() => {
  * Écouter les post messages du dashboard avec les infos d'authentification
  */
 window.addEventListener('message', (event) => {
-  // Accepter seulement les messages depuis la même origine
-  if (event.origin !== window.location.origin) return;
+  console.log("[Website Bridge] Message received from:", event.origin, "Data:", event.data);
+
+  // Accepter les messages depuis la même origine OU depuis le site principal
+  if (event.origin !== window.location.origin && !event.origin.includes('pages.dev') && !event.origin.includes('vidsparkpro')) {
+    console.log("[Website Bridge] Rejected - origin mismatch:", event.origin);
+    return;
+  }
 
   // Écouter les deux types de messages possibles
   if (event.data.type === 'VIDSPARK_AUTH' || event.data.type === 'VIDSPARK_AUTH_UPDATE') {
-    console.log("[Website Bridge] Received auth message:", event.data);
+    console.log("[Website Bridge] ✅ Auth message received:", event.data);
 
     // Relayer au background script de l'extension
     chrome.runtime.sendMessage({
