@@ -27,26 +27,30 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(compression());
 app.use(morgan('combined'));
 /* ── CORS : validation stricte des origines autorisées ── */
+const _defaultOrigins = [
+  'https://vidspark-site.pages.dev',
+  'https://vidsparkpro.com',
+  'https://www.vidsparkpro.com',
+  'http://localhost:3000',
+  'http://localhost:8000'
+];
 const _allowedOrigins = process.env.ALLOWED_ORIGINS
-  ?.split(',').map(o => o.trim()).filter(Boolean) || [];
+  ?.split(',').map(o => o.trim()).filter(Boolean) || _defaultOrigins;
 
 if (_allowedOrigins.length === 0) {
-  if (process.env.NODE_ENV === 'production') {
-    console.error('[CORS] ⚠️ ALLOWED_ORIGINS non défini en production — toutes les requêtes cross-origin seront rejetées. Ajouter l\'ID de l\'extension dans ALLOWED_ORIGINS du .env');
-  } else {
-    console.warn('[CORS] ALLOWED_ORIGINS non défini — toutes origines autorisées en développement');
-  }
+  console.warn('[CORS] ⚠️ ALLOWED_ORIGINS vide — utilisant les domaines par défaut');
 }
 
 app.use(cors({
   origin: function(origin, callback) {
     /* Requêtes sans origin : Postman, curl, server-to-server → toujours autorisées */
     if (!origin) return callback(null, true);
-    /* Développement sans liste configurée → tout autoriser */
-    if (_allowedOrigins.length === 0 && process.env.NODE_ENV !== 'production') {
+    /* Vérifier si origin est dans la liste */
+    if (_allowedOrigins.includes(origin)) return callback(null, true);
+    /* Autoriser en développement sans liste spécifiée */
+    if (process.env.NODE_ENV !== 'production') {
       return callback(null, true);
     }
-    if (_allowedOrigins.includes(origin)) return callback(null, true);
     callback(new Error('CORS: origine non autorisée — ' + origin));
   },
   credentials: true
