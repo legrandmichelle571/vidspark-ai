@@ -4,13 +4,17 @@
   "version": "4.0",
   "description": "YouTube SEO Intelligence — AI-powered analysis",
   "permissions": ["activeTab", "storage", "clipboardWrite"],
-  "host_permissions": ["*://*.youtube.com/*"],
+  "host_permissions": ["*://*.youtube.com/*", "https://vidsparkpro.com/*", "https://*.vidsparkpro.com/*"],
   "background": { "service_worker": "background.js" },
   "content_scripts": [{
     "matches": ["*://*.youtube.com/*"],
     "js": ["content.js"],
     "css": ["styles.css"],
     "run_at": "document_idle"
+  }, {
+    "matches": ["https://vidsparkpro.com/*", "https://*.vidsparkpro.com/*"],
+    "js": ["website-bridge.js"],
+    "run_at": "document_start"
   }],
   "web_accessible_resources": [{
     "resources": ["ai-report.html", "report.css", "icon.png"],

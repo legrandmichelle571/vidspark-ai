@@ -50,19 +50,33 @@ setInterval(() => {
 }, 2000);
 
 /**
- * Aussi, écouter les post messages en cas de communication directe
+ * Écouter les post messages du dashboard avec les infos d'authentification
  */
 window.addEventListener('message', (event) => {
-  // Accepter seulement les messages depuis vidsparkpro.com
+  // Accepter seulement les messages depuis la même origine
   if (event.origin !== window.location.origin) return;
 
-  if (event.data.type === 'VIDSPARK_AUTH_UPDATE') {
-    console.log("[Website Bridge] Received post message auth update");
+  // Écouter les deux types de messages possibles
+  if (event.data.type === 'VIDSPARK_AUTH' || event.data.type === 'VIDSPARK_AUTH_UPDATE') {
+    console.log("[Website Bridge] Received auth message:", event.data);
 
     // Relayer au background script de l'extension
     chrome.runtime.sendMessage({
       type: 'VIDSPARK_SET_AUTH',
-      payload: event.data.payload
+      payload: {
+        email: event.data.email,
+        token: event.data.token,
+        plan: event.data.plan,
+        avatar: event.data.avatar,
+        name: event.data.name,
+        timestamp: event.data.timestamp
+      }
+    }, (response) => {
+      if (chrome.runtime.lastError) {
+        console.log('[Website Bridge] Extension error:', chrome.runtime.lastError);
+      } else {
+        console.log('[Website Bridge] Auth relayed successfully');
+      }
     });
   }
 });

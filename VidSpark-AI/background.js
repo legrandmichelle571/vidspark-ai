@@ -31,6 +31,27 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
+  // 🔐 Message d'authentification du website-bridge
+  if (message.type === "VIDSPARK_SET_AUTH") {
+    console.log("[Background] Auth message received:", message.payload);
+
+    // Stocker dans chrome.storage.local
+    chrome.storage.local.set({
+      userToken: message.payload.token,
+      userPlan: message.payload.plan || 'free',
+      userEmail: message.payload.email,
+      userAvatar: message.payload.avatar || '',
+      userName: message.payload.name || message.payload.email,
+      authTimestamp: message.payload.timestamp || Date.now()
+    }, () => {
+      console.log("[Background] Auth stored in storage");
+      sendResponse({ success: true, message: "Auth stored" });
+    });
+
+    return true;
+  }
+
+  // Autres messages API
   if (!sender.tab) return;
   if (message.type !== "ECHORANK_API_REQUEST") return;
 

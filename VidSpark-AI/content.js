@@ -3297,6 +3297,24 @@ chrome.storage.local.get(["echoLanguage","userPlan","userEmail","userAvatar","us
 });
 
 /* ══════════════════════════════════════════════════════════════
+   ÉCOUTER LES CHANGEMENTS DE STORAGE (mises à jour auth)
+══════════════════════════════════════════════════════════════ */
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if(areaName !== 'local')return;
+  // Si le plan ou l'email change, recharger le panel
+  if(changes.userPlan || changes.userEmail || changes.userToken){
+    console.log('[VidSpark] Storage changed, reloading panel...');
+    if(changes.userToken)currentUserToken = changes.userToken.newValue;
+    if(changes.userEmail)currentUserEmail = changes.userEmail.newValue;
+    if(changes.userAvatar)currentUserAvatar = changes.userAvatar.newValue;
+    if(changes.userName)currentUserName = changes.userName.newValue;
+    if(changes.userPlan)currentPlan = changes.userPlan.newValue;
+    panelMounted = false;
+    setTimeout(() => createPanel(), 500);
+  }
+});
+
+/* ══════════════════════════════════════════════════════════════
    AUTHENTIFICATION — Écouter les messages du site
 ══════════════════════════════════════════════════════════════ */
 window.addEventListener('message', async (event) => {
