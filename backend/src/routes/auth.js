@@ -161,11 +161,18 @@ router.post('/google', async (req, res) => {
     const supabase = req.app.locals.supabase;
 
     // Vérifier si l'utilisateur existe déjà
-    const { data: existingUser } = await supabase
+    const { data: existingUser, error: selectErr } = await supabase
       .from('users')
-      .select('activation_id, plan, subscription_expiry')
+      .select('id, activation_id, plan, subscription_expiry')
       .eq('auth_id', data.user.id)
       .single();
+
+    if (selectErr || !existingUser) {
+      console.error('[POST /auth/google] User not found for auth_id:', data.user.id, selectErr);
+      return res.status(404).json({ error: 'Utilisateur non trouvé. Veuillez créer un compte d\'abord.' });
+    }
+
+    console.log('[POST /auth/google] User found:', { user_id: existingUser.id, auth_id: data.user.id });
 
     // Générer ou régénérer ID + Secret
     let activationId = existingUser?.activation_id || generateActivationId();
@@ -183,7 +190,7 @@ router.post('/google', async (req, res) => {
       subscriptionExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 jours par défaut (FREE)
     }
 
-    const { error: updateErr } = await supabase.from('users')
+    const { error: updateErr, data: updateData, count: updateCount } = await supabase.from('users')
       .update({
         last_login: new Date().toISOString(),
         activation_id: activationId,
@@ -194,9 +201,16 @@ router.post('/google', async (req, res) => {
 
     if (updateErr) {
       console.error('[POST /auth/google] Activation update error:', updateErr);
-    } else {
-      console.log('[POST /auth/google] Activation saved:', { activationId, subscriptionExpiry });
+      return res.status(500).json({ error: 'Erreur lors de la sauvegarde de l\'activation' });
     }
+
+    console.log('[POST /auth/google] Activation saved:', {
+      activationId,
+      subscriptionExpiry,
+      updateCount,
+      user_id: existingUser.id,
+      auth_id: data.user.id
+    });
 
     const { data: dbUser, error: dbErr } = await supabase
       .from('users')
