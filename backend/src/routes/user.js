@@ -13,11 +13,32 @@ const { requireAuth }  = require('../middleware/auth');
 const { getLimits }    = require('../config/plans');
 
 /* ── Mon profil ── */
-router.get('/me', requireAuth, (req, res) => {
-  const { id, email, name, avatar, plan, status, role,
-          quota_used, quota_limit, language, created_at } = req.user;
-  res.json({ id, email, name, avatar, plan, status, role,
-             quota_used, quota_limit, language, created_at });
+router.get('/me', requireAuth, async (req, res) => {
+  try {
+    const supabase = req.app.locals.supabase;
+    const { id, email, name, avatar, plan, status, role,
+            quota_used, quota_limit, language, created_at } = req.user;
+
+    // Récupérer aussi l'ID d'activation et le Secret
+    const { data: userData, error } = await supabase
+      .from('users')
+      .select('activation_id, activation_secret, subscription_expiry')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+
+    res.json({
+      id, email, name, avatar, plan, status, role,
+      quota_used, quota_limit, language, created_at,
+      activation_id: userData?.activation_id,
+      activation_secret: userData?.activation_secret,
+      subscription_expiry: userData?.subscription_expiry
+    });
+  } catch (err) {
+    console.error('[GET /me]', err);
+    res.status(500).json({ error: 'Erreur lors de la récupération du profil' });
+  }
 });
 
 /* ── Mettre à jour le profil ── */
