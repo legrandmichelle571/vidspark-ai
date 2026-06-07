@@ -26,7 +26,16 @@ router.get('/me', requireAuth, async (req, res) => {
       .eq('id', id)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('[GET /user/me] Error fetching activation:', error);
+      throw error;
+    }
+
+    console.log('[GET /user/me] User activation data:', {
+      activation_id: userData?.activation_id,
+      activation_secret: userData?.activation_secret,
+      subscription_expiry: userData?.subscription_expiry
+    });
 
     res.json({
       id, email, name, avatar, plan, status, role,

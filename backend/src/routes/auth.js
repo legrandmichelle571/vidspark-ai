@@ -183,7 +183,7 @@ router.post('/google', async (req, res) => {
       subscriptionExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 jours par défaut (FREE)
     }
 
-    await supabase.from('users')
+    const { error: updateErr } = await supabase.from('users')
       .update({
         last_login: new Date().toISOString(),
         activation_id: activationId,
@@ -191,6 +191,12 @@ router.post('/google', async (req, res) => {
         subscription_expiry: subscriptionExpiry.toISOString()
       })
       .eq('auth_id', data.user.id);
+
+    if (updateErr) {
+      console.error('[POST /auth/google] Activation update error:', updateErr);
+    } else {
+      console.log('[POST /auth/google] Activation saved:', { activationId, subscriptionExpiry });
+    }
 
     const { data: dbUser, error: dbErr } = await supabase
       .from('users')
