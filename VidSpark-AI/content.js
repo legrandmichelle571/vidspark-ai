@@ -1915,6 +1915,7 @@ let currentUserEmail = null;
 let currentUserAvatar = null;
 let currentUserName = null;
 let panelMounted    = false;
+let panelCreating   = false; // Verrou anti-doublon
 let lastUrl         = location.href;
 let activeTab       = "overview";
 
@@ -1971,6 +1972,35 @@ function getVideoData(){
   const descLength=descEl?.innerText?.length||0;
   const thumb=`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
   return {videoId,title,views,description,descLength,thumb,isShort};
+}
+
+/**
+ * Extraire le Channel ID YouTube de la page actuelle
+ */
+function extractYouTubeChannelId(){
+  try {
+    // Chercher dans les meta tags
+    const metaTags = document.querySelectorAll('meta[property], meta[name]');
+    for (let tag of metaTags) {
+      const property = tag.getAttribute('property') || tag.getAttribute('name');
+      if (property?.includes('channelId') || property?.includes('channel_id')) {
+        return tag.getAttribute('content');
+      }
+    }
+
+    // Chercher dans le HTML
+    const match = document.documentElement.innerHTML.match(/"channelId":"(UC[a-zA-Z0-9_-]{22})"/);
+    if (match) return match[1];
+
+    // Chercher dans l'URL (channel/UCxxxxx)
+    const urlMatch = window.location.href.match(/\/channel\/(UC[a-zA-Z0-9_-]{22})/);
+    if (urlMatch) return urlMatch[1];
+
+    return null;
+  } catch (err) {
+    console.error('[VidSpark] Error extracting channel ID:', err);
+    return null;
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -2952,7 +2982,8 @@ function renderActions(data){
 /* ══════════════════════════════════════════════════════════════
    CRÉATION DU PANEL
 ══════════════════════════════════════════════════════════════ */
-function createPanel(){
+async function createPanel(){
+  if(panelCreating)return; // Empêcher les appels simultanés
   if(!isVideoPage()){
     const old=document.getElementById("echo-rank-panel");
     if(old){old.remove();panelMounted=false;}
@@ -2962,6 +2993,7 @@ function createPanel(){
   if(!data)return;
   if(panelMounted&&data.videoId===currentVideoId)return;
 
+  panelCreating=true; // Verrouiller
   const old=document.getElementById("echo-rank-panel");
   if(old)old.remove();
   panelMounted=false;
@@ -3002,7 +3034,146 @@ function createPanel(){
 
     target.prepend(banner);
     panelMounted=true;
+    panelCreating=false; // Déverrouiller
     return;
+  }
+
+  // 🔒 VÉRIFIER LA CHAÎNE YOUTUBE AUTORISÉE (comparaison locale)
+  if (currentUserToken) {
+    const storage = await new Promise(resolve => chrome.storage.local.get("authorizedChannelIds", resolve));
+    const authorizedIds = storage.authorizedChannelIds || [];
+
+    // Si l'utilisateur a des chaînes enregistrées, vérifier
+    if (authorizedIds.length > 0) {
+      const youtubeChannelId = extractYouTubeChannelId();
+      const isAuthorized = youtubeChannelId && authorizedIds.includes(youtubeChannelId);
+
+      if (!isAuthorized) {
+        // CHAÎNE NON AUTORISÉE → bloquer
+        const existingPanel = document.getElementById('echo-rank-panel');
+        if (existingPanel) existingPanel.remove();
+
+        const blockedBanner = document.createElement('div');
+        blockedBanner.id = 'echo-rank-panel';
+        blockedBanner.style.cssText = 'background:linear-gradient(135deg,#2e1a1a 0%,#3e1616 100%);border:2px solid #fa6d6d;border-radius:12px;padding:24px;text-align:center;margin-bottom:12px;box-shadow:0 8px 24px rgba(250,109,109,0.2)';
+        blockedBanner.innerHTML = `
+          <div style="margin-bottom:16px">
+            <div style="font-size:32px;margin-bottom:8px">⛔</div>
+            <h2 style="color:#fa6d6d;margin:0 0 8px;font-size:18px;font-weight:800">Chaîne non autorisée</h2>
+            <p style="color:#aaa;margin:0;font-size:13px">Cette chaîne YouTube n'est pas connectée à votre compte VidSpark AI.</p>
+          </div>
+          <button id="manageBtn" style="background:#fa6d6d;color:white;padding:12px 32px;border:none;border-radius:8px;font-weight:bold;font-size:14px;cursor:pointer;width:100%;transition:all 0.2s">
+            ⚙️ Gérer mes chaînes
+          </button>
+        `;
+        blockedBanner.querySelector('#manageBtn').addEventListener('click', () => {
+          window.open('https://vidspark-site.pages.dev/dashboard', '_blank');
+        });
+
+        target.prepend(blockedBanner);
+        panelMounted = true;
+        currentVideoId = data.videoId;
+        panelCreating = false;
+        return;
+      }
+    } else {
+      // Aucune chaîne enregistrée → demander à l'utilisateur de coller l'URL de SA chaîne
+      const existingPanel = document.getElementById('echo-rank-panel');
+      if (existingPanel) existingPanel.remove();
+
+      const connectBanner = document.createElement('div');
+      connectBanner.id = 'echo-rank-panel';
+      connectBanner.style.cssText = 'background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border:2px solid #7c6dfa;border-radius:12px;padding:24px;margin-bottom:12px;box-shadow:0 8px 24px rgba(124,109,250,0.2)';
+      connectBanner.innerHTML = `
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-size:32px;margin-bottom:8px">🔗</div>
+          <h2 style="color:#7c6dfa;margin:0 0 6px;font-size:17px;font-weight:800">Connecter votre chaîne</h2>
+          <p style="color:#aaa;margin:0;font-size:12px">Collez l'URL de votre chaîne YouTube</p>
+        </div>
+        <input id="channelUrlInput" placeholder="https://www.youtube.com/@VotreChaine" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid #7c6dfa;background:#0f0f1a;color:#fff;font-size:13px;margin-bottom:10px;outline:none"/>
+        <button id="connectChannelBtn" style="background:#7c6dfa;color:white;padding:11px 32px;border:none;border-radius:8px;font-weight:bold;font-size:14px;cursor:pointer;width:100%;transition:all 0.2s">
+          ✅ Enregistrer ma chaîne
+        </button>
+        <p id="connectStatus" style="color:#aaa;font-size:11px;margin:8px 0 0;text-align:center;"></p>
+        <p style="color:#666;font-size:10px;margin:10px 0 0;text-align:center;">Exemple : youtube.com/@NomChaine ou youtube.com/channel/UCxxxxx</p>
+      `;
+
+      const connectBtn = connectBanner.querySelector('#connectChannelBtn');
+      const channelInput = connectBanner.querySelector('#channelUrlInput');
+      const connectStatus = connectBanner.querySelector('#connectStatus');
+
+      function extractChannelIdFromUrl(url) {
+        // Format /channel/UCxxxxx
+        const m1 = url.match(/\/channel\/(UC[a-zA-Z0-9_-]{22})/);
+        if (m1) return { id: m1[1], name: m1[1] };
+        // Format /@handle ou /c/name ou /user/name
+        const m2 = url.match(/\/@([^/?&]+)|\/c\/([^/?&]+)|\/user\/([^/?&]+)/);
+        if (m2) return { id: null, handle: m2[1] || m2[2] || m2[3] };
+        return null;
+      }
+
+      connectBtn.addEventListener('click', async () => {
+        const inputVal = channelInput.value.trim();
+        if (!inputVal) {
+          connectStatus.style.color = '#fa6d6d';
+          connectStatus.textContent = '⚠️ Collez l\'URL de votre chaîne YouTube';
+          return;
+        }
+
+        const parsed = extractChannelIdFromUrl(inputVal);
+        if (!parsed) {
+          connectStatus.style.color = '#fa6d6d';
+          connectStatus.textContent = '⚠️ URL non reconnue. Ex: youtube.com/@VotreChaine';
+          return;
+        }
+
+        connectBtn.disabled = true;
+        connectBtn.textContent = '⏳ Enregistrement...';
+        connectStatus.textContent = '';
+
+        // Si on a un handle (@nom) on essaie de résoudre via la page
+        let channelId = parsed.id;
+        let channelName = parsed.handle || channelId;
+
+        if (!channelId && parsed.handle) {
+          // Chercher l'ID dans le HTML de la page actuelle ou utiliser le handle comme nom
+          const pageMatch = document.documentElement.innerHTML.match(/"channelId":"(UC[a-zA-Z0-9_-]{22})"/);
+          if (pageMatch) channelId = pageMatch[1];
+          else channelId = 'handle:' + parsed.handle; // fallback
+        }
+
+        try {
+          const res = await fetch('https://vidspark-ai-production-9ac7.up.railway.app/api/channels/select', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentUserToken}` },
+            body: JSON.stringify({ channels: [{ youtube_channel_id: channelId, channel_name: channelName }] })
+          });
+          const body = await res.json();
+          if (res.ok) {
+            connectStatus.style.color = '#4ade80';
+            connectStatus.textContent = '✅ Chaîne enregistrée ! Rechargement...';
+            await chrome.storage.local.set({ authorizedChannelIds: [channelId] });
+            setTimeout(() => { panelMounted = false; panelCreating = false; createPanel(); }, 1500);
+          } else {
+            connectStatus.style.color = '#fa6d6d';
+            connectStatus.textContent = body.error || 'Erreur serveur';
+            connectBtn.disabled = false;
+            connectBtn.textContent = '✅ Enregistrer ma chaîne';
+          }
+        } catch(e) {
+          connectStatus.style.color = '#fa6d6d';
+          connectStatus.textContent = 'Erreur réseau : ' + e.message;
+          connectBtn.disabled = false;
+          connectBtn.textContent = '✅ Enregistrer ma chaîne';
+        }
+      });
+
+      target.prepend(connectBanner);
+      panelMounted = true;
+      currentVideoId = data.videoId;
+      panelCreating = false;
+      return;
+    }
   }
 
   currentVideoId=data.videoId;
@@ -3065,6 +3236,7 @@ function createPanel(){
     target.prepend(panel);
   }
   panelMounted=true;
+  panelCreating=false; // Déverrouiller
 
   /* ── RTL ARABE ── */
   if(currentLanguage==="ar"){
@@ -3293,7 +3465,23 @@ function addShortsToggle(panel){
 /* ══════════════════════════════════════════════════════════════
    BOOTSTRAP
 ══════════════════════════════════════════════════════════════ */
-chrome.storage.local.get(["echoLanguage","userPlan","userEmail","userAvatar","userName","userToken"],result=>{
+chrome.storage.local.get(["activation_id","subscription_expiry","echoLanguage","userPlan","userEmail","userAvatar","userName","userToken","authorizedChannelIds"],result=>{
+  // Vérifier l'activation
+  if(!result.activation_id || !result.subscription_expiry){
+    console.log('[VidSpark] Extension non activée. Activez via la popup.');
+    return; // Ne rien charger si pas activée
+  }
+
+  // Vérifier l'expiration du forfait
+  const expiryDate = new Date(result.subscription_expiry);
+  if(expiryDate < new Date()){
+    console.log('[VidSpark] Forfait expiré.');
+    return;
+  }
+
+  // ✅ Activation valide — charger l'extension
+  console.log('[VidSpark] Extension activée, forfait valide jusqu\'à:', expiryDate.toLocaleDateString());
+
   if(result.echoLanguage)currentLanguage=result.echoLanguage;
   if(result.userPlan)currentPlan=result.userPlan;
   if(result.userEmail)currentUserEmail=result.userEmail;
@@ -3304,17 +3492,15 @@ chrome.storage.local.get(["echoLanguage","userPlan","userEmail","userAvatar","us
     console.log('[VidSpark] User auto-loaded from storage:', { email: result.userEmail, plan: result.userPlan });
   }
   createPanel();
-  setTimeout(createPanel,2500);
-  setTimeout(createPanel,5000);
+  // Observer pour les changements de vidéo/URL (plus efficace que setInterval)
   setInterval(()=>{
     const cur=location.href;
     const vid=extractVideoId();
     if(cur!==lastUrl||(vid&&vid!==currentVideoId)){
       lastUrl=cur;panelMounted=false;currentVideoId=null;
-      setTimeout(createPanel,800);
-      setTimeout(createPanel,2000);
+      setTimeout(createPanel,500);  // UN SEUL appel
     }
-  },500);
+  },1000);  // Vérifier MOINS souvent (1sec au lieu de 500ms)
 });
 
 /* ══════════════════════════════════════════════════════════════
@@ -3322,8 +3508,8 @@ chrome.storage.local.get(["echoLanguage","userPlan","userEmail","userAvatar","us
 ══════════════════════════════════════════════════════════════ */
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if(areaName !== 'local')return;
-  // Si le plan ou l'email change, recharger le panel
-  if(changes.userPlan || changes.userEmail || changes.userToken){
+  // Si le plan, l'email ou l'avatar change, recharger le panel
+  if(changes.userPlan || changes.userEmail || changes.userToken || changes.userAvatar || changes.userName){
     console.log('[VidSpark] Storage changed, reloading panel...');
     if(changes.userToken)currentUserToken = changes.userToken.newValue;
     if(changes.userEmail)currentUserEmail = changes.userEmail.newValue;

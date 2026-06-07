@@ -53,20 +53,84 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // 🔐 Message d'authentification du website-bridge
   if (message.type === "VIDSPARK_SET_AUTH") {
     console.log("[Background] Auth message received:", message.payload);
+    // Compatibilité : website-bridge envoie 'accessToken', dashboard envoie 'token'
+    const token = message.payload.token || message.payload.accessToken;
+    const userObj = message.payload.currentUser || {};
+    const email = message.payload.email || userObj.email || userObj.name || '';
+    const name  = message.payload.name  || userObj.name  || userObj.email || email;
+    const avatar= message.payload.avatar|| userObj.avatar|| userObj.picture || '';
 
     // Stocker dans chrome.storage.local
     chrome.storage.local.set({
-      userToken: message.payload.token,
+      userToken: token,
       userPlan: message.payload.plan || 'free',
-      userEmail: message.payload.email,
-      userAvatar: message.payload.avatar || '',
-      userName: message.payload.name || message.payload.email,
+      userEmail: email,
+      userAvatar: avatar,
+      userName: name,
       authTimestamp: message.payload.timestamp || Date.now()
-    }, () => {
+    }, async () => {
       console.log("[Background] Auth stored in storage");
+      // Charger et stocker les chaînes autorisées localement
+      try {
+        const res = await fetch(`${BACKEND_URL}/channels/list`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const body = await res.json();
+          const channelIds = (body.data || []).map(c => c.youtube_channel_id).filter(Boolean);
+          await chrome.storage.local.set({ authorizedChannelIds: channelIds });
+          console.log("[Background] Authorized channels stored:", channelIds);
+        }
+      } catch (e) {
+        console.warn("[Background] Could not fetch channels:", e.message);
+      }
       sendResponse({ success: true, message: "Auth stored" });
     });
 
+    return true;
+  }
+
+  // 🔄 Recharger les chaînes autorisées manuellement
+  if (message.type === "VIDSPARK_REFRESH_CHANNELS") {
+    chrome.storage.local.get("userToken", async ({ userToken }) => {
+      if (!userToken) { sendResponse({ success: false }); return; }
+      try {
+        const res = await fetch(`${BACKEND_URL}/channels/list`, {
+          headers: { "Authorization": `Bearer ${userToken}` }
+        });
+        if (res.ok) {
+          const body = await res.json();
+          const channelIds = (body.data || []).map(c => c.youtube_channel_id).filter(Boolean);
+          await chrome.storage.local.set({ authorizedChannelIds: channelIds });
+          console.log("[Background] Channels refreshed:", channelIds);
+          sendResponse({ success: true, channelIds });
+        }
+      } catch (e) {
+        sendResponse({ success: false, error: e.message });
+      }
+    });
+    return true;
+  }
+
+  // 🔒 Vérification de chaîne YouTube autorisée
+  if (message.type === "VIDSPARK_VERIFY_CHANNEL") {
+    chrome.storage.local.get("userToken", async ({ userToken }) => {
+      if (!userToken) {
+        sendResponse({ success: false, code: "NO_TOKEN" });
+        return;
+      }
+      try {
+        const response = await fetch(`${BACKEND_URL}/channels/verify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${userToken}` },
+          body: JSON.stringify({ youtube_channel_id: message.payload.channelId })
+        });
+        const data = await response.json();
+        sendResponse({ success: response.ok, status: response.status, data });
+      } catch (err) {
+        sendResponse({ success: false, error: err.message });
+      }
+    });
     return true;
   }
 

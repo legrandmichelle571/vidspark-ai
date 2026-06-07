@@ -15,34 +15,39 @@ console.log("[Website Bridge] Loaded on vidsparkpro.com");
 // Vérifier toutes les 2 secondes si un token a été défini
 let lastToken = null;
 
+function sendAuthToExtension(token, userRaw) {
+  let user = {};
+  try { user = userRaw ? JSON.parse(userRaw) : {}; } catch(e) {}
+  chrome.runtime.sendMessage({
+    type: 'VIDSPARK_SET_AUTH',
+    payload: {
+      token: token,           // clé principale
+      accessToken: token,     // compatibilité
+      email: user.email || user.name || '',
+      name: user.name || user.email || '',
+      avatar: user.avatar || user.picture || '',
+      plan: user.plan || 'free',
+      currentUser: user,
+      timestamp: Date.now()
+    }
+  }, (response) => {
+    if (chrome.runtime.lastError) {
+      console.log('[Website Bridge] Extension not available:', chrome.runtime.lastError);
+    } else {
+      console.log('[Website Bridge] Auth notified to extension:', response);
+    }
+  });
+}
+
 setInterval(() => {
   try {
-    // Lire le token depuis le localStorage du site web
     const token = localStorage.getItem('VIDSPARK_ACCESS_TOKEN');
-    const user = localStorage.getItem('VIDSPARK_USER');
-    const isNewUser = localStorage.getItem('VIDSPARK_IS_NEW_USER');
+    const user  = localStorage.getItem('VIDSPARK_USER');
 
-    // Si token détecté et c'est nouveau (pas déjà traité)
     if (token && token !== lastToken) {
       console.log("[Website Bridge] Token detected, notifying extension");
       lastToken = token;
-
-      // Envoyer le message au background script de l'extension
-      chrome.runtime.sendMessage({
-        type: 'VIDSPARK_SET_AUTH',
-        payload: {
-          accessToken: token,
-          currentUser: user ? JSON.parse(user) : null,
-          tokenExpiry: localStorage.getItem('VIDSPARK_TOKEN_EXPIRY'),
-          is_new_user: isNewUser === 'true'
-        }
-      }, (response) => {
-        if (chrome.runtime.lastError) {
-          console.log('[Website Bridge] Extension not available:', chrome.runtime.lastError);
-        } else {
-          console.log('[Website Bridge] Auth notified to extension:', response);
-        }
-      });
+      sendAuthToExtension(token, user);
     }
   } catch (err) {
     console.error('[Website Bridge] Error:', err);
@@ -78,24 +83,12 @@ window.addEventListener('message', (event) => {
   // AUTH — Mettre à jour l'authentification
   if (event.data.type === 'VIDSPARK_AUTH' || event.data.type === 'VIDSPARK_AUTH_UPDATE') {
     console.log("[Website Bridge] ✅ Auth message received:", event.data);
-
-    // Relayer au background script de l'extension
-    chrome.runtime.sendMessage({
-      type: 'VIDSPARK_SET_AUTH',
-      payload: {
-        email: event.data.email,
-        token: event.data.token,
-        plan: event.data.plan,
-        avatar: event.data.avatar,
-        name: event.data.name,
-        timestamp: event.data.timestamp
-      }
-    }, (response) => {
-      if (chrome.runtime.lastError) {
-        console.log('[Website Bridge] Extension error:', chrome.runtime.lastError);
-      } else {
-        console.log('[Website Bridge] Auth relayed successfully');
-      }
-    });
+    const token = event.data.token || event.data.accessToken;
+    sendAuthToExtension(token, JSON.stringify({
+      email: event.data.email,
+      name: event.data.name,
+      avatar: event.data.avatar,
+      plan: event.data.plan
+    }));
   }
 });

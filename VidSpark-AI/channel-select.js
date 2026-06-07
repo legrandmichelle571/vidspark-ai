@@ -49,7 +49,7 @@ function initChannelSelect() {
 
       // Fetch channels from backend
       console.log('[VidSpark Channel Select] Fetching channels from backend...');
-      const response = await fetch('http://localhost:3001/api/user/youtube-channels', {
+      const response = await fetch('https://vidspark-ai-production-9ac7.up.railway.app/api/user/youtube-channels', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -148,7 +148,7 @@ function initChannelSelect() {
       const result = await chrome.storage.local.get('accessToken');
       console.log('[VidSpark Channel Select] Making API call to set-primary-channel...');
 
-      const response = await fetch('http://localhost:3001/api/user/set-primary-channel', {
+      const response = await fetch('https://vidspark-ai-production-9ac7.up.railway.app/api/user/set-primary-channel', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${result.accessToken}`,

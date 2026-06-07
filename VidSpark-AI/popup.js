@@ -1,121 +1,143 @@
-/**
- * VidSpark AI — Popup Login
- * Redirige vers vidsparkpro.com pour l'authentification
- * Récupère le token automatiquement quand l'utilisateur revient
- */
+﻿const BACKEND_URL = 'https://vidspark-ai-production-9ac7.up.railway.app/api';
 
-const CONFIG = {
-  SITE_URL: "https://vidsparkpro.com",
-  BACKEND_URL: "http://localhost:3001/api"
-};
+// Éléments DOM
+const stateInitial = document.querySelector('.state-initial');
+const stateForm = document.querySelector('.state-form');
+const stateActivated = document.querySelector('.state-activated');
 
-// Au chargement de la popup
-document.addEventListener('DOMContentLoaded', async () => {
-  const loginBtn = document.getElementById('loginBtn');
-  const loadingDiv = document.getElementById('loading');
-  const loginDiv = document.getElementById('login');
+const btnPlan = document.getElementById('btnPlan');
+const btnConnect = document.getElementById('btnConnect');
+const btnActivate = document.getElementById('btnActivate');
+const btnBackForm = document.getElementById('btnBackForm');
+const btnNewActivation = document.getElementById('btnNewActivation');
 
-  // Vérifier si déjà authentifié
-  const auth = await checkAuthentication();
+const inputId = document.getElementById('inputId');
+const inputSecret = document.getElementById('inputSecret');
+const statusForm = document.getElementById('statusForm');
+const daysRemaining = document.getElementById('daysRemaining');
 
-  if (auth.authenticated) {
-    console.log("[Popup] User already authenticated");
-    // Fermer la popup - l'utilisateur peut maintenant utiliser l'extension
-    window.close();
+// Vérifier si déjà activé au démarrage
+chrome.storage.local.get(['activation_id', 'activation_secret', 'subscription_expiry'], (data) => {
+  if (data.activation_id && data.activation_secret && data.subscription_expiry) {
+    const expiry = new Date(data.subscription_expiry);
+    if (expiry > new Date()) {
+      showActivatedState(data);
+    } else {
+      // Forfait expiré
+      switchState('initial');
+    }
+  }
+});
+
+// Bouton Plan → ouvre le site web
+btnPlan.addEventListener('click', () => {
+  chrome.tabs.create({ url: 'https://vidspark-site.pages.dev/dashboard' });
+});
+
+// Bouton Connecte → affiche le formulaire
+btnConnect.addEventListener('click', () => {
+  switchState('form');
+  inputId.focus();
+});
+
+// Bouton Activer → valide auprès du backend
+btnActivate.addEventListener('click', async () => {
+  const id = inputId.value.trim();
+  const secret = inputSecret.value.trim();
+
+  if (!id || !secret) {
+    setStatus('⚠️ Entrez ID et Secret', 'error');
     return;
   }
 
-  // Afficher le bouton de login
-  loginDiv.classList.remove('hide');
-  loginDiv.classList.add('show');
+  btnActivate.disabled = true;
+  btnActivate.textContent = '⏳ Vérification...';
+  setStatus('Vérification en cours...', 'info');
 
-  // Au click sur le bouton, ouvrir le site pour authentification
-  loginBtn.addEventListener('click', () => {
-    console.log("[Popup] Opening login page on vidsparkpro.com");
-    chrome.tabs.create({
-      url: CONFIG.SITE_URL + "/login"
+  try {
+    const res = await fetch(\\/activation/activate\, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ activation_id: id, activation_secret: secret })
     });
 
-    // Montrer l'état "Authenticating..."
-    loginDiv.classList.add('hide');
-    loadingDiv.classList.add('show');
+    const body = await res.json();
 
-    // Vérifier toutes les 2 secondes si l'utilisateur a terminé l'authentification
-    const authCheckInterval = setInterval(async () => {
-      const result = await checkAuthentication();
-
-      if (result.authenticated) {
-        console.log("[Popup] Authentication successful!");
-        clearInterval(authCheckInterval);
-
-        // Attendre un peu pour que l'UI se mette à jour
-        setTimeout(() => {
-          window.close();
-        }, 500);
-      }
-    }, 2000);
-
-    // Arrêter la vérification après 10 minutes
-    setTimeout(() => {
-      clearInterval(authCheckInterval);
-    }, 10 * 60 * 1000);
-  });
-
-  // Toutes les 5 secondes, vérifier si token arrive du site
-  setInterval(async () => {
-    const result = await checkAuthentication();
-    if (result.authenticated) {
-      console.log("[Popup] Token detected, closing popup");
-      window.close();
+    if (!res.ok) {
+      setStatus('❌ ' + (body.error || 'Erreur'), 'error');
+      btnActivate.disabled = false;
+      btnActivate.textContent = '✅ Activer';
+      return;
     }
-  }, 5000);
+
+    // Succès → sauvegarder et afficher
+    const expiryDate = new Date(body.subscription.expiry);
+    chrome.storage.local.set({
+      activation_id: id,
+      activation_secret: secret,
+      subscription_expiry: expiryDate.toISOString(),
+      user_email: body.user.email,
+      user_name: body.user.name
+    }, () => {
+      setStatus('✅ Extension activée !', 'success');
+      setTimeout(() => {
+        showActivatedState({ activation_id: id, subscription_expiry: expiryDate.toISOString() });
+      }, 1000);
+    });
+  } catch (e) {
+    setStatus('❌ Erreur réseau: ' + e.message, 'error');
+    btnActivate.disabled = false;
+    btnActivate.textContent = '✅ Activer';
+  }
 });
 
-/**
- * Vérifier l'authentification depuis le storage Chrome
- */
-async function checkAuthentication() {
-  return new Promise((resolve) => {
-    chrome.storage.local.get(
-      ['accessToken', 'currentUser', 'onboardingComplete'],
-      (result) => {
-        const authenticated = !!result.accessToken;
-        resolve({
-          authenticated,
-          token: result.accessToken,
-          user: result.currentUser,
-          onboardingComplete: result.onboardingComplete
-        });
-      }
-    );
-  });
+// Bouton Retour
+btnBackForm.addEventListener('click', () => {
+  switchState('initial');
+  inputId.value = '';
+  inputSecret.value = '';
+  setStatus('', '');
+});
+
+// Bouton Nouvelle activation
+btnNewActivation.addEventListener('click', () => {
+  chrome.storage.local.remove(['activation_id', 'activation_secret', 'subscription_expiry']);
+  switchState('initial');
+});
+
+// Utilitaires
+function switchState(state) {
+  stateInitial.classList.remove('active');
+  stateForm.classList.remove('active');
+  stateActivated.classList.remove('active');
+
+  if (state === 'initial') stateInitial.classList.add('active');
+  if (state === 'form') stateForm.classList.add('active');
+  if (state === 'activated') stateActivated.classList.add('active');
 }
 
-/**
- * Récupérer le token du site web (via message cross-window)
- */
-async function getTokenFromWebsite() {
-  try {
-    const response = await fetch(CONFIG.SITE_URL + "/api/get-token", {
-      method: "GET",
-      credentials: "include"  // Inclure les cookies
-    });
+function setStatus(msg, type) {
+  statusForm.textContent = msg;
+  statusForm.className = 'status-message';
+  if (type === 'error') statusForm.classList.add('status-error');
+  if (type === 'success') statusForm.classList.add('status-success');
+  if (type === 'info') statusForm.classList.add('status-info');
+}
 
-    if (response.ok) {
-      const data = await response.json();
-      if (data.token) {
-        // Sauvegarder dans Chrome storage
-        chrome.storage.local.set({
-          accessToken: data.token,
-          currentUser: data.user,
-          tokenExpiry: data.tokenExpiry,
-          onboardingComplete: true
-        });
-        return data.token;
-      }
-    }
-  } catch (err) {
-    console.error("[Popup] Failed to get token from website:", err);
+function showActivatedState(data) {
+  switchState('activated');
+  const expiryDate = new Date(data.subscription_expiry);
+  const now = new Date();
+  const daysLeft = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+  const remaining = Math.max(0, daysLeft);
+
+  // Afficher la durée
+  if (remaining === 0) {
+    daysRemaining.textContent = 'Expiré';
+    daysRemaining.style.color = '#fa6d6d';
+  } else if (remaining === 1) {
+    daysRemaining.textContent = '1 jour';
+  } else {
+    daysRemaining.textContent = remaining + ' jours';
   }
-  return null;
 }

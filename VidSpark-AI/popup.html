@@ -1,128 +1,253 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VidSpark AI - Login</title>
+  <title>VidSpark AI — Activation</title>
   <style>
-    :root {
-      --bg:       #07070a;
-      --b1:       #1e1e26;
-      --b2:       #2a2a35;
-      --text:     #e8e8f0;
-      --muted:    #8888a0;
-      --purple:   #7c6dfa;
-      --purple-l: #a78bfa;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { -webkit-font-smoothing: antialiased; }
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
       width: 400px;
-      min-height: 300px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 0;
     }
-
     .container {
-      width: 100%;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
       text-align: center;
+      margin-bottom: 24px;
     }
-
     .logo {
-      font-size: 48px;
-      margin-bottom: 20px;
-    }
-
-    h1 {
-      font-size: 20px;
-      font-weight: 800;
+      font-size: 32px;
       margin-bottom: 8px;
     }
-
-    p {
-      font-size: 14px;
-      color: var(--muted);
-      margin-bottom: 30px;
+    .title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #7c6dfa;
+      margin-bottom: 4px;
     }
-
-    .btn {
+    .subtitle {
+      font-size: 12px;
+      color: #aaa;
+    }
+    .content {
+      flex: 1;
+    }
+    .state-initial,
+    .state-form,
+    .state-activated {
+      display: none;
+    }
+    .state-initial.active,
+    .state-form.active,
+    .state-activated.active {
       display: block;
-      width: 100%;
+    }
+    .button-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .btn {
       padding: 14px;
-      background: var(--purple);
-      color: #fff;
       border: none;
       border-radius: 8px;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .btn-plan {
+      background: #ef4444;
+      color: white;
+    }
+    .btn-plan:hover {
+      background: #ff6b6b;
+      transform: scale(1.02);
+    }
+    .btn-connect {
+      background: #7c6dfa;
+      color: white;
+    }
+    .btn-connect:hover {
+      background: #a78bfa;
+      transform: scale(1.02);
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 6px;
       font-weight: 600;
-      font-size: 15px;
+    }
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #7c6dfa;
+      border-radius: 8px;
+      background: #0f0f1a;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus {
+      border-color: #a78bfa;
+    }
+    .btn-submit {
+      width: 100%;
+      padding: 12px;
+      background: #7c6dfa;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 13px;
       cursor: pointer;
       transition: all 0.2s;
     }
-
-    .btn:hover {
-      background: var(--purple-l);
+    .btn-submit:hover:not(:disabled) {
+      background: #a78bfa;
+      transform: scale(1.02);
     }
-
-    .spinner {
-      width: 24px;
-      height: 24px;
-      border: 2px solid rgba(124,109,250,.2);
-      border-top-color: var(--purple);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 20px;
+    .btn-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .loading {
-      display: none;
-    }
-
-    .loading.show {
-      display: block;
-    }
-
-    .login {
-      display: block;
-    }
-
-    .login.hide {
-      display: none;
-    }
-
-    .status {
+    .btn-back {
+      width: 100%;
+      padding: 10px;
+      background: transparent;
+      color: #7c6dfa;
+      border: 1px solid #7c6dfa;
+      border-radius: 8px;
+      font-weight: bold;
       font-size: 12px;
-      color: var(--muted);
-      margin-top: 15px;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: all 0.2s;
+    }
+    .btn-back:hover {
+      background: rgba(124, 109, 250, 0.1);
+    }
+    .status-message {
+      font-size: 11px;
+      margin-top: 8px;
+      text-align: center;
+      min-height: 14px;
+    }
+    .status-success {
+      color: #4ade80;
+    }
+    .status-error {
+      color: #fa6d6d;
+    }
+    .status-info {
+      color: #7c6dfa;
+    }
+    .activated-box {
+      background: rgba(74, 222, 128, 0.1);
+      border: 1px solid #4ade80;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .activated-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    .activated-title {
+      color: #4ade80;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .activated-text {
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 4px;
+    }
+    .days-remaining {
+      font-size: 20px;
+      color: #4ade80;
+      font-weight: bold;
+      margin: 8px 0;
+    }
+    .days-label {
+      font-size: 11px;
+      color: #888;
+    }
+    .info-box {
+      background: rgba(124, 109, 250, 0.1);
+      border: 1px solid #7c6dfa;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 11px;
+      color: #aaa;
+      line-height: 1.5;
+      margin-bottom: 12px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Loading State -->
-    <div id="loading" class="loading">
-      <div class="spinner"></div>
-      <h1>Authenticating...</h1>
-      <p>Connecting to your VidSpark AI account</p>
-      <div class="status">Please wait</div>
+    <div class="header">
+      <div class="logo">⚡</div>
+      <div class="title">VidSpark AI</div>
+      <div class="subtitle">YouTube SEO Intelligence</div>
     </div>
 
-    <!-- Login State -->
-    <div id="login" class="login">
-      <div class="logo">✨</div>
-      <h1>VidSpark AI</h1>
-      <p>YouTube SEO Intelligence</p>
-      <button class="btn" id="loginBtn">Sign In with Google</button>
-      <div class="status">Secure login on vidsparkpro.com</div>
+    <div class="content">
+      <div class="state-initial active">
+        <div class="info-box">Choisissez votre forfait ou activez avec votre ID et Secret.</div>
+        <div class="button-group">
+          <button class="btn btn-plan" id="btnPlan">🎯 Forfais</button>
+          <button class="btn btn-connect" id="btnConnect">🔑 Connecte</button>
+        </div>
+      </div>
+
+      <div class="state-form">
+        <div class="info-box">Entrez votre ID et Secret fournis après inscription.</div>
+        <div class="form-group">
+          <label class="form-label">ID d'activation</label>
+          <input type="text" class="form-input" id="inputId" placeholder="VID...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Code secret</label>
+          <input type="password" class="form-input" id="inputSecret" placeholder="••••••••">
+        </div>
+        <button class="btn-submit" id="btnActivate">✅ Activer</button>
+        <p class="status-message" id="statusForm"></p>
+        <button class="btn-back" id="btnBackForm">← Retour</button>
+      </div>
+
+      <div class="state-activated">
+        <div class="activated-box">
+          <div class="activated-icon">✅</div>
+          <div class="activated-title">Extension activée</div>
+          <div class="activated-text">Forfait en cours</div>
+          <div class="days-remaining" id="daysRemaining">30 jours</div>
+          <div class="days-label">restants</div>
+        </div>
+        <div class="info-box">Vous pouvez analyser vos vidéos YouTube. Bloquée sur les chaînes non autorisées.</div>
+        <button class="btn-back" id="btnNewActivation">🔄 Nouvelle activation</button>
+      </div>
     </div>
   </div>
 
