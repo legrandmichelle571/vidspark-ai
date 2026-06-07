@@ -32,7 +32,8 @@ const _defaultOrigins = [
   'https://vidsparkpro.com',
   'https://www.vidsparkpro.com',
   'http://localhost:3000',
-  'http://localhost:8000'
+  'http://localhost:8000',
+  'https://www.youtube.com'
 ];
 const _allowedOrigins = process.env.ALLOWED_ORIGINS
   ?.split(',').map(o => o.trim()).filter(Boolean) || _defaultOrigins;
@@ -45,6 +46,8 @@ app.use(cors({
   origin: function(origin, callback) {
     /* Requêtes sans origin : Postman, curl, server-to-server → toujours autorisées */
     if (!origin) return callback(null, true);
+    /* Check if origin is a chrome extension */
+    if (origin.startsWith('chrome-extension://')) return callback(null, true);
     /* Vérifier si origin est dans la liste */
     if (_allowedOrigins.includes(origin)) return callback(null, true);
     /* Autoriser en développement sans liste spécifiée */

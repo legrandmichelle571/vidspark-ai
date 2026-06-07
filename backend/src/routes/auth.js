@@ -130,6 +130,14 @@ router.post('/logout', requireAuth, async (req, res) => {
   }
 });
 
+/* ── Générer ID + Secret uniques ── */
+function generateActivationId() {
+  return 'VID' + Math.random().toString(36).substring(2, 11).toUpperCase() + Date.now().toString(36).toUpperCase();
+}
+function generateActivationSecret() {
+  return Math.random().toString(36).substring(2, 18).toUpperCase() + Math.random().toString(36).substring(2, 18).toUpperCase();
+}
+
 /* ── Google OAuth via id_token → session Supabase réelle ── */
 router.post('/google', async (req, res) => {
   try {
@@ -152,13 +160,41 @@ router.post('/google', async (req, res) => {
     /* Le trigger on_auth_user_created a créé le profil lors du 1er login */
     const supabase = req.app.locals.supabase;
 
+    // Vérifier si l'utilisateur existe déjà
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('activation_id, plan, subscription_expiry')
+      .eq('auth_id', data.user.id)
+      .single();
+
+    // Générer ou régénérer ID + Secret
+    let activationId = existingUser?.activation_id || generateActivationId();
+    let activationSecret = generateActivationSecret(); // NOUVEAU secret à chaque login (pour changement de plan)
+
+    // Déterminer la durée du forfait
+    let subscriptionExpiry;
+    if (existingUser?.plan === 'free') {
+      subscriptionExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 jours FREE
+    } else if (existingUser?.plan === 'pro') {
+      subscriptionExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 an PRO
+    } else if (existingUser?.plan === 'business') {
+      subscriptionExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 an BUSINESS
+    } else {
+      subscriptionExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 jours par défaut (FREE)
+    }
+
     await supabase.from('users')
-      .update({ last_login: new Date().toISOString() })
+      .update({
+        last_login: new Date().toISOString(),
+        activation_id: activationId,
+        activation_secret: activationSecret,
+        subscription_expiry: subscriptionExpiry.toISOString()
+      })
       .eq('auth_id', data.user.id);
 
     const { data: dbUser, error: dbErr } = await supabase
       .from('users')
-      .select('id, email, name, plan, status, role, quota_used, quota_limit, language')
+      .select('id, email, name, plan, status, role, quota_used, quota_limit, language, activation_id, activation_secret, subscription_expiry')
       .eq('auth_id', data.user.id)
       .single();
 
@@ -174,6 +210,9 @@ router.post('/google', async (req, res) => {
       access_token:  data.session.access_token,
       refresh_token: data.session.refresh_token,
       expires_in:    data.session.expires_in,
+      activation_id: dbUser.activation_id,
+      activation_secret: dbUser.activation_secret,
+      subscription_expiry: dbUser.subscription_expiry,
       user: {
         id:          dbUser.id,
         email:       dbUser.email,
@@ -252,6 +291,89 @@ router.post('/refresh', async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: 'Refresh failed' });
+  }
+});
+
+/* ── ACTIVATION : Valider ID + Secret (appelé par l'extension) ── */
+router.post('/activation/activate', async (req, res) => {
+  try {
+    const { activation_id, activation_secret } = req.body;
+
+    if (!activation_id || !activation_secret) {
+      return res.status(400).json({ error: 'ID et Secret requis' });
+    }
+
+    const supabase = req.app.locals.supabase;
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('id, email, name, plan, activation_id, activation_secret, subscription_expiry')
+      .eq('activation_id', activation_id)
+      .eq('activation_secret', activation_secret)
+      .single();
+
+    if (error || !user) {
+      return res.status(401).json({ error: 'ID ou Secret invalide' });
+    }
+
+    // Vérifier si l'abonnement n'est pas expiré
+    const expiryDate = new Date(user.subscription_expiry);
+    const isExpired = expiryDate < new Date();
+
+    if (isExpired) {
+      return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+    }
+
+    // Calculer les jours restants
+    const now = new Date();
+    const daysRemaining = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        plan: user.plan
+      },
+      subscription: {
+        expiry: user.subscription_expiry,
+        days_remaining: Math.max(0, daysRemaining),
+        is_active: !isExpired
+      }
+    });
+  } catch (err) {
+    console.error('[ACTIVATION]', err.message);
+    res.status(500).json({ error: 'Erreur lors de l\'activation' });
+  }
+});
+
+/* ── Vérifier la durée restante (appelé par l'extension) ── */
+router.get('/activation/remaining/:activation_id', async (req, res) => {
+  try {
+    const { activation_id } = req.params;
+
+    const supabase = req.app.locals.supabase;
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('subscription_expiry')
+      .eq('activation_id', activation_id)
+      .single();
+
+    if (error || !user) {
+      return res.status(404).json({ error: 'ID non trouvé' });
+    }
+
+    const expiryDate = new Date(user.subscription_expiry);
+    const now = new Date();
+    const daysRemaining = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+
+    res.json({
+      expiry: user.subscription_expiry,
+      days_remaining: Math.max(0, daysRemaining),
+      is_active: expiryDate > now
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 

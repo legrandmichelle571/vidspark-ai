@@ -68,6 +68,40 @@ class ChannelController {
       next(err);
     }
   }
+
+  async verifyChannel(req, res) {
+    try {
+      const { youtube_channel_id } = req.body;
+      const userId = req.user.id;
+
+      if (!youtube_channel_id) {
+        return res.status(403).json({
+          code: 'CHANNEL_NOT_AUTHORIZED',
+          error: 'youtube_channel_id est requis'
+        });
+      }
+
+      const { data: channels, error } = await getSupabase()
+        .from('user_channels')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('youtube_channel_id', youtube_channel_id);
+
+      if (error) throw error;
+
+      if (!channels || channels.length === 0) {
+        return res.status(403).json({
+          code: 'CHANNEL_NOT_AUTHORIZED',
+          error: 'Chaîne non autorisée pour cet utilisateur'
+        });
+      }
+
+      res.json({ authorized: true });
+    } catch (err) {
+      console.error('Erreur verifyChannel:', err);
+      res.status(500).json({ error: 'Erreur serveur interne' });
+    }
+  }
 }
 
 module.exports = new ChannelController();
