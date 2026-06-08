@@ -165,22 +165,19 @@ router.post('/google', async (req, res) => {
     const activationSecret = generateActivationSecret();
     const subscriptionExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 jours par défaut
 
-    // Mettre à jour les codes d'activation directement (sans SELECT préalable)
-    const { error: updateErr } = await supabase
-      .from('users')
-      .update({
-        last_login: new Date().toISOString(),
-        activation_id: activationId,
-        activation_secret: activationSecret,
-        subscription_expiry: subscriptionExpiry.toISOString()
-      })
-      .eq('auth_id', data.user.id);
+    // Appeler la fonction SQL pour mettre à jour les codes d'activation
+    const { error: rpcErr } = await supabase.rpc('update_activation_codes', {
+      p_auth_id: data.user.id,
+      p_activation_id: activationId,
+      p_activation_secret: activationSecret,
+      p_subscription_expiry: subscriptionExpiry.toISOString()
+    });
 
-    if (updateErr) {
-      console.error('[POST /auth/google] Activation update error:', updateErr);
+    if (rpcErr) {
+      console.error('[POST /auth/google] RPC update_activation_codes error:', rpcErr);
       // Continue anyway - ne pas bloquer le login si l'activation échoue
     } else {
-      console.log('[POST /auth/google] ✅ Activation codes saved:', {
+      console.log('[POST /auth/google] ✅ Activation codes saved via RPC:', {
         auth_id: data.user.id,
         activation_id: activationId,
         subscription_expiry: subscriptionExpiry.toISOString()
