@@ -81,6 +81,7 @@ app.use(rateLimit({
 /* ── Routes ── */
 app.use('/api/auth',          require('./routes/auth'));
 app.use('/api/user',          require('./routes/user'));
+app.use('/api/activation',    require('./routes/activation'));
 app.use('/api/channels',      require('./routes/channels'));
 app.use('/api/analysis',      require('./routes/analysis'));
 app.use('/api/subscription',  require('./routes/subscription'));
