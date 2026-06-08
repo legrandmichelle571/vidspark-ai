@@ -177,10 +177,16 @@ router.post('/google', async (req, res) => {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
-    // Insérer ou mettre à jour dans la table activation_codes (pas de RLS!)
+    // Supprimer l'ancienne entrée si elle existe
+    await supabase
+      .from('activation_codes')
+      .delete()
+      .eq('user_id', userData.id);
+
+    // Insérer la nouvelle entrée
     const { error: activationErr } = await supabase
       .from('activation_codes')
-      .upsert({
+      .insert({
         user_id: userData.id,
         activation_id: activationId,
         activation_secret: activationSecret,
@@ -188,9 +194,9 @@ router.post('/google', async (req, res) => {
       });
 
     if (activationErr) {
-      console.error('[POST /auth/google] Activation codes error:', activationErr);
+      console.error('[POST /auth/google] Activation codes INSERT error:', activationErr);
     } else {
-      console.log('[POST /auth/google] ✅ Activation codes saved in activation_codes table:', {
+      console.log('[POST /auth/google] ✅ Activation codes saved via INSERT:', {
         user_id: userData.id,
         activation_id: activationId,
         subscription_expiry: subscriptionExpiry.toISOString()
