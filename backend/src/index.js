@@ -23,7 +23,10 @@ const supabase = createClient(
 app.locals.supabase = supabase;
 
 /* ── Middleware ── */
-// app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));  // DÉSACTIVÉ: causait 502 sur OPTIONS
+app.use(helmet({
+  crossOriginResourcePolicy: false,  // Disabled - handled by CORS
+  contentSecurityPolicy: false  // Disabled - might interfere with CORS
+}));
 app.use(compression());
 app.use(morgan('combined'));
 /* ── CORS : validation stricte des origines autorisées ── */
@@ -44,20 +47,20 @@ if (_allowedOrigins.length === 0) {
 
 app.use(cors({
   origin: function(origin, callback) {
-    /* Requêtes sans origin : Postman, curl, server-to-server → toujours autorisées */
     if (!origin) return callback(null, true);
-    /* Check if origin is a chrome extension */
     if (origin.startsWith('chrome-extension://')) return callback(null, true);
-    /* Vérifier si origin est dans la liste */
     if (_allowedOrigins.includes(origin)) return callback(null, true);
-    /* Autoriser en développement sans liste spécifiée */
-    if (process.env.NODE_ENV !== 'production') {
-      return callback(null, true);
-    }
-    callback(new Error('CORS: origine non autorisée — ' + origin));
+    if (process.env.NODE_ENV !== 'production') return callback(null, true);
+    callback(new Error('CORS: origin not allowed'));
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
 }));
+
+/* Explicitly handle OPTIONS for all routes */
+app.options('*', cors());
 
 /* Stripe webhook MUST receive raw body */
 app.use(
