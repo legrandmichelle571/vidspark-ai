@@ -5,9 +5,12 @@
 const { createClient } = require('@supabase/supabase-js');
 const { getLimits }    = require('../config/plans');
 
-const supabaseAnon = createClient(
+/* Client pour valider les JWT utilisateurs.
+   On utilise la SERVICE_KEY (et non l'ANON_KEY) car la clé anon peut être
+   manquante/placeholder en prod ; getUser(token) valide quand même le JWT passé. */
+const supabaseAuth = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY
 );
 
 /* ── Middleware auth obligatoire ── */
@@ -21,7 +24,7 @@ async function requireAuth(req, res, next) {
     const token = authHeader.split(' ')[1];
 
     /* Vérifier le token via Supabase */
-    const { data: { user }, error } = await supabaseAnon.auth.getUser(token);
+    const { data: { user }, error } = await supabaseAuth.auth.getUser(token);
     if (error || !user) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
