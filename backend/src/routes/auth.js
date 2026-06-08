@@ -211,7 +211,7 @@ router.post('/google', async (req, res) => {
 
     const { data: dbUser, error: dbErr } = await supabase
       .from('users')
-      .select('id, email, name, plan, status, role, quota_used, quota_limit, language, activation_id, activation_secret, subscription_expiry')
+      .select('id, email, name, plan, status, role, quota_used, quota_limit, language')
       .eq('auth_id', data.user.id)
       .single();
 
@@ -227,9 +227,9 @@ router.post('/google', async (req, res) => {
       access_token:  data.session.access_token,
       refresh_token: data.session.refresh_token,
       expires_in:    data.session.expires_in,
-      activation_id: dbUser.activation_id,
-      activation_secret: dbUser.activation_secret,
-      subscription_expiry: dbUser.subscription_expiry,
+      activation_id: activationId,
+      activation_secret: activationSecret,
+      subscription_expiry: subscriptionExpiry.toISOString(),
       user: {
         id:          dbUser.id,
         email:       dbUser.email,
