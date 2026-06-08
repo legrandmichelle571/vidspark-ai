@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git remote *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'Fix: Lazy initialization of Supabase clients to resolve build-time errors *)",
+      "Bash(git config *)",
+      "Bash(git push *)",
+      "Bash(git rm *)",
+      "Bash(git commit --amend -m 'Fix: Lazy initialization of Supabase clients to resolve build-time errors *)",
+      "Bash(git commit *)",
+      "Bash(cd \"E:/extension pro/VidSpark-AI-v1.0\" && rm -rf .git backend VidSpark-AI admin database *.html *.js *.md *.zip .gitignore .dockerignore && ls -la)",
+      "Bash(git init *)",
+      "Bash(npm install *)",
+      "Bash(grep -E \"\\(src/|database/|\\\\.md$|\\\\.sql$\\)\")",
+      "Bash(npm list *)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "WebFetch(domain:vidspark-site.pages.dev)",
+      "WebFetch(domain:vidsparkpro.com)",
+      "WebFetch(domain:vidspark-ai-production-9ac7.up.railway.app)"
+    ]
+  }
+}
