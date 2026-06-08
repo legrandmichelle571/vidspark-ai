@@ -185,7 +185,7 @@ router.post('/google', async (req, res) => {
         activation_id: activationId,
         activation_secret: activationSecret,
         subscription_expiry: subscriptionExpiry.toISOString()
-      }, { onConflict: 'user_id' });
+      });
 
     if (activationErr) {
       console.error('[POST /auth/google] Activation codes error:', activationErr);
