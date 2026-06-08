@@ -165,22 +165,29 @@ router.post('/google', async (req, res) => {
     const activationSecret = generateActivationSecret();
     const subscriptionExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 jours par défaut
 
-    // Appeler la fonction SQL pour mettre à jour les codes d'activation
-    const { error: rpcErr } = await supabase.rpc('update_activation_codes', {
-      p_auth_id: data.user.id,
-      p_activation_id: activationId,
-      p_activation_secret: activationSecret,
-      p_subscription_expiry: subscriptionExpiry.toISOString()
-    });
+    // Mettre à jour directement (les RLS policies permettent maintenant)
+    console.log('[POST /auth/google] 🔄 Updating activation codes for auth_id:', data.user.id);
 
-    if (rpcErr) {
-      console.error('[POST /auth/google] RPC update_activation_codes error:', rpcErr);
-      // Continue anyway - ne pas bloquer le login si l'activation échoue
+    const { data: updateResult, error: updateErr, count } = await supabase
+      .from('users')
+      .update({
+        last_login: new Date().toISOString(),
+        activation_id: activationId,
+        activation_secret: activationSecret,
+        subscription_expiry: subscriptionExpiry.toISOString()
+      })
+      .eq('auth_id', data.user.id)
+      .select();
+
+    if (updateErr) {
+      console.error('[POST /auth/google] UPDATE error:', updateErr);
     } else {
-      console.log('[POST /auth/google] ✅ Activation codes saved via RPC:', {
+      console.log('[POST /auth/google] ✅ Activation codes saved:', {
+        rows_updated: count,
         auth_id: data.user.id,
         activation_id: activationId,
-        subscription_expiry: subscriptionExpiry.toISOString()
+        subscription_expiry: subscriptionExpiry.toISOString(),
+        update_result: updateResult
       });
     }
 
