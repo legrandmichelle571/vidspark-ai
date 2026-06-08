@@ -19,30 +19,30 @@ router.get('/me', requireAuth, async (req, res) => {
     const { id, email, name, avatar, plan, status, role,
             quota_used, quota_limit, language, created_at } = req.user;
 
-    // Récupérer aussi l'ID d'activation et le Secret
-    const { data: userData, error } = await supabase
-      .from('users')
+    // Récupérer les codes d'activation depuis la table activation_codes
+    const { data: activationData, error: activationErr } = await supabase
+      .from('activation_codes')
       .select('activation_id, activation_secret, subscription_expiry')
-      .eq('id', id)
+      .eq('user_id', id)
       .single();
 
-    if (error) {
-      console.error('[GET /user/me] Error fetching activation:', error);
-      throw error;
+    if (activationErr && activationErr.code !== 'PGRST116') {
+      // PGRST116 = no rows returned (c'est normal si pas d'activation)
+      console.error('[GET /user/me] Error fetching activation codes:', activationErr);
     }
 
     console.log('[GET /user/me] User activation data:', {
-      activation_id: userData?.activation_id,
-      activation_secret: userData?.activation_secret,
-      subscription_expiry: userData?.subscription_expiry
+      activation_id: activationData?.activation_id,
+      activation_secret: activationData?.activation_secret,
+      subscription_expiry: activationData?.subscription_expiry
     });
 
     res.json({
       id, email, name, avatar, plan, status, role,
       quota_used, quota_limit, language, created_at,
-      activation_id: userData?.activation_id,
-      activation_secret: userData?.activation_secret,
-      subscription_expiry: userData?.subscription_expiry
+      activation_id: activationData?.activation_id,
+      activation_secret: activationData?.activation_secret,
+      subscription_expiry: activationData?.subscription_expiry
     });
   } catch (err) {
     console.error('[GET /me]', err);

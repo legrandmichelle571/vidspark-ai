@@ -165,31 +165,43 @@ router.post('/google', async (req, res) => {
     const activationSecret = generateActivationSecret();
     const subscriptionExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 jours par défaut
 
-    // Mettre à jour directement (les RLS policies permettent maintenant)
-    console.log('[POST /auth/google] 🔄 Updating activation codes for auth_id:', data.user.id);
-
-    const { data: updateResult, error: updateErr, count } = await supabase
+    // D'abord, trouver l'user_id à partir de auth_id
+    const { data: userData, error: userErr } = await supabase
       .from('users')
-      .update({
-        last_login: new Date().toISOString(),
+      .select('id')
+      .eq('auth_id', data.user.id)
+      .single();
+
+    if (userErr || !userData) {
+      console.error('[POST /auth/google] Could not find user_id for auth_id:', data.user.id);
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    // Insérer ou mettre à jour dans la table activation_codes (pas de RLS!)
+    const { error: activationErr } = await supabase
+      .from('activation_codes')
+      .upsert({
+        user_id: userData.id,
         activation_id: activationId,
         activation_secret: activationSecret,
         subscription_expiry: subscriptionExpiry.toISOString()
-      })
-      .eq('auth_id', data.user.id)
-      .select();
+      }, { onConflict: 'user_id' });
 
-    if (updateErr) {
-      console.error('[POST /auth/google] UPDATE error:', updateErr);
+    if (activationErr) {
+      console.error('[POST /auth/google] Activation codes error:', activationErr);
     } else {
-      console.log('[POST /auth/google] ✅ Activation codes saved:', {
-        rows_updated: count,
-        auth_id: data.user.id,
+      console.log('[POST /auth/google] ✅ Activation codes saved in activation_codes table:', {
+        user_id: userData.id,
         activation_id: activationId,
-        subscription_expiry: subscriptionExpiry.toISOString(),
-        update_result: updateResult
+        subscription_expiry: subscriptionExpiry.toISOString()
       });
     }
+
+    // Mettre à jour last_login dans users
+    await supabase
+      .from('users')
+      .update({ last_login: new Date().toISOString() })
+      .eq('auth_id', data.user.id);
 
     const { data: dbUser, error: dbErr } = await supabase
       .from('users')
