@@ -160,37 +160,14 @@ router.post('/google', async (req, res) => {
     /* Le trigger on_auth_user_created a créé le profil lors du 1er login */
     const supabase = req.app.locals.supabase;
 
-    // Vérifier si l'utilisateur existe déjà
-    const { data: existingUser, error: selectErr } = await supabase
+    // Générer les codes d'activation
+    const activationId = generateActivationId();
+    const activationSecret = generateActivationSecret();
+    const subscriptionExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 jours par défaut
+
+    // Mettre à jour les codes d'activation directement (sans SELECT préalable)
+    const { error: updateErr } = await supabase
       .from('users')
-      .select('id, activation_id, plan, subscription_expiry')
-      .eq('auth_id', data.user.id)
-      .single();
-
-    if (selectErr || !existingUser) {
-      console.error('[POST /auth/google] User not found for auth_id:', data.user.id, selectErr);
-      return res.status(404).json({ error: 'Utilisateur non trouvé. Veuillez créer un compte d\'abord.' });
-    }
-
-    console.log('[POST /auth/google] User found:', { user_id: existingUser.id, auth_id: data.user.id });
-
-    // Générer ou régénérer ID + Secret
-    let activationId = existingUser?.activation_id || generateActivationId();
-    let activationSecret = generateActivationSecret(); // NOUVEAU secret à chaque login (pour changement de plan)
-
-    // Déterminer la durée du forfait
-    let subscriptionExpiry;
-    if (existingUser?.plan === 'free') {
-      subscriptionExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 jours FREE
-    } else if (existingUser?.plan === 'pro') {
-      subscriptionExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 an PRO
-    } else if (existingUser?.plan === 'business') {
-      subscriptionExpiry = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 an BUSINESS
-    } else {
-      subscriptionExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 jours par défaut (FREE)
-    }
-
-    const { error: updateErr, data: updateData, count: updateCount } = await supabase.from('users')
       .update({
         last_login: new Date().toISOString(),
         activation_id: activationId,
@@ -201,16 +178,14 @@ router.post('/google', async (req, res) => {
 
     if (updateErr) {
       console.error('[POST /auth/google] Activation update error:', updateErr);
-      return res.status(500).json({ error: 'Erreur lors de la sauvegarde de l\'activation' });
+      // Continue anyway - ne pas bloquer le login si l'activation échoue
+    } else {
+      console.log('[POST /auth/google] ✅ Activation codes saved:', {
+        auth_id: data.user.id,
+        activation_id: activationId,
+        subscription_expiry: subscriptionExpiry.toISOString()
+      });
     }
-
-    console.log('[POST /auth/google] Activation saved:', {
-      activationId,
-      subscriptionExpiry,
-      updateCount,
-      user_id: existingUser.id,
-      auth_id: data.user.id
-    });
 
     const { data: dbUser, error: dbErr } = await supabase
       .from('users')
