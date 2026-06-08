@@ -48,6 +48,8 @@ app.use(cors({
     if (!origin) return callback(null, true);
     /* Check if origin is a chrome extension */
     if (origin.startsWith('chrome-extension://')) return callback(null, true);
+    /* Toujours autoriser YouTube (l'extension appelle l'API depuis les pages YouTube) */
+    if (/^https?:\/\/([a-z0-9-]+\.)?youtube\.com$/.test(origin)) return callback(null, true);
     /* Vérifier si origin est dans la liste */
     if (_allowedOrigins.includes(origin)) return callback(null, true);
     /* Autoriser en développement sans liste spécifiée */
