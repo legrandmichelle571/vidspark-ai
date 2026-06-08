@@ -1,44 +1,46 @@
 /**
  * Routes d'activation de l'extension Chrome
- * POST /api/activation/activate          → valider ID + Secret
+ * POST /api/activation/activate          → valider ID + Secret (renvoie la chaîne verrouillée)
+ * POST /api/activation/bind-channel      → verrouiller UNE chaîne sur ce code (1 ID = 1 chaîne)
  * GET  /api/activation/remaining/:id     → vérifier la durée restante
  *
  * Les codes sont stockés dans la table `activation_codes`
  * (générés par POST /api/auth/google lors de la connexion au dashboard).
+ * La chaîne verrouillée est stockée dans activation_codes.channel_id / channel_name.
  */
 const router = require('express').Router();
+
+/* Récupère un code d'activation valide (ID + Secret) ou null */
+async function findValidCode(supabase, activation_id, activation_secret) {
+  const { data: code } = await supabase
+    .from('activation_codes')
+    .select('*')                 // select('*') : résilient si la colonne channel_id n'existe pas encore
+    .eq('activation_id', activation_id)
+    .eq('activation_secret', activation_secret)
+    .maybeSingle();
+  return code || null;
+}
 
 /* ── Valider ID + Secret (appelé par l'extension) ── */
 router.post('/activate', async (req, res) => {
   try {
     const { activation_id, activation_secret } = req.body;
-
     if (!activation_id || !activation_secret) {
       return res.status(400).json({ error: 'ID et Secret requis' });
     }
 
     const supabase = req.app.locals.supabase;
-
-    // Chercher le code dans activation_codes
-    const { data: code, error: codeErr } = await supabase
-      .from('activation_codes')
-      .select('user_id, subscription_expiry')
-      .eq('activation_id', activation_id)
-      .eq('activation_secret', activation_secret)
-      .maybeSingle();
-
-    if (codeErr || !code) {
+    const code = await findValidCode(supabase, activation_id, activation_secret);
+    if (!code) {
       return res.status(401).json({ error: 'ID ou Secret invalide' });
     }
 
-    // Vérifier l'expiration
     const expiryDate = new Date(code.subscription_expiry);
     const now = new Date();
     if (expiryDate < now) {
       return res.status(403).json({ error: 'Abonnement expiré', expired: true });
     }
 
-    // Récupérer les infos utilisateur
     const { data: user } = await supabase
       .from('users')
       .select('id, email, name, plan')
@@ -59,11 +61,61 @@ router.post('/activate', async (req, res) => {
         expiry:         code.subscription_expiry,
         days_remaining: Math.max(0, daysRemaining),
         is_active:      true
-      }
+      },
+      // Chaîne verrouillée (null si pas encore choisie)
+      channel_id:   code.channel_id   || null,
+      channel_name: code.channel_name || null
     });
   } catch (err) {
     console.error('[ACTIVATION]', err.message);
     res.status(500).json({ error: 'Erreur lors de l\'activation' });
+  }
+});
+
+/* ── Verrouiller UNE chaîne sur ce code (1 ID = 1 chaîne) ── */
+router.post('/bind-channel', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, channel_id, channel_name } = req.body;
+    if (!activation_id || !activation_secret || !channel_id) {
+      return res.status(400).json({ error: 'ID, Secret et channel_id requis' });
+    }
+
+    const supabase = req.app.locals.supabase;
+    const code = await findValidCode(supabase, activation_id, activation_secret);
+    if (!code) {
+      return res.status(401).json({ error: 'ID ou Secret invalide' });
+    }
+
+    // Déjà verrouillé sur une chaîne ?
+    if (code.channel_id) {
+      if (code.channel_id === channel_id) {
+        // Même chaîne → OK (idempotent)
+        return res.json({ success: true, locked: true, channel_id: code.channel_id, channel_name: code.channel_name });
+      }
+      // Chaîne différente → refus : 1 ID = 1 chaîne
+      return res.status(409).json({
+        error: 'Cet ID est déjà verrouillé sur une autre chaîne.',
+        locked: true,
+        channel_id: code.channel_id,
+        channel_name: code.channel_name
+      });
+    }
+
+    // Premier verrouillage
+    const { error: upErr } = await supabase
+      .from('activation_codes')
+      .update({ channel_id, channel_name: channel_name || channel_id })
+      .eq('activation_id', activation_id);
+
+    if (upErr) {
+      console.error('[BIND-CHANNEL] update error:', upErr.message);
+      return res.status(500).json({ error: 'Impossible de verrouiller la chaîne' });
+    }
+
+    res.json({ success: true, locked: true, channel_id, channel_name: channel_name || channel_id });
+  } catch (err) {
+    console.error('[BIND-CHANNEL]', err.message);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 
