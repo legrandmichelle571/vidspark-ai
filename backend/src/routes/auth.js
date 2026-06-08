@@ -157,6 +157,8 @@ router.post('/google', async (req, res) => {
       return res.status(401).json({ error: error?.message || 'Connexion Google échouée' });
     }
 
+    console.log('🔥🔥🔥 [POST /auth/google] LOGIN STARTED - auth_id:', data.user.id);
+
     /* Le trigger on_auth_user_created a créé le profil lors du 1er login */
     const supabase = req.app.locals.supabase;
 
@@ -165,17 +167,24 @@ router.post('/google', async (req, res) => {
     const activationSecret = generateActivationSecret();
     const subscriptionExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 jours par défaut
 
+    console.log('🔥 [POST /auth/google] Generated codes:', { activationId, activationSecret });
+
     // D'abord, trouver l'user_id à partir de auth_id
+    console.log('🔥 [POST /auth/google] Searching for user with auth_id:', data.user.id);
     const { data: userData, error: userErr } = await supabase
       .from('users')
       .select('id')
       .eq('auth_id', data.user.id)
       .single();
 
+    console.log('🔥 [POST /auth/google] User SELECT result:', { userData, userErr });
+
     if (userErr || !userData) {
-      console.error('[POST /auth/google] Could not find user_id for auth_id:', data.user.id);
+      console.error('[POST /auth/google] Could not find user_id for auth_id:', data.user.id, userErr);
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
+
+    console.log('🔥 [POST /auth/google] Found user_id:', userData.id);
 
     // Supprimer l'ancienne entrée si elle existe
     await supabase
