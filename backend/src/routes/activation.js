@@ -86,22 +86,8 @@ router.post('/bind-channel', async (req, res) => {
       return res.status(401).json({ error: 'ID ou Secret invalide' });
     }
 
-    // Déjà verrouillé sur une chaîne ?
-    if (code.channel_id) {
-      if (code.channel_id === channel_id) {
-        // Même chaîne → OK (idempotent)
-        return res.json({ success: true, locked: true, channel_id: code.channel_id, channel_name: code.channel_name });
-      }
-      // Chaîne différente → refus : 1 ID = 1 chaîne
-      return res.status(409).json({
-        error: 'Cet ID est déjà verrouillé sur une autre chaîne.',
-        locked: true,
-        channel_id: code.channel_id,
-        channel_name: code.channel_name
-      });
-    }
-
-    // Premier verrouillage
+    // (Re)lier la chaîne — 1 ID = 1 chaîne ACTIVE à la fois, mais corrigible
+    // (la nouvelle chaîne remplace l'ancienne ; évite un verrou définitif sur une mauvaise chaîne).
     const { error: upErr } = await supabase
       .from('activation_codes')
       .update({ channel_id, channel_name: channel_name || channel_id })
