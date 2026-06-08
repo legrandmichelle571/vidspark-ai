@@ -19,14 +19,16 @@ router.get('/me', requireAuth, async (req, res) => {
     const { id, email, name, avatar, plan, status, role,
             quota_used, quota_limit, language, created_at } = req.user;
 
-    // Récupérer aussi l'ID d'activation et le Secret
+    // Récupérer l'ID d'activation et le Secret depuis la table activation_codes
     const { data: userData, error } = await supabase
-      .from('users')
+      .from('activation_codes')
       .select('activation_id, activation_secret, subscription_expiry')
-      .eq('id', id)
-      .single();
+      .eq('user_id', id)
+      .maybeSingle();
 
-    if (error) throw error;
+    if (error && error.code !== 'PGRST116') {
+      console.error('[GET /user/me] Error fetching activation codes:', error);
+    }
 
     res.json({
       id, email, name, avatar, plan, status, role,
