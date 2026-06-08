@@ -23,7 +23,7 @@ const supabase = createClient(
 app.locals.supabase = supabase;
 
 /* ── Middleware ── */
-app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+// app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));  // DÉSACTIVÉ: causait 502 sur OPTIONS
 app.use(compression());
 app.use(morgan('combined'));
 /* ── CORS : validation stricte des origines autorisées ── */
