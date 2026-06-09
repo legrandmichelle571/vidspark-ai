@@ -36,11 +36,44 @@ router.get('/channels', requireAuth, async (req, res) => {
   }
 });
 
+/* Résoudre une URL / @handle / UC... en ID de chaîne UC... (fetch côté serveur) */
+async function resolveChannelId(input) {
+  if (!input) return null;
+  const direct = input.match(/(UC[a-zA-Z0-9_-]{22})/);
+  if (direct) return { id: direct[1], name: null };
+
+  let url = input.trim();
+  if (!/^https?:\/\//.test(url)) {
+    url = 'https://www.youtube.com/' + url.replace(/^\//, '');
+  }
+  try {
+    const resp = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const html = await resp.text();
+    const idm = html.match(/"(?:channelId|externalId)":"(UC[a-zA-Z0-9_-]{22})"/)
+             || html.match(/channel\/(UC[a-zA-Z0-9_-]{22})/);
+    const namem = html.match(/<meta property="og:title" content="([^"]+)"/)
+               || html.match(/"title":"([^"]+)"/);
+    if (idm) return { id: idm[1], name: namem ? namem[1] : null };
+  } catch (e) {
+    console.warn('[resolveChannelId] fetch error:', e.message);
+  }
+  return null;
+}
+
 /* Ajouter une chaîne (respecte la limite du plan) */
 router.post('/channels', requireAuth, async (req, res) => {
   try {
-    const { channel_id, channel_name } = req.body;
-    if (!channel_id) return res.status(400).json({ error: 'channel_id requis' });
+    let { channel_id, channel_name, channel_url } = req.body;
+
+    // Résoudre l'URL / @handle en ID UC... si besoin
+    if (!channel_id || !/^UC[a-zA-Z0-9_-]{22}$/.test(channel_id)) {
+      const resolved = await resolveChannelId(channel_url || channel_id);
+      if (!resolved) {
+        return res.status(400).json({ error: 'Chaîne introuvable. Colle l\'URL de ta chaîne YouTube (ex: youtube.com/@TaChaine).' });
+      }
+      channel_id = resolved.id;
+      channel_name = channel_name || resolved.name || resolved.id;
+    }
 
     const supabase = req.app.locals.supabase;
     const limit = getChannelLimit(req.user.plan);
