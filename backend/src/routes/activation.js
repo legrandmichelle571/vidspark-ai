@@ -176,11 +176,14 @@ router.post('/ai/titles', async (req, res) => {
     const ctx = await getCodeUser(supabase, activation_id, activation_secret);
     if (!ctx)         return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired)  return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+    const result = await generateTitles(title, language);
+
+    // FREE = aperçu : 1 vrai titre visible, le reste verrouillé (hook de conversion)
     if (!requirePaidPlan(ctx.plan)) {
-      return res.status(403).json({ error: 'Titres IA réservés aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+      const all = result.titles || [];
+      return res.json({ titles: all.slice(0, 1), preview: true, locked: Math.max(0, all.length - 1) });
     }
 
-    const result = await generateTitles(title, language);
     res.json(result);
   } catch (err) {
     console.error('[ACT-AI/TITLES]', err.message);
@@ -199,11 +202,20 @@ router.post('/ai/report', async (req, res) => {
     const ctx = await getCodeUser(supabase, activation_id, activation_secret);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+    const result = await generateReport(title, description, language);
+
+    // FREE = aperçu : score + 1 insight IA visibles, checklist/suggestions verrouillées
     if (!requirePaidPlan(ctx.plan)) {
-      return res.status(403).json({ error: 'Rapport IA réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+      return res.json({
+        score: result.score,
+        viral_score: result.viral_score,
+        viral_reason: result.viral_reason,
+        checklist: [],
+        suggestions: [],
+        preview: true
+      });
     }
 
-    const result = await generateReport(title, description, language);
     res.json(result);
   } catch (err) {
     console.error('[ACT-AI/REPORT]', err.message);
