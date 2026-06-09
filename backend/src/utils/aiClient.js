@@ -3,31 +3,46 @@
  * La clé API reste côté serveur uniquement (process.env.GEMINI_API_KEY).
  */
 
-async function callGemini(prompt, maxTokens = 1000) {
+async function callGemini(prompt, maxTokens = 2048) {
   const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   const key   = process.env.GEMINI_API_KEY;
   if (!key) throw new Error('GEMINI_API_KEY manquante');
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-  const response = await fetch(url, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        maxOutputTokens:  maxTokens,
-        temperature:      0.8,
-        responseMimeType: 'application/json'   // force une sortie JSON propre
-      }
-    })
+  const body = JSON.stringify({
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: {
+      maxOutputTokens:  maxTokens,
+      temperature:      0.8,
+      responseMimeType: 'application/json',      // force une sortie JSON propre
+      thinkingConfig:   { thinkingBudget: 0 }    // désactive le "thinking" (sinon le JSON est tronqué)
+    }
   });
 
-  if (!response.ok) {
+  let lastErr = 'Gemini indisponible';
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const response = await fetch(url, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    }
+
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.error?.message || `Gemini API error ${response.status}`);
+    lastErr = err.error?.message || `Gemini API error ${response.status}`;
+
+    // Retry automatique sur surcharge / rate limit
+    if (response.status === 503 || response.status === 429 || /high demand|overloaded|unavailable/i.test(lastErr)) {
+      await new Promise(r => setTimeout(r, 1200 * (attempt + 1)));
+      continue;
+    }
+    throw new Error(lastErr);
   }
-  const data = await response.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  throw new Error(lastErr);
 }
 
 function parseJson(text) {
