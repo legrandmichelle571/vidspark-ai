@@ -247,7 +247,8 @@ router.post('/ai/competitor', async (req, res) => {
 });
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
-const { getVideoStats, searchVideos } = require('../utils/youtube');
+const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas } = require('../utils/youtube');
+const { analyzeThumbnail } = require('../utils/aiClient');
 
 router.post('/youtube/video', async (req, res) => {
   try {
@@ -282,6 +283,69 @@ router.post('/youtube/competitors', async (req, res) => {
   } catch (err) {
     console.error('[YT/COMP]', err.message);
     res.status(500).json({ error: 'Recherche indisponible', details: err.message });
+  }
+});
+
+/* ── Audit de chaîne (Pro/Business) ── */
+router.post('/youtube/channel-audit', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, channelId } = req.body;
+    if (!activation_id || !activation_secret || !channelId) return res.status(400).json({ error: 'Paramètres requis' });
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Audit de chaîne réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    const audit = await getChannelAudit(channelId);
+    if (!audit) return res.status(404).json({ error: 'Chaîne introuvable' });
+    res.json(audit);
+  } catch (err) {
+    console.error('[YT/AUDIT]', err.message);
+    res.status(500).json({ error: 'Audit indisponible', details: err.message });
+  }
+});
+
+/* ── Recherche de mots-clés (Pro/Business) ── */
+router.post('/youtube/keywords', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, query } = req.body;
+    if (!activation_id || !activation_secret || !query) return res.status(400).json({ error: 'Paramètres requis' });
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Recherche de mots-clés réservée aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    const ideas = await getKeywordIdeas(query);
+    res.json(ideas);
+  } catch (err) {
+    console.error('[YT/KW]', err.message);
+    res.status(500).json({ error: 'Recherche indisponible', details: err.message });
+  }
+});
+
+/* ── Analyse de miniature par IA (Pro/Business) ── */
+router.post('/ai/thumbnail', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, videoId, title = '', language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret || !videoId) return res.status(400).json({ error: 'Paramètres requis' });
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Analyse de miniature réservée aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+
+    // Récupérer l'image de la miniature et la convertir en base64
+    let b64 = null;
+    for (const q of ['maxresdefault', 'hqdefault', 'mqdefault']) {
+      try {
+        const ir = await fetch(`https://i.ytimg.com/vi/${videoId}/${q}.jpg`);
+        if (ir.ok) { const buf = Buffer.from(await ir.arrayBuffer()); if (buf.length > 1000) { b64 = buf.toString('base64'); break; } }
+      } catch (e) {}
+    }
+    if (!b64) return res.status(404).json({ error: 'Miniature introuvable' });
+
+    const result = await analyzeThumbnail(b64, title, language);
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/THUMB]', err.message);
+    res.status(500).json({ error: 'Analyse de miniature indisponible', details: err.message });
   }
 });
 

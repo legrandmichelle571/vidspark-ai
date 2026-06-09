@@ -123,4 +123,33 @@ Réponds UNIQUEMENT en JSON valide :
   return geminiJson(prompt, 1600);
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights };
+/* Analyse d'une miniature via Gemini Vision (image en base64) */
+async function analyzeThumbnail(imageBase64, title = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) throw new Error('GEMINI_API_KEY manquante');
+  const prompt = `Tu es un expert des miniatures YouTube (CTR). Analyse cette miniature (titre de la vidéo : "${title}") en ${langName}.
+Réponds UNIQUEMENT en JSON valide :
+{
+  "score": <0-100>,
+  "strengths": ["<point fort 1>", "<point fort 2>"],
+  "tips": ["<conseil concret pour augmenter le CTR 1>", "<conseil 2>", "<conseil 3>"],
+  "has_text": <true|false>,
+  "has_face": <true|false>,
+  "emotion": "<émotion dominante ou 'neutre'>"
+}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+  const r = await fetch(url, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }] }],
+      generationConfig: { maxOutputTokens: 1024, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 0 } }
+    })
+  });
+  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error?.message || `Gemini ${r.status}`); }
+  const d = await r.json();
+  return parseJson(d.candidates?.[0]?.content?.parts?.[0]?.text || '');
+}
+
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, analyzeThumbnail };
