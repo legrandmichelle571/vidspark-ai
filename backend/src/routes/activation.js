@@ -184,7 +184,7 @@ router.post('/ai/titles', async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error('[ACT-AI/TITLES]', err.message);
-    res.status(500).json({ error: 'Génération des titres échouée' });
+    res.status(500).json({ error: 'Génération des titres échouée', details: err.message });
   }
 });
 
