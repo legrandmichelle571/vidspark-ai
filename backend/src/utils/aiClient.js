@@ -49,6 +49,20 @@ function parseJson(text) {
   return JSON.parse(text.replace(/```json|```/g, '').trim());
 }
 
+/* Appelle Gemini + parse le JSON, avec un retry si la réponse est tronquée */
+async function geminiJson(prompt, maxTokens) {
+  let lastErr;
+  for (let i = 0; i < 2; i++) {
+    try {
+      return parseJson(await callGemini(prompt, maxTokens));
+    } catch (e) {
+      lastErr = e;
+      await new Promise(r => setTimeout(r, 600));
+    }
+  }
+  throw lastErr;
+}
+
 const LANG_NAMES = {
   fr:'français', en:'english', ar:'arabe', es:'espagnol',
   de:'allemand', ru:'russe', ja:'japonais', ko:'coréen', zh:'chinois',
@@ -71,7 +85,7 @@ Chaque variante a un type différent. Réponds UNIQUEMENT en JSON valide :
   ]
 }
 Langue: ${LANG_NAMES[language] || language}. Titres entre 55-70 caractères idéalement.`;
-  return parseJson(await callGemini(prompt, 1000));
+  return geminiJson(prompt, 2048);
 }
 
 /* Rapport SEO complet */
@@ -92,7 +106,7 @@ Réponds UNIQUEMENT en JSON valide :
   ],
   "suggestions": ["<conseil concret 1 en ${langName}>", "<conseil 2>", "<conseil 3>", "<conseil 4>"]
 }`;
-  return parseJson(await callGemini(prompt, 1400));
+  return geminiJson(prompt, 2048);
 }
 
 /* Analyse concurrentielle (basée IA) */
@@ -106,7 +120,7 @@ Réponds UNIQUEMENT en JSON valide :
   "angles": ["<angle original 1>", "<angle original 2>"],
   "keywords": ["<mot-clé 1>", "<mot-clé 2>", "<mot-clé 3>", "<mot-clé 4>", "<mot-clé 5>"]
 }`;
-  return parseJson(await callGemini(prompt, 900));
+  return geminiJson(prompt, 1600);
 }
 
 module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights };
