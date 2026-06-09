@@ -246,4 +246,43 @@ router.post('/ai/competitor', async (req, res) => {
   }
 });
 
+/* ── Vraies données YouTube (API v3) — Pro/Business ── */
+const { getVideoStats, searchVideos } = require('../utils/youtube');
+
+router.post('/youtube/video', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, videoId } = req.body;
+    if (!activation_id || !activation_secret || !videoId) return res.status(400).json({ error: 'Paramètres requis' });
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+    if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Données YouTube réelles réservées aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+
+    const data = await getVideoStats(videoId);
+    if (!data) return res.status(404).json({ error: 'Vidéo introuvable' });
+    res.json(data);
+  } catch (err) {
+    console.error('[YT/VIDEO]', err.message);
+    res.status(500).json({ error: 'Données YouTube indisponibles', details: err.message });
+  }
+});
+
+router.post('/youtube/competitors', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, query } = req.body;
+    if (!activation_id || !activation_secret || !query) return res.status(400).json({ error: 'Paramètres requis' });
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Analyse concurrents réelle réservée aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+
+    const videos = await searchVideos(query, 8);
+    res.json({ videos });
+  } catch (err) {
+    console.error('[YT/COMP]', err.message);
+    res.status(500).json({ error: 'Recherche indisponible', details: err.message });
+  }
+});
+
 module.exports = router;
