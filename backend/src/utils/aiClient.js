@@ -160,7 +160,7 @@ async function generateThumbnailImage(prompt) {
     const r = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT_ID}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
       { method: 'POST', headers: { 'Authorization': `Bearer ${process.env.CF_AI_TOKEN}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, width: 1280, height: 720 }) }
+        body: JSON.stringify({ prompt, steps: 6 }) }
     );
     const j = await r.json().catch(() => ({}));
     if (r.ok && j.result?.image) return { base64: j.result.image, mime: 'image/jpeg' };
