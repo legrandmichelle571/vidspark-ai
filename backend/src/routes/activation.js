@@ -9,6 +9,7 @@
  * La chaîne verrouillée est stockée dans activation_codes.channel_id / channel_name.
  */
 const router = require('express').Router();
+const { getChannelLimit } = require('../config/channelLimits');
 
 /* Récupère un code d'activation valide (ID + Secret) ou null */
 async function findValidCode(supabase, activation_id, activation_secret) {
@@ -47,6 +48,13 @@ router.post('/activate', async (req, res) => {
       .eq('id', code.user_id)
       .maybeSingle();
 
+    // Liste des chaînes autorisées (multi-chaînes selon le plan)
+    const { data: chans } = await supabase
+      .from('activation_channels')
+      .select('channel_id, channel_name')
+      .eq('user_id', code.user_id);
+    const channels = chans || [];
+
     const daysRemaining = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
 
     res.json({
@@ -62,9 +70,10 @@ router.post('/activate', async (req, res) => {
         days_remaining: Math.max(0, daysRemaining),
         is_active:      true
       },
-      // Chaîne verrouillée (null si pas encore choisie)
-      channel_id:   code.channel_id   || null,
-      channel_name: code.channel_name || null
+      // Chaînes autorisées + limite du plan
+      channels,
+      channel_ids:   channels.map(c => c.channel_id),
+      channel_limit: getChannelLimit(user?.plan)
     });
   } catch (err) {
     console.error('[ACTIVATION]', err.message);

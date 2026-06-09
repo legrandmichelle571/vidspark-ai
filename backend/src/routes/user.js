@@ -11,6 +11,91 @@
 const router = require('express').Router();
 const { requireAuth }  = require('../middleware/auth');
 const { getLimits }    = require('../config/plans');
+const { getChannelLimit } = require('../config/channelLimits');
+
+/* ── Mes chaînes YouTube autorisées (gérées depuis le dashboard) ── */
+
+/* Liste des chaînes + limite du plan */
+router.get('/channels', requireAuth, async (req, res) => {
+  try {
+    const supabase = req.app.locals.supabase;
+    const { data: channels } = await supabase
+      .from('activation_channels')
+      .select('channel_id, channel_name, created_at')
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: true });
+
+    res.json({
+      plan:     req.user.plan,
+      limit:    getChannelLimit(req.user.plan),
+      channels: channels || []
+    });
+  } catch (err) {
+    console.error('[GET /user/channels]', err.message);
+    res.status(500).json({ error: 'Erreur lors de la récupération des chaînes' });
+  }
+});
+
+/* Ajouter une chaîne (respecte la limite du plan) */
+router.post('/channels', requireAuth, async (req, res) => {
+  try {
+    const { channel_id, channel_name } = req.body;
+    if (!channel_id) return res.status(400).json({ error: 'channel_id requis' });
+
+    const supabase = req.app.locals.supabase;
+    const limit = getChannelLimit(req.user.plan);
+
+    const { data: existing } = await supabase
+      .from('activation_channels')
+      .select('channel_id')
+      .eq('user_id', req.user.id);
+
+    const current = existing || [];
+    // Déjà présente ?
+    if (current.some(c => c.channel_id === channel_id)) {
+      return res.status(200).json({ message: 'Chaîne déjà ajoutée', limit, count: current.length });
+    }
+    // Limite atteinte ?
+    if (current.length >= limit) {
+      return res.status(403).json({
+        error: `Limite atteinte (${limit} chaîne${limit > 1 ? 's' : ''}). Passez à Business pour 5 chaînes.`,
+        code:  'CHANNEL_LIMIT_REACHED',
+        limit
+      });
+    }
+
+    const { error: insErr } = await supabase
+      .from('activation_channels')
+      .insert({ user_id: req.user.id, channel_id, channel_name: channel_name || channel_id });
+
+    if (insErr) {
+      console.error('[POST /user/channels] insert error:', insErr.message);
+      return res.status(500).json({ error: 'Impossible d\'ajouter la chaîne' });
+    }
+
+    res.status(201).json({ message: 'Chaîne ajoutée', channel_id, channel_name: channel_name || channel_id, limit, count: current.length + 1 });
+  } catch (err) {
+    console.error('[POST /user/channels]', err.message);
+    res.status(500).json({ error: 'Erreur lors de l\'ajout de la chaîne' });
+  }
+});
+
+/* Retirer une chaîne */
+router.delete('/channels/:channel_id', requireAuth, async (req, res) => {
+  try {
+    const supabase = req.app.locals.supabase;
+    const { error } = await supabase
+      .from('activation_channels')
+      .delete()
+      .eq('user_id', req.user.id)
+      .eq('channel_id', req.params.channel_id);
+
+    if (error) return res.status(500).json({ error: 'Impossible de retirer la chaîne' });
+    res.json({ message: 'Chaîne retirée' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur lors de la suppression de la chaîne' });
+  }
+});
 
 /* ── Mon profil ── */
 router.get('/me', requireAuth, async (req, res) => {
