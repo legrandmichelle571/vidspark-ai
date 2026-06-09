@@ -248,7 +248,8 @@ router.post('/ai/competitor', async (req, res) => {
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
 const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas } = require('../utils/youtube');
-const { analyzeThumbnail } = require('../utils/aiClient');
+const { analyzeThumbnail, generateThumbnailImage } = require('../utils/aiClient');
+const { getThumbnailLimit } = require('../config/thumbnailLimits');
 
 router.post('/youtube/video', async (req, res) => {
   try {
@@ -346,6 +347,46 @@ router.post('/ai/thumbnail', async (req, res) => {
   } catch (err) {
     console.error('[AI/THUMB]', err.message);
     res.status(500).json({ error: 'Analyse de miniature indisponible', details: err.message });
+  }
+});
+
+/* ── Génération de miniature (Pro=30/mois, Business=50/mois, Free=bloqué) ── */
+router.post('/ai/thumbnail-generate', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, title = '', prompt = '' } = req.body;
+    if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+
+    const limit = getThumbnailLimit(ctx.plan);
+    if (limit === 0) {
+      return res.status(403).json({ error: 'Génération de miniatures réservée aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    }
+
+    // Quota mensuel
+    const month = new Date().toISOString().slice(0, 7);
+    const { data: usage } = await supabase
+      .from('thumbnail_usage').select('count').eq('user_id', ctx.user.id).eq('month', month).maybeSingle();
+    const used = usage?.count || 0;
+    if (used >= limit) {
+      return res.status(429).json({ error: `Quota mensuel atteint (${used}/${limit} miniatures).`, code: 'QUOTA_REACHED', used, limit });
+    }
+
+    const fullPrompt = `Crée une miniature YouTube ultra accrocheuse, format 16:9, haute qualité, couleurs vives, fort contraste, texte gras lisible, pour une vidéo intitulée "${title}". ${prompt}`.trim();
+    const image = await generateThumbnailImage(fullPrompt);
+
+    // Incrémenter le quota
+    await supabase.from('thumbnail_usage').upsert(
+      { user_id: ctx.user.id, month, count: used + 1 },
+      { onConflict: 'user_id,month' }
+    );
+
+    res.json({ image, mime: 'image/png', used: used + 1, limit });
+  } catch (err) {
+    console.error('[AI/THUMB-GEN]', err.message);
+    res.status(500).json({ error: 'Génération de miniature indisponible', details: err.message });
   }
 });
 

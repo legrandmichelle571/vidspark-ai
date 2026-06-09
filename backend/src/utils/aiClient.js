@@ -152,4 +152,24 @@ Réponds UNIQUEMENT en JSON valide :
   return parseJson(d.candidates?.[0]?.content?.parts?.[0]?.text || '');
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, analyzeThumbnail };
+/* Génère une image de miniature (Gemini image) — renvoie le base64 */
+async function generateThumbnailImage(prompt) {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) throw new Error('GEMINI_API_KEY manquante');
+  const model = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+  const r = await fetch(url, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { responseModalities: ['IMAGE'] }
+    })
+  });
+  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error?.message || `Gemini image ${r.status}`); }
+  const d = await r.json();
+  const img = d.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+  if (!img) throw new Error('Aucune image générée');
+  return img.inlineData.data; // base64
+}
+
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, analyzeThumbnail, generateThumbnailImage };
