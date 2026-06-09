@@ -374,8 +374,8 @@ router.post('/ai/thumbnail-generate', async (req, res) => {
       return res.status(429).json({ error: `Quota mensuel atteint (${used}/${limit} miniatures).`, code: 'QUOTA_REACHED', used, limit });
     }
 
-    const fullPrompt = `Crée une miniature YouTube ultra accrocheuse, format 16:9, haute qualité, couleurs vives, fort contraste, texte gras lisible, pour une vidéo intitulée "${title}". ${prompt}`.trim();
-    const image = await generateThumbnailImage(fullPrompt);
+    const fullPrompt = `YouTube thumbnail, 16:9, ultra eye-catching, vivid colors, high contrast, bold readable text, cinematic, for a video titled "${title}". ${prompt}`.trim();
+    const img = await generateThumbnailImage(fullPrompt);
 
     // Incrémenter le quota
     await supabase.from('thumbnail_usage').upsert(
@@ -383,7 +383,7 @@ router.post('/ai/thumbnail-generate', async (req, res) => {
       { onConflict: 'user_id,month' }
     );
 
-    res.json({ image, mime: 'image/png', used: used + 1, limit });
+    res.json({ image: img.base64, mime: img.mime, used: used + 1, limit });
   } catch (err) {
     console.error('[AI/THUMB-GEN]', err.message);
     res.status(500).json({ error: 'Génération de miniature indisponible', details: err.message });

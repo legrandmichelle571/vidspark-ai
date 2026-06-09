@@ -152,24 +152,30 @@ Réponds UNIQUEMENT en JSON valide :
   return parseJson(d.candidates?.[0]?.content?.parts?.[0]?.text || '');
 }
 
-/* Génère une image de miniature (Gemini image) — renvoie le base64 */
+/* Génère une image de miniature — GRATUIT via Pollinations.ai (pas de clé ni facturation)
+   Renvoie { base64, mime }. */
 async function generateThumbnailImage(prompt) {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) throw new Error('GEMINI_API_KEY manquante');
-  const model = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-  const r = await fetch(url, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { responseModalities: ['IMAGE'] }
-    })
-  });
-  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error?.message || `Gemini image ${r.status}`); }
-  const d = await r.json();
-  const img = d.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-  if (!img) throw new Error('Aucune image générée');
-  return img.inlineData.data; // base64
+  // 1) Cloudflare Workers AI (Flux) si configuré → qualité pro, 16:9, gratuit
+  if (process.env.CF_ACCOUNT_ID && process.env.CF_AI_TOKEN) {
+    const r = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${process.env.CF_ACCOUNT_ID}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
+      { method: 'POST', headers: { 'Authorization': `Bearer ${process.env.CF_AI_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, width: 1280, height: 720 }) }
+    );
+    const j = await r.json().catch(() => ({}));
+    if (r.ok && j.result?.image) return { base64: j.result.image, mime: 'image/jpeg' };
+    // sinon on retombe sur Pollinations
+  }
+
+  // 2) Pollinations.ai (gratuit, sans clé) — tier gratuit : prompt + modèle uniquement
+  //    (variation via le texte du prompt, car les paramètres seed/width déclenchent un 402)
+  const varied = `${prompt} [v${Math.floor(Math.random() * 100000)}]`;
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(varied)}?model=flux`;
+  const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+  if (!r.ok) throw new Error(`Génération image ${r.status}`);
+  const buf = Buffer.from(await r.arrayBuffer());
+  if (buf.length < 2000) throw new Error('Image vide');
+  return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
 module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, analyzeThumbnail, generateThumbnailImage };
