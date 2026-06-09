@@ -144,4 +144,94 @@ router.get('/remaining/:activation_id', async (req, res) => {
   }
 });
 
+/* ════════════════════════════════════════════════════════════════
+   IA via code d'activation (l'extension n'a pas de JWT)
+   Gating par plan : Titres IA / Rapport IA / Concurrence = Pro & Business.
+   ════════════════════════════════════════════════════════════════ */
+const { generateTitles, generateReport, generateCompetitorInsights } = require('../utils/aiClient');
+
+/* Valide le code + récupère le plan de l'utilisateur. Renvoie {code,user} ou null. */
+async function getCodeUser(supabase, activation_id, activation_secret) {
+  const code = await findValidCode(supabase, activation_id, activation_secret);
+  if (!code) return null;
+  if (new Date(code.subscription_expiry) < new Date()) return { expired: true };
+  const { data: user } = await supabase
+    .from('users').select('id, plan').eq('id', code.user_id).maybeSingle();
+  return { code, user, plan: (user?.plan || 'free') };
+}
+
+/* Middleware-like : exige un plan payant (pro/business) */
+function requirePaidPlan(plan) {
+  return ['pro', 'business'].includes((plan || '').toLowerCase());
+}
+
+/* ── Titres IA (Pro/Business) ── */
+router.post('/ai/titles', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, title, language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
+    if (!title) return res.status(400).json({ error: 'Titre requis' });
+
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)         return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (ctx.expired)  return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+    if (!requirePaidPlan(ctx.plan)) {
+      return res.status(403).json({ error: 'Titres IA réservés aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    }
+
+    const result = await generateTitles(title, language);
+    res.json(result);
+  } catch (err) {
+    console.error('[ACT-AI/TITLES]', err.message);
+    res.status(500).json({ error: 'Génération des titres échouée' });
+  }
+});
+
+/* ── Rapport IA complet (Pro/Business) ── */
+router.post('/ai/report', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, title, description = '', language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
+    if (!title) return res.status(400).json({ error: 'Titre requis' });
+
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+    if (!requirePaidPlan(ctx.plan)) {
+      return res.status(403).json({ error: 'Rapport IA réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    }
+
+    const result = await generateReport(title, description, language);
+    res.json(result);
+  } catch (err) {
+    console.error('[ACT-AI/REPORT]', err.message);
+    res.status(500).json({ error: 'Génération du rapport échouée' });
+  }
+});
+
+/* ── Analyse concurrentielle IA (Pro/Business) ── */
+router.post('/ai/competitor', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, title, language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
+    if (!title) return res.status(400).json({ error: 'Titre requis' });
+
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+    if (!requirePaidPlan(ctx.plan)) {
+      return res.status(403).json({ error: 'Analyse concurrents réservée aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    }
+
+    const result = await generateCompetitorInsights(title, language);
+    res.json(result);
+  } catch (err) {
+    console.error('[ACT-AI/COMPETITOR]', err.message);
+    res.status(500).json({ error: 'Analyse concurrentielle échouée' });
+  }
+});
+
 module.exports = router;
