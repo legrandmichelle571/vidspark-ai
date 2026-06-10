@@ -223,6 +223,38 @@ router.post('/ai/report', async (req, res) => {
   }
 });
 
+/* ── Description IA (Pro/Business) ── */
+router.post('/ai/description', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, title, language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret || !title) return res.status(400).json({ error: 'Paramètres requis' });
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Description IA réservée aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    res.json(await generateDescription(title, language));
+  } catch (err) {
+    console.error('[ACT-AI/DESC]', err.message);
+    res.status(500).json({ error: 'Génération de description échouée', details: err.message });
+  }
+});
+
+/* ── Tags IA (Pro/Business) ── */
+router.post('/ai/tags', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, title, language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret || !title) return res.status(400).json({ error: 'Paramètres requis' });
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Tags IA réservés aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    res.json(await generateTags(title, language));
+  } catch (err) {
+    console.error('[ACT-AI/TAGS]', err.message);
+    res.status(500).json({ error: 'Génération de tags échouée', details: err.message });
+  }
+});
+
 /* ── Analyse concurrentielle IA (Pro/Business) ── */
 router.post('/ai/competitor', async (req, res) => {
   try {
@@ -248,7 +280,7 @@ router.post('/ai/competitor', async (req, res) => {
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
 const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas } = require('../utils/youtube');
-const { analyzeThumbnail, generateThumbnailImage } = require('../utils/aiClient');
+const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags } = require('../utils/aiClient');
 const { getThumbnailLimit } = require('../config/thumbnailLimits');
 
 router.post('/youtube/video', async (req, res) => {

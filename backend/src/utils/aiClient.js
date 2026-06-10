@@ -109,6 +109,23 @@ Réponds UNIQUEMENT en JSON valide :
   return geminiJson(prompt, 2048);
 }
 
+/* Description YouTube optimisée + hashtags */
+async function generateDescription(title, language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const prompt = `Tu es un expert YouTube SEO. Rédige une description YouTube optimisée en ${langName} pour la vidéo "${title}".
+Réponds UNIQUEMENT en JSON valide :
+{ "description": "<description engageante de 3 à 5 lignes, riche en mots-clés>", "hashtags": ["#mot1","#mot2","#mot3","#mot4","#mot5"] }`;
+  return geminiJson(prompt, 1200);
+}
+
+/* 15 tags SEO */
+async function generateTags(title, language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const prompt = `Génère 15 tags YouTube SEO pertinents (mots-clés) pour la vidéo "${title}" en ${langName}.
+Réponds UNIQUEMENT en JSON valide : { "tags": ["tag1","tag2","tag3", "..."] }`;
+  return geminiJson(prompt, 800);
+}
+
 /* Analyse concurrentielle (basée IA) */
 async function generateCompetitorInsights(title, language = 'fr') {
   const langName = LANG_NAMES[language] || language;
@@ -178,4 +195,4 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, analyzeThumbnail, generateThumbnailImage };
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage };
