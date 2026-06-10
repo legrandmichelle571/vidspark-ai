@@ -46,11 +46,40 @@ async function callGemini(prompt, maxTokens = 2048) {
 }
 
 function parseJson(text) {
-  return JSON.parse(text.replace(/```json|```/g, '').trim());
+  let t = (text || '').replace(/```json|```/g, '').trim();
+  const s = t.indexOf('{'), e = t.lastIndexOf('}');   // extrait le bloc JSON si entouré de texte
+  if (s >= 0 && e > s) t = t.slice(s, e + 1);
+  return JSON.parse(t);
 }
 
-/* Appelle Gemini + parse le JSON, avec un retry si la réponse est tronquée */
+/* Génération de texte via Cloudflare Workers AI (Llama) — gratuit, sans quota Gemini */
+async function callCloudflareText(prompt, maxTokens = 1200) {
+  const acc = process.env.CF_ACCOUNT_ID, tok = process.env.CF_AI_TOKEN;
+  if (!acc || !tok) throw new Error('Cloudflare non configuré');
+  const model = process.env.CF_TEXT_MODEL || '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+  const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${acc}/ai/run/${model}`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${tok}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: maxTokens,
+      response_format: { type: 'json_object' }   // force une sortie JSON
+    })
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.result) throw new Error(j.errors?.[0]?.message || `Cloudflare AI ${r.status}`);
+  const resp = j.result.response;
+  return (resp && typeof resp === 'object') ? JSON.stringify(resp) : (resp || '');
+}
+
+/* JSON IA : Cloudflare d'abord (gratuit), Gemini en secours */
 async function geminiJson(prompt, maxTokens) {
+  // 1) Cloudflare Workers AI (pas de quota Gemini)
+  if (process.env.CF_ACCOUNT_ID && process.env.CF_AI_TOKEN) {
+    try { return parseJson(await callCloudflareText(prompt, maxTokens)); }
+    catch (e) { /* on bascule sur Gemini */ }
+  }
+  // 2) Gemini (fallback)
   let lastErr;
   for (let i = 0; i < 2; i++) {
     try {
