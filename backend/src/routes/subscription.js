@@ -219,27 +219,26 @@ router.post('/checkout/paypal', requireAuth, async (req, res) => {
 
     const accessToken = tokenData.access_token;
 
-    /* Créer une commande (Orders API) avec abonnement */
+    /* Créer une commande (Orders API) */
     const planData = PLANS.find(p => p.id === plan);
     const amount = interval === 'month' ? planData.price_monthly : planData.price_yearly;
 
     const orderBody = {
-      intent: 'SUBSCRIBE',
-      payer: {
-        email_address: req.user.email,
-        name: {
-          given_name: req.user.name || 'User',
-          surname: ''
+      intent: 'CAPTURE',
+      purchase_units: [
+        {
+          reference_id: `${req.user.id}-${plan}-${Date.now()}`,
+          amount: {
+            currency_code: 'USD',
+            value: amount.toString()
+          },
+          description: `VidSpark AI ${plan.toUpperCase()} - ${interval}ly`
         }
-      },
-      subscription_data: {
-        plan_id: `VIDSPARK_${plan.toUpperCase()}_${interval.toUpperCase()}`
-      },
+      ],
       application_context: {
         return_url: `${process.env.FRONTEND_URL}/success?type=paypal&plan=${plan}`,
         cancel_url: `${process.env.FRONTEND_URL}/pricing`,
-        notify_url: `${process.env.BACKEND_URL || process.env.FRONTEND_URL}/api/webhook/paypal`,
-        user_action: 'SUBSCRIBE_NOW'
+        user_action: 'PAY_NOW'
       }
     };
 
