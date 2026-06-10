@@ -62,7 +62,7 @@ async function createPaymentOrder({
     order_id: orderId,
     description,
     return_url: `${process.env.FRONTEND_URL}/success?type=crypto`,
-    notify_url: `${process.env.BACKEND_URL || 'https://vidsparkpro.com'}/api/webhook/cryptomus`,
+    notify_url: `${process.env.BACKEND_URL || 'https://vidspark-ai-production-9ac7.up.railway.app'}/api/webhook/cryptomus`,
     is_payment_currency: true,
     metadata: JSON.stringify(metadata)
   };
@@ -70,9 +70,16 @@ async function createPaymentOrder({
   console.log('[CRYPTOMUS] Creating order:', body);
   const result = await cryptomusRequest('/payment', body);
 
+  console.log('[CRYPTOMUS] API Response:', JSON.stringify(result, null, 2));
+
+  if (!result.result) {
+    console.error('[CRYPTOMUS] No result field in response:', result);
+    throw new Error('Cryptomus API returned invalid response structure');
+  }
+
   return {
-    uuid: result.result?.uuid,
-    pay_url: result.result?.pay_url,
+    uuid: result.result.uuid,
+    pay_url: result.result.pay_url,
     ...result
   };
 }
