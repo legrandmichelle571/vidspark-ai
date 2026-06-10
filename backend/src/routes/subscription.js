@@ -180,17 +180,101 @@ router.post('/checkout/cryptomus', requireAuth, async (req, res) => {
   }
 });
 
-/* ── PayPal Checkout — DÉSACTIVÉ ──────────────────────────────
-   La création d'abonnement PayPal n'est pas encore implémentée.
-   Utiliser Stripe pour les paiements (pleinement fonctionnel).
-   Réactiver cette route quand l'intégration PayPal sera complète.
-──────────────────────────────────────────────────────────────── */
-router.post('/checkout/paypal', requireAuth, (req, res) => {
-  res.status(501).json({
-    error:      'PayPal payments are not available yet. Please use Stripe.',
-    code:       'PAYPAL_NOT_IMPLEMENTED',
-    alternative:'Use POST /api/subscription/checkout/stripe'
-  });
+/* ── PayPal Checkout ── */
+router.post('/checkout/paypal', requireAuth, async (req, res) => {
+  try {
+    const { plan, interval = 'month' } = req.body;
+    if (!['pro', 'business'].includes(plan)) {
+      return res.status(400).json({ error: 'Invalid plan' });
+    }
+
+    const supabase = req.app.locals.supabase;
+
+    /* Récupérer les credentials PayPal */
+    const clientId = process.env.PAYPAL_CLIENT_ID;
+    const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+    const mode = process.env.PAYPAL_MODE || 'sandbox';
+
+    if (!clientId || !clientSecret) {
+      throw new Error('PayPal credentials not configured');
+    }
+
+    const apiBase = mode === 'live'
+      ? 'https://api-m.paypal.com'
+      : 'https://api-m.sandbox.paypal.com';
+
+    /* Obtenir access token */
+    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const tokenRes = await fetch(`${apiBase}/v1/oauth2/token`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${credentials}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: 'grant_type=client_credentials'
+    });
+
+    const tokenData = await tokenRes.json();
+    if (!tokenData.access_token) throw new Error('Failed to get PayPal token');
+
+    const accessToken = tokenData.access_token;
+
+    /* Créer une commande (Orders API) avec abonnement */
+    const planData = PLANS.find(p => p.id === plan);
+    const amount = interval === 'month' ? planData.price_monthly : planData.price_yearly;
+
+    const orderBody = {
+      intent: 'SUBSCRIBE',
+      payer: {
+        email_address: req.user.email,
+        name: {
+          given_name: req.user.name || 'User',
+          surname: ''
+        }
+      },
+      subscription_data: {
+        plan_id: `VIDSPARK_${plan.toUpperCase()}_${interval.toUpperCase()}`
+      },
+      application_context: {
+        return_url: `${process.env.FRONTEND_URL}/success?type=paypal&plan=${plan}`,
+        cancel_url: `${process.env.FRONTEND_URL}/pricing`,
+        notify_url: `${process.env.BACKEND_URL || process.env.FRONTEND_URL}/api/webhook/paypal`,
+        user_action: 'SUBSCRIBE_NOW'
+      }
+    };
+
+    const orderRes = await fetch(`${apiBase}/v2/checkout/orders`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'PayPal-Request-Id': `${req.user.id}-${Date.now()}`
+      },
+      body: JSON.stringify(orderBody)
+    });
+
+    const orderData = await orderRes.json();
+
+    if (!orderRes.ok || !orderData.id) {
+      console.error('[PAYPAL] Order creation failed:', orderData);
+      throw new Error(orderData.message || 'Failed to create PayPal order');
+    }
+
+    /* Trouver le lien d'approbation */
+    const approveLink = orderData.links.find(l => l.rel === 'approve');
+    if (!approveLink) throw new Error('No approve link in PayPal response');
+
+    res.json({
+      checkout_url: approveLink.href,
+      order_id: orderData.id,
+      plan,
+      interval,
+      amount
+    });
+  } catch (err) {
+    console.error('[PAYPAL]', err.message);
+    res.status(500).json({ error: 'PayPal checkout failed: ' + err.message });
+  }
 });
 
 /* ── Annuler l'abonnement ── */
