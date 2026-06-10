@@ -77,9 +77,15 @@ async function createPaymentOrder({
     throw new Error('Cryptomus API returned invalid response structure');
   }
 
+  const paymentUrl = result.result.url || result.result.pay_url;
+  if (!paymentUrl) {
+    console.error('[CRYPTOMUS] No payment URL in response:', result.result);
+    throw new Error('Cryptomus did not return a payment URL');
+  }
+
   return {
     uuid: result.result.uuid,
-    pay_url: result.result.pay_url,
+    pay_url: paymentUrl,
     ...result
   };
 }
