@@ -169,24 +169,45 @@ Réponds UNIQUEMENT en JSON valide :
   return geminiJson(prompt, 1600);
 }
 
-/* Analyse d'une miniature via Gemini Vision (image en base64) */
+/* Décrit une image via Cloudflare LLAVA (vision) */
+async function cloudflareDescribeImage(imageBase64) {
+  const acc = process.env.CF_ACCOUNT_ID, tok = process.env.CF_AI_TOKEN;
+  if (!acc || !tok) throw new Error('Cloudflare non configuré');
+  const bytes = [...Buffer.from(imageBase64, 'base64')];
+  const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${acc}/ai/run/@cf/llava-hf/llava-1.5-7b-hf`, {
+    method: 'POST', headers: { 'Authorization': `Bearer ${tok}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image: bytes, prompt: 'Describe this YouTube thumbnail in detail: colors, text present, faces and emotions, composition, and how clickable it looks.', max_tokens: 300 })
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.result) throw new Error(j.errors?.[0]?.message || `Cloudflare vision ${r.status}`);
+  return j.result.description || '';
+}
+
+/* Analyse d'une miniature — Cloudflare (LLAVA décrit → Llama note en JSON), fallback Gemini Vision */
 async function analyzeThumbnail(imageBase64, title = '', language = 'fr') {
   const langName = LANG_NAMES[language] || language;
+
+  // 1) Cloudflare : LLAVA décrit l'image, puis Llama produit le JSON (gratuit, sans quota Gemini)
+  if (process.env.CF_ACCOUNT_ID && process.env.CF_AI_TOKEN) {
+    try {
+      const desc = await cloudflareDescribeImage(imageBase64);
+      if (desc) {
+        const prompt = `Tu es un expert des miniatures YouTube (CTR). Voici la description d'une miniature (titre de la vidéo : "${title}") : "${desc}".
+Réponds UNIQUEMENT en JSON valide :
+{ "score": <0-100>, "strengths": ["<point fort 1>","<point fort 2>"], "tips": ["<conseil CTR 1>","<conseil 2>","<conseil 3>"], "has_text": <true|false>, "has_face": <true|false>, "emotion": "<émotion ou 'neutre'>" }
+Langue : ${langName}.`;
+        return await geminiJson(prompt, 900);
+      }
+    } catch (e) { /* on bascule sur Gemini Vision */ }
+  }
+
+  // 2) Fallback : Gemini Vision
   const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   const key = process.env.GEMINI_API_KEY;
-  if (!key) throw new Error('GEMINI_API_KEY manquante');
-  const prompt = `Tu es un expert des miniatures YouTube (CTR). Analyse cette miniature (titre de la vidéo : "${title}") en ${langName}.
-Réponds UNIQUEMENT en JSON valide :
-{
-  "score": <0-100>,
-  "strengths": ["<point fort 1>", "<point fort 2>"],
-  "tips": ["<conseil concret pour augmenter le CTR 1>", "<conseil 2>", "<conseil 3>"],
-  "has_text": <true|false>,
-  "has_face": <true|false>,
-  "emotion": "<émotion dominante ou 'neutre'>"
-}`;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-  const r = await fetch(url, {
+  if (!key) throw new Error('Analyse de miniature indisponible');
+  const prompt = `Tu es un expert des miniatures YouTube (CTR). Analyse cette miniature (titre : "${title}") en ${langName}.
+Réponds UNIQUEMENT en JSON : { "score": <0-100>, "strengths": ["..."], "tips": ["...","...","..."], "has_text": <true|false>, "has_face": <true|false>, "emotion": "<...>" }`;
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }] }],
