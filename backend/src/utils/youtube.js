@@ -131,15 +131,22 @@ async function getKeywordIdeas(query) {
   } catch (e) { /* autocomplete optionnel */ }
 
   // Concurrence : moyenne des vues des meilleures vidéos sur ce mot-clé
-  let competition = 'inconnue', topAvgViews = 0, sampled = 0;
+  let competition = 'faible', topAvgViews = 0, sampled = 0;
   try {
     const top = await searchVideos(query, 6);
-    if (top.length) {
+    if (top && top.length > 0) {
       topAvgViews = Math.round(top.reduce((a, b) => a + b.views, 0) / top.length);
       sampled = top.length;
       competition = topAvgViews > 500000 ? 'forte' : topAvgViews > 50000 ? 'moyenne' : 'faible';
+    } else {
+      // Si pas de résultats, on considère que c'est une faible concurrence (niche)
+      competition = 'faible';
     }
-  } catch (e) { /* search optionnel */ }
+  } catch (e) {
+    console.error('[KW] Search failed:', e.message);
+    // Par défaut faible concurrence si erreur
+    competition = 'faible';
+  }
 
   return { query, suggestions, competition, top_avg_views: topAvgViews, sampled };
 }
