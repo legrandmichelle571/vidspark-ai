@@ -1,10 +1,12 @@
 /**
- * Webhook Stripe et PayPal
+ * Webhook Stripe, PayPal, et Cryptomus
  * POST /api/webhook/stripe
  * POST /api/webhook/paypal
+ * POST /api/webhook/cryptomus
  */
 const router    = require('express').Router();
 const express   = require('express');
+const crypto    = require('crypto');
 const { getLimits } = require('../config/plans');
 
 /* ── Stripe Webhook ── */
@@ -308,6 +310,106 @@ router.post('/paypal', async (req, res) => {
   } catch (err) {
     console.error('[PAYPAL] Erreur traitement:', err.message);
     res.status(500).json({ error: 'PayPal webhook failed' });
+  }
+});
+
+/* ── Cryptomus Webhook ── */
+router.post('/cryptomus', async (req, res) => {
+  try {
+    const { data, signature } = req.body;
+
+    if (!data || !signature) {
+      console.error('[CRYPTOMUS] Missing data or signature');
+      return res.status(400).send('Invalid webhook');
+    }
+
+    // Vérifier la signature
+    const apiKey = process.env.CRYPTOMUS_API_KEY;
+    const base64Data = Buffer.from(JSON.stringify(data)).toString('base64');
+    const expectedSig = crypto.createHash('md5')
+      .update(base64Data + apiKey)
+      .digest('hex');
+
+    if (signature !== expectedSig) {
+      console.error('[CRYPTOMUS] Signature mismatch');
+      return res.status(401).send('Invalid signature');
+    }
+
+    const supabase = req.app.locals.supabase;
+    const orderId = data.order_id;
+    const status = data.status; // 'paid', 'confirmed', 'failed', etc.
+
+    console.log(`[CRYPTOMUS] Webhook: Order ${orderId} status=${status}`);
+
+    // Seulement traiter les paiements confirmés
+    if (status !== 'paid' && status !== 'confirmed') {
+      console.log(`[CRYPTOMUS] Ignoring status: ${status}`);
+      return res.json({ received: true });
+    }
+
+    // Extraire user_id et plan depuis metadata
+    let metadata = {};
+    try {
+      metadata = JSON.parse(data.metadata || '{}');
+    } catch (e) {
+      console.error('[CRYPTOMUS] Failed to parse metadata:', data.metadata);
+    }
+
+    const userId = metadata.user_id;
+    const plan = metadata.plan;
+
+    if (!userId || !plan || !['pro', 'business'].includes(plan)) {
+      console.error('[CRYPTOMUS] Invalid metadata:', metadata);
+      return res.json({ received: true });
+    }
+
+    // Mettre à jour le plan utilisateur
+    await supabase.from('users')
+      .update({
+        plan,
+        status: 'active',
+        quota_limit: getLimits(plan).daily_analyses
+      })
+      .eq('id', userId);
+
+    // Créer l'entrée subscription
+    const now = new Date();
+    const nextMonth = new Date(now);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+    const interval = metadata.interval || 'month';
+    const endDate = interval === 'year'
+      ? new Date(now.setFullYear(now.getFullYear() + 1))
+      : nextMonth;
+
+    await supabase.from('subscriptions').upsert({
+      user_id: userId,
+      plan,
+      provider: 'cryptomus',
+      provider_sub_id: data.uuid, // UUID de la commande
+      status: 'active',
+      amount: parseFloat(data.amount) || 0,
+      currency: data.currency || 'USD',
+      interval,
+      current_period_start: now.toISOString(),
+      current_period_end: endDate.toISOString()
+    }, { onConflict: 'provider_sub_id' });
+
+    // Enregistrer le paiement
+    await supabase.from('payments').insert({
+      user_id: userId,
+      provider: 'cryptomus',
+      provider_payment_id: data.uuid,
+      amount: parseFloat(data.amount) || 0,
+      currency: data.currency || 'USD',
+      status: 'succeeded'
+    });
+
+    console.log(`[CRYPTOMUS] User ${userId} upgraded to ${plan}`);
+    res.json({ received: true });
+  } catch (err) {
+    console.error('[CRYPTOMUS] Webhook error:', err.message);
+    res.status(500).json({ error: 'Webhook processing failed' });
   }
 });
 

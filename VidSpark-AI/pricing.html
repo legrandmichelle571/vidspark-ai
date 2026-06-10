@@ -333,7 +333,10 @@
           <div class="feature">Competitor analysis</div>
           <div class="feature">PDF export & History</div>
         </div>
-        <button class="cta-button primary" onclick="window.open('https://vidsparkpro.com/checkout?plan=pro', '_blank')">Upgrade to Pro</button>
+        <div style="display: grid; gap: 10px;">
+          <button class="cta-button primary" onclick="startCheckout('pro', 'stripe')">💳 Stripe Card</button>
+          <button class="cta-button secondary" onclick="startCheckout('pro', 'cryptomus')">₿ Pay in USDT</button>
+        </div>
       </div>
 
       <!-- BUSINESS PLAN -->
@@ -349,7 +352,10 @@
           <div class="feature">API access</div>
           <div class="feature">Priority support</div>
         </div>
-        <button class="cta-button primary" onclick="window.open('https://vidsparkpro.com/checkout?plan=business', '_blank')">Upgrade to Business</button>
+        <div style="display: grid; gap: 10px;">
+          <button class="cta-button primary" onclick="startCheckout('business', 'stripe')">💳 Stripe Card</button>
+          <button class="cta-button secondary" onclick="startCheckout('business', 'cryptomus')">₿ Pay in USDT</button>
+        </div>
       </div>
     </div>
 
@@ -456,5 +462,65 @@
       <p>&copy; 2026 VidSpark AI. All rights reserved. | <a href="https://vidsparkpro.com/terms" style="color: #58a6ff; text-decoration: none;">Terms</a> | <a href="https://vidsparkpro.com/privacy" style="color: #58a6ff; text-decoration: none;">Privacy</a></p>
     </footer>
   </div>
+
+  <script>
+    async function startCheckout(plan, provider) {
+      try {
+        // Check if user is authenticated
+        const userResp = await fetch('/api/user/me', {
+          credentials: 'include'
+        });
+
+        if (!userResp.ok) {
+          alert('Please sign in first to upgrade your plan');
+          window.location.href = '/admin';
+          return;
+        }
+
+        if (provider === 'stripe') {
+          // Stripe: send to checkout with default monthly billing
+          const checkoutResp = await fetch('/api/subscription/checkout/stripe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ plan, interval: 'month' })
+          });
+
+          if (!checkoutResp.ok) {
+            const err = await checkoutResp.json();
+            alert('Stripe checkout failed: ' + (err.error || 'Unknown error'));
+            return;
+          }
+
+          const { checkout_url } = await checkoutResp.json();
+          if (checkout_url) {
+            window.location.href = checkout_url;
+          }
+        } else if (provider === 'cryptomus') {
+          // Cryptomus: send to payment portal
+          const checkoutResp = await fetch('/api/subscription/checkout/cryptomus', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ plan, interval: 'month' })
+          });
+
+          if (!checkoutResp.ok) {
+            const err = await checkoutResp.json();
+            alert('Cryptomus checkout failed: ' + (err.error || 'Unknown error'));
+            return;
+          }
+
+          const { checkout_url } = await checkoutResp.json();
+          if (checkout_url) {
+            window.location.href = checkout_url;
+          }
+        }
+      } catch (error) {
+        console.error('Checkout error:', error);
+        alert('Checkout failed: ' + error.message);
+      }
+    }
+  </script>
 </body>
 </html>

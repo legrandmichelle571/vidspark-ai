@@ -130,6 +130,56 @@ router.post('/checkout/stripe', requireAuth, async (req, res) => {
   }
 });
 
+/* ── Cryptomus Checkout (USDT) ── */
+router.post('/checkout/cryptomus', requireAuth, async (req, res) => {
+  try {
+    const { plan, interval = 'month' } = req.body;
+    if (!['pro', 'business'].includes(plan)) {
+      return res.status(400).json({ error: 'Invalid plan' });
+    }
+
+    const { createPaymentOrder } = require('../utils/cryptomus');
+    const supabase = req.app.locals.supabase;
+
+    /* Récupérer le prix du plan */
+    const planData = PLANS.find(p => p.id === plan);
+    const amount = interval === 'month' ? planData.price_monthly : planData.price_yearly;
+
+    if (!amount || amount === 0) {
+      return res.status(400).json({ error: 'Free plan cannot be paid' });
+    }
+
+    /* Créer une commande unique */
+    const orderId = `${req.user.id}-${plan}-${Date.now()}`;
+    const result = await createPaymentOrder({
+      amount: Math.round(amount * 100) / 100,
+      currency: 'USD',
+      orderId,
+      description: `VidSpark AI ${plan.toUpperCase()} - ${interval}ly`,
+      metadata: {
+        user_id: req.user.id,
+        user_email: req.user.email,
+        plan,
+        interval
+      }
+    });
+
+    if (!result.pay_url) {
+      throw new Error('Cryptomus did not return payment URL');
+    }
+
+    res.json({
+      checkout_url: result.pay_url,
+      order_uuid: result.uuid,
+      amount,
+      currency: 'USD'
+    });
+  } catch (err) {
+    console.error('[CRYPTOMUS]', err.message);
+    res.status(500).json({ error: 'Checkout creation failed: ' + err.message });
+  }
+});
+
 /* ── PayPal Checkout — DÉSACTIVÉ ──────────────────────────────
    La création d'abonnement PayPal n'est pas encore implémentée.
    Utiliser Stripe pour les paiements (pleinement fonctionnel).
