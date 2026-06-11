@@ -444,6 +444,58 @@ Donne 4 à 6 best_keywords (privilégie les long-tail faciles à classer). Tout 
   return geminiJson(prompt, 1500);
 }
 
+/* Planificateur de contenu : planning 7 jours adapté à la niche */
+async function generateContentPlan(niche = '', region = '', frequency = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const freq = frequency ? `Rythme souhaité : ${frequency}.` : '';
+  const prompt = `Tu es un stratège de contenu YouTube. Crée un PLANNING de 7 jours pour une chaîne.
+Niche : "${niche || 'généraliste'}". Audience : "${region || 'mondial'}". ${freq}
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "plan": [
+    {"day": "<jour 1, ex Lundi>", "type": "Vidéo longue" ou "Short" ou "Repos", "idea": "<idée de contenu en ${langName}>", "time": "<meilleur créneau, ex 19:00>", "why": "<raison courte en ${langName}>"}
+  ]
+}
+7 jours (mix de vidéos longues, Shorts et 1-2 jours de repos selon un rythme réaliste). Tout en ${langName}.`;
+  return geminiJson(prompt, 2000);
+}
+
+/* Localisation : traduit titre + description + tags vers une langue cible */
+async function translateMetadata(title = '', description = '', targetLang = 'en', language = 'fr') {
+  const targetName = LANG_NAMES[targetLang] || targetLang;
+  const prompt = `Tu es un traducteur YouTube expert en localisation (pas une traduction mot à mot, mais adaptée à la culture et au SEO).
+Traduis et ADAPTE ces métadonnées vers ${targetName}.
+
+Titre : "${title}"
+Description : "${(description || '').slice(0, 600)}"
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "title": "<titre traduit et optimisé en ${targetName}>",
+  "description": "<description traduite et adaptée en ${targetName}>",
+  "tags": ["<tag SEO 1 en ${targetName}>", "<tag 2>", "<...jusqu'à 10 tags>"]
+}`;
+  return geminiJson(prompt, 1500);
+}
+
+/* Posts communautaires : sondages, questions, teasers pour l'onglet Communauté */
+async function generateCommunityPosts(niche = '', topic = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const ctx = [niche && `Niche : ${niche}`, topic && `Sujet : ${topic}`].filter(Boolean).join('. ');
+  const prompt = `Tu es un expert de l'engagement YouTube. Génère 5 posts pour l'onglet Communauté afin de garder l'audience active entre deux vidéos.
+${ctx || 'Niche généraliste.'}
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "posts": [
+    {"type": "Sondage" ou "Question" ou "Teaser" ou "Annonce", "text": "<texte du post en ${langName}>", "options": ["<option sondage 1>", "<option 2>"]}
+  ]
+}
+5 posts variés (au moins 2 sondages avec options). Tout en ${langName}. Pour les non-sondages, "options" = [].`;
+  return geminiJson(prompt, 1600);
+}
+
 /* Générateur d'idées de vidéos à fort potentiel selon niche/région/sujet */
 async function generateVideoIdeas(niche = '', region = '', topic = '', language = 'fr') {
   const langName = LANG_NAMES[language] || language;
@@ -689,4 +741,4 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit };
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts };

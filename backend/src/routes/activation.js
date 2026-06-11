@@ -340,7 +340,7 @@ router.post('/ai/competitor', async (req, res) => {
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
 const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments } = require('../utils/youtube');
-const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit } = require('../utils/aiClient');
+const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts } = require('../utils/aiClient');
 const { getThumbnailLimit } = require('../config/thumbnailLimits');
 
 router.post('/youtube/video', async (req, res) => {
@@ -886,6 +886,54 @@ router.post('/ai/sponsor', async (req, res) => {
   } catch (err) {
     console.error('[AI/SPONSOR]', err.message);
     res.status(500).json({ error: 'Kit Sponsor indisponible', details: err.message });
+  }
+});
+
+/* ── Planificateur de contenu 7 jours (Pro/Business) ── */
+router.post('/ai/plan', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, niche = '', region = '', frequency = '', language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Planificateur réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    res.json(await generateContentPlan(niche, region, frequency, language));
+  } catch (err) {
+    console.error('[AI/PLAN]', err.message);
+    res.status(500).json({ error: 'Planificateur indisponible', details: err.message });
+  }
+});
+
+/* ── Localisation / traduction des métadonnées (Pro/Business) ── */
+router.post('/ai/translate', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, title, description = '', target_lang = 'en', language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret || !title) return res.status(400).json({ error: 'Titre requis' });
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Traduction réservée aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    res.json(await translateMetadata(title, description, target_lang, language));
+  } catch (err) {
+    console.error('[AI/TRANSLATE]', err.message);
+    res.status(500).json({ error: 'Traduction indisponible', details: err.message });
+  }
+});
+
+/* ── Posts communautaires (Pro/Business) ── */
+router.post('/ai/community', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, niche = '', topic = '', language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Posts communautaires réservés aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    res.json(await generateCommunityPosts(niche, topic, language));
+  } catch (err) {
+    console.error('[AI/COMMUNITY]', err.message);
+    res.status(500).json({ error: 'Posts communautaires indisponibles', details: err.message });
   }
 });
 
