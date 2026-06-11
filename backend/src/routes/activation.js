@@ -666,7 +666,7 @@ router.post('/ai/hook', async (req, res) => {
 /* ── Optimiseur d'audience (région/pays + langue) — Pro/Business ── */
 router.post('/ai/audience', async (req, res) => {
   try {
-    const { activation_id, activation_secret, target = '', content_language = 'fr', language = 'fr' } = req.body;
+    const { activation_id, activation_secret, target = '', content_language = 'fr', language = 'fr', niche = '' } = req.body;
     if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
 
     const supabase = req.app.locals.supabase;
@@ -677,7 +677,7 @@ router.post('/ai/audience', async (req, res) => {
       return res.status(403).json({ error: 'Optimiseur d\'audience réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
     }
 
-    const result = await optimizeAudience(target, content_language, language);
+    const result = await optimizeAudience(target, content_language, language, niche);
     res.json(result);
   } catch (err) {
     console.error('[AI/AUDIENCE]', err.message);

@@ -321,12 +321,16 @@ Toutes les explications en ${langName}. Sois précis et actionnable.`;
 }
 
 /* Optimiseur d'audience : cible (mondial/région/pays) + langue → heures, tendances, hashtags, sujets */
-async function optimizeAudience(target, contentLang = 'fr', uiLang = 'fr') {
+async function optimizeAudience(target, contentLang = 'fr', uiLang = 'fr', niche = '') {
   const contentName = LANG_NAMES[contentLang] || contentLang;
   const uiName = LANG_NAMES[uiLang] || uiLang;
   const targetClean = (target && target.trim()) ? target.trim() : 'Mondial / International';
+  const nicheLine = (niche && niche.trim())
+    ? `Niche / style de la chaîne : "${niche.trim()}". Adapte TOUTES les recommandations (heures, tendances, hashtags, sujets) à cette niche précise.`
+    : `Niche non précisée : donne des recommandations générales.`;
   const prompt = `Tu es un stratège de croissance YouTube spécialisé dans le ciblage d'audience par région.
 Cible : "${targetClean}". Langue du contenu/de l'audience : ${contentName}.
+${nicheLine}
 
 Donne des recommandations concrètes pour percer auprès de cette audience :
 - Les meilleures heures et jours de publication (tiens compte du fuseau horaire et des habitudes de visionnage de "${targetClean}").
