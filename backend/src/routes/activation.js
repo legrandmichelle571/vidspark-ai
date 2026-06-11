@@ -280,7 +280,7 @@ router.post('/ai/competitor', async (req, res) => {
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
 const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas } = require('../utils/youtube');
-const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags } = require('../utils/aiClient');
+const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles } = require('../utils/aiClient');
 const { getThumbnailLimit } = require('../config/thumbnailLimits');
 
 router.post('/youtube/video', async (req, res) => {
@@ -419,6 +419,66 @@ router.post('/ai/thumbnail-generate', async (req, res) => {
   } catch (err) {
     console.error('[AI/THUMB-GEN]', err.message);
     res.status(500).json({ error: 'Génération de miniature indisponible', details: err.message });
+  }
+});
+
+/* ── A/B Test IA : prédit le titre gagnant (Pro/Business) ── */
+router.post('/ai/ab-test', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, titleA, titleB, language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
+    if (!titleA || !titleB) return res.status(400).json({ error: 'Deux titres requis (titleA et titleB)' });
+
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+    if (!requirePaidPlan(ctx.plan)) {
+      return res.status(403).json({ error: 'A/B Testing réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    }
+
+    const result = await compareTitles(titleA, titleB, language);
+
+    // Sauvegarder le test (Phase 2 : suivi dans le temps)
+    try {
+      await supabase.from('ab_tests').insert({
+        user_id:   ctx.user.id,
+        variant_a: titleA,
+        variant_b: titleB,
+        winner:    result.winner || null,
+        ctr_a:     result.a?.ctr_estimate || null,
+        ctr_b:     result.b?.ctr_estimate || null,
+        status:    'predicted'
+      });
+    } catch (e) { /* table optionnelle, non bloquant */ }
+
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/AB-TEST]', err.message);
+    res.status(500).json({ error: 'A/B Test indisponible', details: err.message });
+  }
+});
+
+/* ── Historique des A/B Tests (Pro/Business) ── */
+router.post('/ai/ab-test/history', async (req, res) => {
+  try {
+    const { activation_id, activation_secret } = req.body;
+    if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+
+    const { data } = await supabase
+      .from('ab_tests')
+      .select('*')
+      .eq('user_id', ctx.user.id)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    res.json({ tests: data || [] });
+  } catch (err) {
+    console.error('[AI/AB-HISTORY]', err.message);
+    res.status(500).json({ error: 'Historique indisponible', details: err.message });
   }
 });
 

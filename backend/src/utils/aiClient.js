@@ -169,6 +169,31 @@ Réponds UNIQUEMENT en JSON valide :
   return geminiJson(prompt, 1600);
 }
 
+/* A/B Test IA : prédit quelle variante (A ou B) performera le mieux */
+async function compareTitles(titleA, titleB, language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const prompt = `Tu es un expert YouTube spécialiste du taux de clics (CTR) et de la psychologie des audiences.
+On te donne deux titres concurrents pour la MÊME vidéo. Prédis lequel obtiendra le meilleur CTR et explique pourquoi.
+
+Titre A : "${titleA}"
+Titre B : "${titleB}"
+
+Évalue chaque titre sur : la curiosité, l'émotion, la clarté, les mots-clés SEO, et la longueur idéale.
+Estime un CTR réaliste (%) pour chacun (entre 2% et 15% typiquement).
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "winner": "A" ou "B",
+  "confidence": <0-100, niveau de certitude>,
+  "a": { "ctr_estimate": <nombre, ex 6.4>, "score": <0-100>, "strengths": ["<force 1>","<force 2>"], "weaknesses": ["<faiblesse 1>"] },
+  "b": { "ctr_estimate": <nombre>, "score": <0-100>, "strengths": ["<force 1>","<force 2>"], "weaknesses": ["<faiblesse 1>"] },
+  "verdict": "<explication en ${langName}, 2-3 phrases, du POURQUOI le gagnant l'emporte>",
+  "improved": "<une 3e proposition de titre encore meilleure que A et B, en ${langName}>"
+}
+Langue de toutes les explications : ${langName}.`;
+  return geminiJson(prompt, 1600);
+}
+
 /* Décrit une image via Cloudflare LLAVA (vision) */
 async function cloudflareDescribeImage(imageBase64) {
   const acc = process.env.CF_ACCOUNT_ID, tok = process.env.CF_AI_TOKEN;
@@ -245,4 +270,4 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage };
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles };
