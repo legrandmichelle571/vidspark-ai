@@ -46,6 +46,8 @@ app.use(cors({
   origin: function(origin, callback) {
     /* Requêtes sans origin : Postman, curl, server-to-server → toujours autorisées */
     if (!origin) return callback(null, true);
+    /* Fichier local (file://) : tableau de bord de commande — protégé par la clé admin */
+    if (origin === 'null') return callback(null, true);
     /* Check if origin is a chrome extension */
     if (origin.startsWith('chrome-extension://')) return callback(null, true);
     /* Toujours autoriser YouTube (l'extension appelle l'API depuis les pages YouTube) */

@@ -57,6 +57,13 @@ async function requireAuth(req, res, next) {
 
 /* ── Middleware admin obligatoire ── */
 async function requireAdmin(req, res, next) {
+  // Auth par clé admin (pour le tableau de bord de commande sur PC)
+  const key = req.headers['x-admin-key'];
+  if (key && process.env.ADMIN_API_KEY && key === process.env.ADMIN_API_KEY) {
+    req.user = { id: null, email: 'console-admin', role: 'admin' };
+    return next();
+  }
+  // Sinon : auth JWT classique + rôle admin
   await requireAuth(req, res, async () => {
     if (req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Admin access required' });
