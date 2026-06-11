@@ -151,6 +151,27 @@ async function getKeywordIdeas(query) {
   return { query, suggestions, competition, top_avg_views: topAvgViews, sampled };
 }
 
+/* Vidéos qui "tendent" : publiées récemment (<14j) et fortes vues/heure dans la niche */
+async function getTrendingVideos(query, max = 12) {
+  const after = new Date(Date.now() - 14 * 86400000).toISOString();
+  const sj = await ytFetch(`/search?part=snippet&type=video&order=viewCount&publishedAfter=${after}&maxResults=${max}&q=${encodeURIComponent(query)}`);
+  const ids = (sj.items || []).map(i => i.id.videoId).filter(Boolean);
+  if (!ids.length) return [];
+  const vj = await ytFetch(`/videos?part=snippet,statistics&id=${ids.join(',')}`);
+  return (vj.items || []).map(v => {
+    const views = +v.statistics.viewCount || 0;
+    const hours = Math.max(1, (Date.now() - new Date(v.snippet.publishedAt)) / 3.6e6);
+    return {
+      videoId: v.id,
+      title: v.snippet.title,
+      channel: v.snippet.channelTitle,
+      views,
+      published_at: v.snippet.publishedAt,
+      views_per_hour: Math.round(views / hours)
+    };
+  }).sort((a, b) => b.views_per_hour - a.views_per_hour);
+}
+
 /* Récupère les vidéos récentes d'une chaîne (titre + vues) pour l'optimiseur de playlists */
 async function getChannelVideos(channelId, max = 25) {
   const cj = await ytFetch(`/channels?part=contentDetails&id=${channelId}`);
@@ -237,4 +258,4 @@ async function getTranscript(videoId) {
   }
 }
 
-module.exports = { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments, getChannelVideos };
+module.exports = { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments, getChannelVideos, getTrendingVideos };

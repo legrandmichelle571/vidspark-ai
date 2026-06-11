@@ -444,6 +444,28 @@ Donne 4 à 6 best_keywords (privilégie les long-tail faciles à classer). Tout 
   return geminiJson(prompt, 1500);
 }
 
+/* Détecteur de tendances : analyse les vidéos qui explosent et en extrait les tendances */
+async function detectTrends(videos = [], niche = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const list = (videos || []).slice(0, 12).map((v, i) => `${i + 1}. (${v.views_per_hour}/h) ${v.title}`).join('\n');
+  const prompt = `Tu es un analyste de tendances YouTube. Voici les vidéos qui EXPLOSENT en ce moment dans la niche "${niche || 'généraliste'}" (publiées récemment, triées par vues/heure) :
+"""
+${list}
+"""
+
+Analyse-les et extrais les tendances actuelles.
+Réponds UNIQUEMENT en JSON valide :
+{
+  "trends": [
+    {"topic": "<sujet/thème qui tend en ${langName}>", "format": "<format qui marche, ex: tutoriel, réaction, vlog>", "why": "<pourquoi ça marche maintenant en ${langName}>"}
+  ],
+  "rising_keywords": ["<mot-clé en hausse 1>", "<mot-clé 2>", "<mot-clé 3>", "<mot-clé 4>", "<mot-clé 5>"],
+  "advice": ["<conseil pour surfer sur ces tendances 1 en ${langName}>", "<conseil 2>", "<conseil 3>"]
+}
+3 à 5 tendances. Tout en ${langName}.`;
+  return geminiJson(prompt, 1800);
+}
+
 /* Générateur de script complet à partir d'un sujet */
 async function generateScript(topic, niche = '', duration = '', language = 'fr') {
   const langName = LANG_NAMES[language] || language;
@@ -812,4 +834,4 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists };
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends };

@@ -339,8 +339,8 @@ router.post('/ai/competitor', async (req, res) => {
 });
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
-const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments, getChannelVideos } = require('../utils/youtube');
-const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists } = require('../utils/aiClient');
+const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments, getChannelVideos, getTrendingVideos } = require('../utils/youtube');
+const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends } = require('../utils/aiClient');
 const { getThumbnailLimit } = require('../config/thumbnailLimits');
 
 router.post('/youtube/video', async (req, res) => {
@@ -990,6 +990,27 @@ router.post('/ai/playlists', async (req, res) => {
   } catch (err) {
     console.error('[AI/PLAYLISTS]', err.message);
     res.status(500).json({ error: 'Optimiseur de playlists indisponible', details: err.message });
+  }
+});
+
+/* ── Détecteur de tendances (Pro/Business) ── */
+router.post('/ai/trends', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, niche = '', region = '', language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret || !niche) return res.status(400).json({ error: 'Niche requise' });
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Détecteur de tendances réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+
+    const query = region ? `${niche} ${region}` : niche;
+    const videos = await getTrendingVideos(query, 12);
+    if (!videos.length) return res.json({ videos: [], trends: [], rising_keywords: [], advice: [] });
+    const analysis = await detectTrends(videos, niche, language);
+    res.json({ videos: videos.slice(0, 8), ...analysis });
+  } catch (err) {
+    console.error('[AI/TRENDS]', err.message);
+    res.status(500).json({ error: 'Détecteur de tendances indisponible', details: err.message });
   }
 });
 
