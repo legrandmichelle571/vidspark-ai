@@ -67,8 +67,8 @@ app.use(
   express.raw({ type: 'application/json' })
 );
 
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '6mb' }));   // 6mb : permet l'envoi de miniatures (A/B Vision)
+app.use(express.urlencoded({ extended: true, limit: '6mb' }));
 
 /* ── Rate Limiter global ── */
 const rateLimit = require('express-rate-limit');
