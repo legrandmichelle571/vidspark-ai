@@ -398,6 +398,31 @@ Toutes les explications en ${langName}. Sois précis et actionnable.`;
   return geminiJson(prompt, 1400);
 }
 
+/* Générateur d'idées de vidéos à fort potentiel selon niche/région/sujet */
+async function generateVideoIdeas(niche = '', region = '', topic = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const ctx = [niche && `Niche : ${niche}`, region && `Audience : ${region}`, topic && `Sujet/mot-clé : ${topic}`].filter(Boolean).join('. ');
+  const prompt = `Tu es un stratège de contenu YouTube. Génère 10 idées de vidéos à FORT potentiel viral.
+${ctx || 'Niche généraliste, audience mondiale.'}
+
+Chaque idée doit avoir un titre accrocheur, un angle original, et une raison pour laquelle ça marche.
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "ideas": [
+    {
+      "title": "<titre de vidéo accrocheur en ${langName}, prêt à l'emploi>",
+      "angle": "<angle/concept original en ${langName}>",
+      "why": "<pourquoi ça peut marcher en ${langName}, 1 phrase>",
+      "format": "Long" ou "Short",
+      "viral_score": <0-100>
+    }
+  ]
+}
+10 idées variées (tutoriels, listicles, défis, réactions, histoires…) adaptées à la niche et à l'audience. Tout en ${langName}.`;
+  return geminiJson(prompt, 2200);
+}
+
 /* Estimateur de vues (J+7) et de revenus AdSense selon titre/niche/région/abonnés */
 async function estimateRevenue(title, niche = '', region = '', subscribers = 0, language = 'fr') {
   const langName = LANG_NAMES[language] || language;
@@ -595,4 +620,4 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters };
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas };
