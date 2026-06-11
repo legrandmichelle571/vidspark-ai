@@ -340,7 +340,7 @@ router.post('/ai/competitor', async (req, res) => {
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
 const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp } = require('../utils/youtube');
-const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook } = require('../utils/aiClient');
+const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience } = require('../utils/aiClient');
 const { getThumbnailLimit } = require('../config/thumbnailLimits');
 
 router.post('/youtube/video', async (req, res) => {
@@ -660,6 +660,28 @@ router.post('/ai/hook', async (req, res) => {
   } catch (err) {
     console.error('[AI/HOOK]', err.message);
     res.status(500).json({ error: 'Hook Analyzer indisponible', details: err.message });
+  }
+});
+
+/* ── Optimiseur d'audience (région/pays + langue) — Pro/Business ── */
+router.post('/ai/audience', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, target = '', content_language = 'fr', language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
+
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+    if (!requirePaidPlan(ctx.plan)) {
+      return res.status(403).json({ error: 'Optimiseur d\'audience réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    }
+
+    const result = await optimizeAudience(target, content_language, language);
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/AUDIENCE]', err.message);
+    res.status(500).json({ error: 'Optimiseur d\'audience indisponible', details: err.message });
   }
 });
 

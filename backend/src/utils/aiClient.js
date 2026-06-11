@@ -320,6 +320,37 @@ Toutes les explications en ${langName}. Sois précis et actionnable.`;
   return geminiJson(prompt, 1800);
 }
 
+/* Optimiseur d'audience : cible (mondial/région/pays) + langue → heures, tendances, hashtags, sujets */
+async function optimizeAudience(target, contentLang = 'fr', uiLang = 'fr') {
+  const contentName = LANG_NAMES[contentLang] || contentLang;
+  const uiName = LANG_NAMES[uiLang] || uiLang;
+  const targetClean = (target && target.trim()) ? target.trim() : 'Mondial / International';
+  const prompt = `Tu es un stratège de croissance YouTube spécialisé dans le ciblage d'audience par région.
+Cible : "${targetClean}". Langue du contenu/de l'audience : ${contentName}.
+
+Donne des recommandations concrètes pour percer auprès de cette audience :
+- Les meilleures heures et jours de publication (tiens compte du fuseau horaire et des habitudes de visionnage de "${targetClean}").
+- Les tendances et formats qui marchent dans ce marché.
+- Des hashtags localisés (EN ${contentName}).
+- Des idées de sujets de vidéos adaptés à ce public (EN ${contentName}).
+- Des conseils culturels/format spécifiques.
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "target": "${targetClean}",
+  "timezone": "<fuseau horaire principal de la cible>",
+  "best_times": [
+    {"day": "<jour>", "time": "<heure locale, ex 20:00>", "reason": "<pourquoi, en ${uiName}>"}
+  ],
+  "trends": ["<tendance/format 1 en ${uiName}>", "<tendance 2>", "<tendance 3>"],
+  "hashtags": ["#hashtag1", "#hashtag2", "#hashtag3", "#hashtag4", "#hashtag5"],
+  "topic_ideas": ["<idée de vidéo 1 en ${contentName}>", "<idée 2>", "<idée 3>", "<idée 4>"],
+  "tips": ["<conseil culturel/format 1 en ${uiName}>", "<conseil 2>", "<conseil 3>"]
+}
+Donne 3-4 créneaux horaires. Les hashtags et idées de sujets en ${contentName} ; les explications (reason, trends, tips) en ${uiName}.`;
+  return geminiJson(prompt, 1800);
+}
+
 /* Générateur de YouTube Shorts : transforme une vidéo longue / un sujet en idées de Shorts.
    opts = { transcript, hasTranscript, durationStr } pour proposer de vrais passages à couper. */
 async function generateShorts(source, language = 'fr', opts = {}) {
@@ -439,4 +470,4 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook };
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience };
