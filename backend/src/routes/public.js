@@ -6,14 +6,26 @@ const router = require('express').Router();
 const rateLimit = require('express-rate-limit');
 const { getVideoStats } = require('../utils/youtube');
 const { generateTags, generateTitles, generateDescription } = require('../utils/aiClient');
+const { requireAuth } = require('../middleware/auth');
 
-/* Anti-abus : 15 générations IA / heure / IP sur les outils gratuits */
+/* Outils IA du site : réservés aux abonnés Pro/Business connectés */
+function requireProPlan(req, res, next) {
+  if (!['pro', 'business'].includes((req.user?.plan || '').toLowerCase())) {
+    return res.status(403).json({
+      error: 'Outil réservé aux abonnés Pro et Business. Passe à Pro pour y accéder !',
+      code: 'UPGRADE_REQUIRED'
+    });
+  }
+  next();
+}
+
+/* Garde une limite raisonnable même pour les abonnés (anti-abus) */
 const aiLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 15,
+  max: 60,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Limite gratuite atteinte (15/heure). Passe à VidSpark Pro pour un accès illimité !', code: 'RATE_LIMIT' }
+  message: { error: 'Limite horaire atteinte, réessaie dans un moment.', code: 'RATE_LIMIT' }
 });
 
 /* Extrait l'ID vidéo d'une URL YouTube (ou accepte un ID brut) */
@@ -57,7 +69,7 @@ router.get('/video', async (req, res) => {
 });
 
 /* POST /api/public/ai/tags {topic, language} → 15 tags SEO (gratuit, rate-limité) */
-router.post('/ai/tags', aiLimiter, async (req, res) => {
+router.post('/ai/tags', requireAuth, requireProPlan, aiLimiter, async (req, res) => {
   try {
     const { topic, language = 'fr' } = req.body;
     if (!topic || topic.trim().length < 3) return res.status(400).json({ error: 'Sujet requis (3 caractères min)' });
@@ -69,7 +81,7 @@ router.post('/ai/tags', aiLimiter, async (req, res) => {
 });
 
 /* POST /api/public/ai/titles {topic, language} → 5 titres optimisés */
-router.post('/ai/titles', aiLimiter, async (req, res) => {
+router.post('/ai/titles', requireAuth, requireProPlan, aiLimiter, async (req, res) => {
   try {
     const { topic, language = 'fr' } = req.body;
     if (!topic || topic.trim().length < 3) return res.status(400).json({ error: 'Sujet requis (3 caractères min)' });
@@ -81,7 +93,7 @@ router.post('/ai/titles', aiLimiter, async (req, res) => {
 });
 
 /* POST /api/public/ai/description {topic, language} → description + hashtags */
-router.post('/ai/description', aiLimiter, async (req, res) => {
+router.post('/ai/description', requireAuth, requireProPlan, aiLimiter, async (req, res) => {
   try {
     const { topic, language = 'fr' } = req.body;
     if (!topic || topic.trim().length < 3) return res.status(400).json({ error: 'Sujet requis (3 caractères min)' });
