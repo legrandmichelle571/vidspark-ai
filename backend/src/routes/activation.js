@@ -42,28 +42,48 @@ router.post('/activate', async (req, res) => {
       return res.status(403).json({ error: 'Abonnement expiré', expired: true });
     }
 
-    // 🔒 Verrouillage par appareil (blocage strict) — 1 code = 1 PC à la fois
-    if (device_id) {
-      if (!code.device_id) {
-        // Première activation : on lie le code à cet appareil
-        await supabase.from('activation_codes')
-          .update({ device_id, device_bound_at: new Date().toISOString() })
-          .eq('activation_id', activation_id);
-      } else if (code.device_id !== device_id) {
-        // Déjà lié à un autre appareil → refus
-        return res.status(403).json({
-          error: 'Ce code est déjà utilisé sur un autre appareil. Libère-le depuis cet appareil (bouton 🔑) ou contacte le support.',
-          code: 'DEVICE_LOCKED'
-        });
-      }
-      // sinon (même appareil) → OK
-    }
-
     const { data: user } = await supabase
       .from('users')
       .select('id, email, name, plan')
       .eq('id', code.user_id)
       .maybeSingle();
+
+    // 🔒 Verrouillage par appareil — 1 code marche sur N PC selon le plan
+    //    (Free/Pro = 1 PC, Business = 5 PC). Table activation_devices.
+    if (device_id) {
+      const maxDevices = (user?.plan === 'business') ? 5 : 1;
+
+      // Cet appareil est-il déjà lié à ce code ?
+      const { data: existingDev } = await supabase
+        .from('activation_devices')
+        .select('device_id')
+        .eq('activation_id', activation_id)
+        .eq('device_id', device_id)
+        .maybeSingle();
+
+      if (!existingDev) {
+        // Compter les appareils déjà liés
+        const { count } = await supabase
+          .from('activation_devices')
+          .select('device_id', { count: 'exact', head: true })
+          .eq('activation_id', activation_id);
+
+        if ((count || 0) >= maxDevices) {
+          return res.status(403).json({
+            error: maxDevices === 1
+              ? 'Ce code est déjà utilisé sur un autre appareil. Libère-le (bouton 🔑) ou via le dashboard.'
+              : `Limite de ${maxDevices} appareils atteinte pour ce code. Libère un appareil (bouton 🔑) ou via le dashboard.`,
+            code: 'DEVICE_LOCKED'
+          });
+        }
+
+        // Lier ce nouvel appareil
+        await supabase.from('activation_devices').insert({
+          activation_id, device_id, user_id: code.user_id
+        });
+      }
+      // sinon (déjà lié) → OK
+    }
 
     // Liste des chaînes autorisées (multi-chaînes selon le plan)
     const { data: chans } = await supabase
@@ -109,14 +129,10 @@ router.post('/release', async (req, res) => {
     const code = await findValidCode(supabase, activation_id, activation_secret);
     if (!code) return res.status(401).json({ error: 'ID ou Secret invalide' });
 
-    // Seul l'appareil actuellement lié peut libérer le code
-    if (code.device_id && device_id && code.device_id !== device_id) {
-      return res.status(403).json({ error: 'Seul l\'appareil lié peut libérer ce code.', code: 'NOT_BOUND_DEVICE' });
-    }
-
-    await supabase.from('activation_codes')
-      .update({ device_id: null, device_bound_at: null })
-      .eq('activation_id', activation_id);
+    // Libérer cet appareil (ou tous si device_id absent)
+    let q = supabase.from('activation_devices').delete().eq('activation_id', activation_id);
+    if (device_id) q = q.eq('device_id', device_id);
+    await q;
 
     res.json({ success: true, released: true });
   } catch (err) {

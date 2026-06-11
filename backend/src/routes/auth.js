@@ -189,7 +189,7 @@ router.post('/google', async (req, res) => {
     // ♻️ Codes STABLES : réutiliser les codes existants du compte.
     //    Business = 5 codes (5 PC), autres plans = 1 code. On complète si besoin.
     let activationId, activationSecret, subscriptionExpiry;
-    const neededCodes = (userData.plan === 'business') ? 5 : 1;
+    const neededCodes = 1;  // 1 code/utilisateur ; Business = ce code marche sur 5 PC (activation_devices)
 
     const { data: existingCodes } = await supabase
       .from('activation_codes')

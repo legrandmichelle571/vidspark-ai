@@ -150,8 +150,8 @@ router.get('/me', requireAuth, async (req, res) => {
 
     let codes = codeRows || [];
 
-    // Compléter les codes si besoin (Business = 5, autres = 1) — idempotent
-    const needed = (plan === 'business') ? 5 : 1;
+    // Compléter les codes si besoin — 1 code/utilisateur (Business = 5 PC via activation_devices)
+    const needed = 1;
     if (codes.length < needed) {
       const expiry = codes[0]?.subscription_expiry || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
       const genId = () => 'VID' + Math.random().toString(36).substring(2, 11).toUpperCase() + Date.now().toString(36).toUpperCase();
@@ -234,37 +234,30 @@ router.get('/plan', requireAuth, async (req, res) => {
   });
 });
 
-/* ── Appareils liés aux codes d'activation ── */
+/* ── Appareils liés au code d'activation ── */
 router.get('/devices', requireAuth, async (req, res) => {
   try {
     const supabase = req.app.locals.supabase;
     const { data } = await supabase
-      .from('activation_codes')
-      .select('activation_id, device_id, device_bound_at')
+      .from('activation_devices')
+      .select('device_id, bound_at')
       .eq('user_id', req.user.id);
-    const codes = (data || []).map(c => ({
-      activation_id: c.activation_id,
-      bound:         !!c.device_id,
-      bound_at:      c.device_bound_at
-    }));
-    res.json({ codes });
+    const max = (req.user.plan === 'business') ? 5 : 1;
+    res.json({ devices: data || [], used: (data || []).length, max });
   } catch (err) {
     console.error('[DEVICES]', err.message);
     res.status(500).json({ error: 'Erreur lecture appareils' });
   }
 });
 
-/* Libérer (déverrouiller) un code — depuis le dashboard, si le PC est perdu.
-   Sans activation_id : libère TOUS les codes du compte. */
+/* Libérer tous les appareils du compte — depuis le dashboard, si un PC est perdu. */
 router.post('/devices/release', requireAuth, async (req, res) => {
   try {
     const supabase = req.app.locals.supabase;
-    const { activation_id } = req.body || {};
-    let q = supabase.from('activation_codes')
-      .update({ device_id: null, device_bound_at: null })
+    const { error } = await supabase
+      .from('activation_devices')
+      .delete()
       .eq('user_id', req.user.id);
-    if (activation_id) q = q.eq('activation_id', activation_id);
-    const { error } = await q;
     if (error) throw new Error(error.message);
     res.json({ success: true, released: true });
   } catch (err) {
