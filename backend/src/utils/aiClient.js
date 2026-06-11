@@ -209,6 +209,24 @@ Réponds UNIQUEMENT en JSON valide :
   return geminiJson(prompt, 1600);
 }
 
+/* Title Doctor : diagnostic CTR d'un titre + mot manquant + version améliorée */
+async function titleDoctor(title, language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const prompt = `Tu es un expert YouTube du taux de clics (CTR). Diagnostique ce titre et améliore-le.
+Titre : "${title}"
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "score": <0-100, qualité CTR du titre>,
+  "ctr_estimate": <CTR estimé en %, ex 6.5>,
+  "missing": ["<élément manquant ou faible 1 en ${langName}>", "<élément 2>"],
+  "improved": "<une version réécrite du titre, bien meilleure pour le CTR, en ${langName}, 50-70 caractères>",
+  "tips": ["<conseil court 1 en ${langName}>", "<conseil 2>"]
+}
+Tout en ${langName}.`;
+  return geminiJson(prompt, 900);
+}
+
 /* A/B Test IA : prédit quelle variante (A ou B) performera le mieux */
 async function compareTitles(titleA, titleB, language = 'fr') {
   const langName = LANG_NAMES[language] || language;
@@ -648,4 +666,4 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity };
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor };
