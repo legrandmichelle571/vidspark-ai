@@ -469,6 +469,29 @@ Réponds UNIQUEMENT en JSON valide :
   return geminiJson(prompt, 2200);
 }
 
+/* Kit sponsor & monétisation : tarif sponso + pitch + media-kit + idées d'affiliation */
+async function sponsorKit(niche = '', region = '', subscribers = 0, avgViews = 0, language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const subs = parseInt(subscribers, 10) || 0;
+  const views = parseInt(avgViews, 10) || 0;
+  const prompt = `Tu es un expert de la monétisation des créateurs YouTube (sponsoring, affiliation).
+Chaîne — Niche : "${niche || 'généraliste'}". Audience : "${region || 'mondial'}". Abonnés : ${subs}. Vues moyennes/vidéo : ${views}.
+
+Le tarif d'un placement sponsorisé dépend ÉNORMÉMENT de la niche (finance/tech/business = élevé ; divertissement/vlog = faible) ET du pays de l'audience (USA/Europe/Golfe = élevé ; Maghreb/Inde/Afrique = beaucoup plus faible). Base-toi sur les vues moyennes.
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "rate_usd": { "low": <nombre>, "high": <nombre> },
+  "rate_basis": "<explication courte du calcul en ${langName}>",
+  "pitch": "<message de prospection prêt à envoyer à une marque, chaleureux et pro, en ${langName}, avec un espace [Marque]>",
+  "media_kit": ["<argument clé 1 (audience, niche, engagement…) en ${langName}>", "<argument 2>", "<argument 3>", "<argument 4>"],
+  "brand_types": ["<type de marque qui irait bien 1>", "<type 2>", "<type 3>"],
+  "affiliate_ideas": ["<idée de produit/programme d'affiliation adapté 1>", "<idée 2>", "<idée 3>"]
+}
+Sois réaliste sur les tarifs. Tout en ${langName}.`;
+  return geminiJson(prompt, 1600);
+}
+
 /* Estimateur de vues (J+7) et de revenus AdSense selon titre/niche/région/abonnés */
 async function estimateRevenue(title, niche = '', region = '', subscribers = 0, language = 'fr') {
   const langName = LANG_NAMES[language] || language;
@@ -666,4 +689,4 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor };
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit };
