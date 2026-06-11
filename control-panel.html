@@ -98,14 +98,19 @@
     <div class="nav">
       <button class="active" data-page="dashboard" onclick="nav('dashboard')">📊 Tableau de bord</button>
       <button data-page="users" onclick="nav('users')">👥 Utilisateurs</button>
+      <button data-page="payments" onclick="nav('payments')">💳 Paiements</button>
+      <button data-page="promos" onclick="nav('promos')">🏷️ Codes promo</button>
       <button data-page="logs" onclick="nav('logs')">📜 Journal</button>
-      <button data-page="dashboard" onclick="loadAll()">🔄 Actualiser</button>
+      <button onclick="loadAll()">🔄 Actualiser</button>
     </div>
     <div class="main" id="main"></div>
   </div>
 </div>
 
 <div id="toast"></div>
+<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:flex-start;justify-content:center;padding:40px 20px;overflow:auto;">
+  <div style="background:var(--s1);border:1px solid var(--b1);border-radius:14px;max-width:560px;width:100%;padding:22px;" id="modalBody"></div>
+</div>
 
 <script>
 let API='', KEY='';
@@ -147,6 +152,8 @@ function nav(p){
   document.querySelectorAll('.nav button[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===p));
   if(p==='dashboard')loadDashboard();
   else if(p==='users')loadUsers();
+  else if(p==='payments')loadPayments();
+  else if(p==='promos')loadPromos();
   else if(p==='logs')loadLogs();
 }
 function loadAll(){nav(curPage);}
@@ -183,7 +190,9 @@ async function loadUsers(){
     <div class="toolbar">
       <input id="uSearch" placeholder="🔍 Email ou nom…" style="flex:1;min-width:160px" onkeydown="if(event.key==='Enter')renderUsers()">
       <select id="uPlan" onchange="renderUsers()"><option value="">Tous les plans</option><option value="free">Free</option><option value="pro">Pro</option><option value="business">Business</option></select>
+      <select id="uStatus" onchange="renderUsers()"><option value="">Tous les statuts</option><option value="active">Actif</option><option value="suspended">Suspendu</option></select>
       <button class="btn btn-sm" onclick="renderUsers()">Filtrer</button>
+      <button class="btn btn-sm btn-green" onclick="exportCSV()">⬇ CSV</button>
     </div>
     <div id="usersTable"></div>`;
   renderUsers();
@@ -193,13 +202,15 @@ async function renderUsers(){
   el.innerHTML='<div class="muted">Chargement…</div>';
   const search=document.getElementById('uSearch')?.value||'';
   const plan=document.getElementById('uPlan')?.value||'';
+  const status=document.getElementById('uStatus')?.value||'';
   try{
-    const d=await api(`/users?limit=100&search=${encodeURIComponent(search)}&plan=${plan}`);
+    const d=await api(`/users?limit=100&search=${encodeURIComponent(search)}&plan=${plan}&status=${status}`);
+    lastUsers=d.users;
     if(!d.users.length){el.innerHTML='<div class="empty">Aucun utilisateur</div>';return;}
     el.innerHTML=`<table><thead><tr><th>Email</th><th>Plan</th><th>Statut</th><th>Fin forfait</th><th>Mode</th><th>Inscrit</th><th>Actions</th></tr></thead><tbody>
       ${d.users.map(u=>`
         <tr>
-          <td><div>${u.email||'—'}</div><div class="muted">${u.name||''}</div></td>
+          <td style="cursor:pointer" onclick="userDetail('${u.id}')"><div style="color:var(--purple-l)">${u.email||'—'}</div><div class="muted">${u.name||''}</div></td>
           <td><span class="pill ${u.plan}">${(u.plan||'free').toUpperCase()}</span></td>
           <td><span class="pill ${u.status}">${u.status||'active'}</span></td>
           <td>${fmtEnd(u.subscription_end)}</td>
@@ -236,6 +247,90 @@ async function loadLogs(){
       '</tbody></table>';
   }catch(e){m.innerHTML='<div class="page-title">📜 Journal admin</div><div class="empty">❌ '+e.message+'</div>';}
 }
+
+let lastUsers=[];
+function exportCSV(){
+  if(!lastUsers.length){toast('Rien à exporter');return;}
+  const head=['email','name','plan','status','subscription_end','interval','created_at'];
+  const rows=lastUsers.map(u=>[u.email,u.name,u.plan,u.status,u.subscription_end||'',u.subscription_interval||'',u.created_at].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(','));
+  const csv=head.join(',')+'\n'+rows.join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='vidspark-users.csv';a.click();
+}
+
+function closeModal(){document.getElementById('modal').style.display='none';}
+async function userDetail(id){
+  const md=document.getElementById('modal');md.style.display='flex';
+  document.getElementById('modalBody').innerHTML='<div class="muted">Chargement…</div>';
+  try{
+    const d=await api(`/users/${id}`);const u=d.user;
+    const codes=(d.codes||[]).map(c=>`<div style="font-family:monospace;font-size:11px;color:#9fe6b0;margin:2px 0;">${c.activation_id}</div>`).join('')||'<span class="muted">—</span>';
+    const devs=(d.devices||[]).map(v=>`<div class="muted" style="font-size:11px;">📱 ${v.device_id.slice(0,18)}… <span style="font-size:10px">(${v.bound_at?new Date(v.bound_at).toLocaleDateString('fr-FR'):''})</span></div>`).join('')||'<span class="muted">Aucun appareil lié</span>';
+    const subs=(d.subscriptions||[]).map(s=>`<div class="muted" style="font-size:12px;">${s.provider} · ${s.plan} · ${s.status} · ${s.interval||''} ${s.current_period_end?'→ '+new Date(s.current_period_end).toLocaleDateString('fr-FR'):''}</div>`).join('')||'<span class="muted">—</span>';
+    document.getElementById('modalBody').innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div><div style="font-size:16px;font-weight:800;">${u.email}</div><div class="muted">${u.name||''} · <span class="pill ${u.plan}">${(u.plan||'free').toUpperCase()}</span></div></div>
+        <button class="btn btn-sm btn-ghost" onclick="closeModal()">✕ Fermer</button>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin:10px 0 4px;">🔑 CODES D'ACTIVATION</div>${codes}
+      <div style="font-size:12px;color:var(--muted);margin:12px 0 4px;">📱 APPAREILS LIÉS</div>${devs}
+      <button class="btn btn-sm btn-amber" style="margin-top:8px" onclick="releaseDevices('${id}')">🔓 Libérer tous les appareils</button>
+      <div style="font-size:12px;color:var(--muted);margin:14px 0 4px;">💳 ABONNEMENTS</div>${subs}
+      <div style="font-size:12px;color:var(--muted);margin:14px 0 4px;">📅 MODIFIER LA DATE DE FIN</div>
+      <div style="display:flex;gap:8px;">
+        <input type="date" id="expDate" style="flex:1;background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:8px;color:var(--text);">
+        <button class="btn btn-sm" onclick="setExpiry('${id}')">Enregistrer</button>
+      </div>
+      <div style="margin-top:6px;">
+        <button class="btn btn-sm btn-ghost" onclick="extendExpiry('${id}',30)">+30 j</button>
+        <button class="btn btn-sm btn-ghost" onclick="extendExpiry('${id}',365)">+1 an</button>
+      </div>`;
+  }catch(e){document.getElementById('modalBody').innerHTML='<div class="empty">❌ '+e.message+'</div>';}
+}
+async function releaseDevices(id){if(!confirm('Libérer tous les appareils de cet utilisateur ?'))return;try{await api(`/users/${id}/release-devices`,{method:'POST'});toast('🔓 Appareils libérés');userDetail(id);}catch(e){toast('❌ '+e.message);}}
+async function setExpiry(id){const v=document.getElementById('expDate').value;if(!v){toast('Choisis une date');return;}try{await api(`/users/${id}/expiry`,{method:'PUT',body:JSON.stringify({date:v})});toast('✅ Date mise à jour');userDetail(id);renderUsers();}catch(e){toast('❌ '+e.message);}}
+async function extendExpiry(id,days){const d=new Date(Date.now()+days*86400000).toISOString();try{await api(`/users/${id}/expiry`,{method:'PUT',body:JSON.stringify({date:d})});toast('✅ +'+days+' jours');userDetail(id);renderUsers();}catch(e){toast('❌ '+e.message);}}
+
+async function loadPayments(){
+  const m=document.getElementById('main');m.innerHTML='<div class="page-title">💳 Paiements</div><div class="muted">Chargement…</div>';
+  try{
+    const d=await api('/payments');const p=d.payments||[];
+    if(!p.length){m.innerHTML='<div class="page-title">💳 Paiements</div><div class="empty">Aucun paiement</div>';return;}
+    m.innerHTML='<div class="page-title">💳 Paiements</div><table><thead><tr><th>Email</th><th>Montant</th><th>Provider</th><th>Statut</th><th>Date</th></tr></thead><tbody>'+
+      p.map(x=>`<tr><td>${x.email}</td><td><b style="color:var(--green)">${x.amount} ${x.currency||''}</b></td><td class="muted">${x.provider||'—'}</td><td><span class="pill ${x.status==='succeeded'?'active':'suspended'}">${x.status}</span></td><td class="muted">${x.created_at?new Date(x.created_at).toLocaleString('fr-FR'):''}</td></tr>`).join('')+
+      '</tbody></table>';
+  }catch(e){m.innerHTML='<div class="page-title">💳 Paiements</div><div class="empty">❌ '+e.message+'</div>';}
+}
+
+async function loadPromos(){
+  const m=document.getElementById('main');
+  m.innerHTML=`<div class="page-title">🏷️ Codes promo</div>
+    <div class="toolbar">
+      <input id="pCode" placeholder="CODE (ex: NOEL50)" style="text-transform:uppercase">
+      <select id="pType"><option value="discount">Réduction %</option><option value="trial">Essai gratuit</option><option value="upgrade">Upgrade</option></select>
+      <input id="pPct" type="number" placeholder="% réduc" style="width:90px">
+      <select id="pPlan"><option value="">— Plan —</option><option value="pro">Pro</option><option value="business">Business</option></select>
+      <input id="pMax" type="number" placeholder="Max usages" style="width:110px" value="100">
+      <button class="btn btn-sm btn-green" onclick="createPromo()">+ Créer</button>
+    </div>
+    <div id="promosTable"></div>`;
+  renderPromos();
+}
+async function renderPromos(){
+  const el=document.getElementById('promosTable');el.innerHTML='<div class="muted">Chargement…</div>';
+  try{
+    const d=await api('/promos');const p=d.promos||[];
+    if(!p.length){el.innerHTML='<div class="empty">Aucun code promo</div>';return;}
+    el.innerHTML='<table><thead><tr><th>Code</th><th>Type</th><th>Valeur</th><th>Usages</th><th>Actif</th><th></th></tr></thead><tbody>'+
+      p.map(x=>`<tr><td><b>${x.code}</b></td><td class="muted">${x.type}</td><td>${x.discount_pct?x.discount_pct+'%':x.trial_days?x.trial_days+'j essai':x.plan||'—'}</td><td class="muted">${x.uses||0}/${x.max_uses||'∞'}</td><td><span class="pill ${x.active?'active':'suspended'}">${x.active?'Oui':'Non'}</span></td><td><button class="btn btn-sm btn-ghost" onclick="togglePromo('${x.id}')">${x.active?'Désactiver':'Activer'}</button></td></tr>`).join('')+
+      '</tbody></table>';
+  }catch(e){el.innerHTML='<div class="empty">❌ '+e.message+'</div>';}
+}
+async function createPromo(){
+  const code=document.getElementById('pCode').value.trim();if(!code){toast('Entre un code');return;}
+  const body={code,type:document.getElementById('pType').value,discount_pct:+document.getElementById('pPct').value||0,plan:document.getElementById('pPlan').value||null,max_uses:+document.getElementById('pMax').value||100};
+  try{await api('/promo',{method:'POST',body:JSON.stringify(body)});toast('✅ Code créé');renderPromos();}catch(e){toast('❌ '+e.message);}
+}
+async function togglePromo(id){try{await api(`/promo/${id}/toggle`,{method:'PUT'});renderPromos();}catch(e){toast('❌ '+e.message);}}
 
 /* Auto-login si déjà connecté */
 (function(){
