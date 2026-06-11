@@ -320,6 +320,34 @@ Toutes les explications en ${langName}. Sois précis et actionnable.`;
   return geminiJson(prompt, 1800);
 }
 
+/* Rapport de santé de chaîne : score + forces/faiblesses + recommandations à partir des stats d'audit */
+async function generateChannelReport(stats = {}, language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const s = stats || {};
+  const prompt = `Tu es un consultant YouTube. Analyse la SANTÉ d'une chaîne à partir de ces statistiques réelles et donne un diagnostic actionnable.
+
+Statistiques :
+- Abonnés : ${s.subs ?? '?'}
+- Vues totales : ${s.total_views ?? '?'}
+- Nombre de vidéos : ${s.total_videos ?? '?'}
+- Vues moyennes par vidéo : ${s.avg_views ?? '?'}
+- Engagement moyen : ${s.avg_engagement ?? '?'}%
+- Fréquence de publication : ${s.upload_freq_days ?? '?'} jours entre vidéos
+- % de vidéos avec tags : ${s.tags_usage_pct ?? '?'}%
+- Longueur moyenne des titres : ${s.avg_title_length ?? '?'} caractères
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "health_score": <0-100, santé globale de la chaîne>,
+  "summary": "<diagnostic global en ${langName}, 2-3 phrases>",
+  "strengths": ["<force 1>", "<force 2>"],
+  "weaknesses": ["<faiblesse 1>", "<faiblesse 2>"],
+  "recommendations": ["<reco prioritaire 1>", "<reco 2>", "<reco 3>"]
+}
+Toutes les explications en ${langName}. Sois précis et actionnable.`;
+  return geminiJson(prompt, 1400);
+}
+
 /* Estimateur de vues (J+7) et de revenus AdSense selon titre/niche/région/abonnés */
 async function estimateRevenue(title, niche = '', region = '', subscribers = 0, language = 'fr') {
   const langName = LANG_NAMES[language] || language;
@@ -517,4 +545,4 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue };
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport };
