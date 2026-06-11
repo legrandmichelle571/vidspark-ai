@@ -215,6 +215,45 @@ router.get('/plan', requireAuth, async (req, res) => {
   });
 });
 
+/* ── Appareils liés aux codes d'activation ── */
+router.get('/devices', requireAuth, async (req, res) => {
+  try {
+    const supabase = req.app.locals.supabase;
+    const { data } = await supabase
+      .from('activation_codes')
+      .select('activation_id, device_id, device_bound_at')
+      .eq('user_id', req.user.id);
+    const codes = (data || []).map(c => ({
+      activation_id: c.activation_id,
+      bound:         !!c.device_id,
+      bound_at:      c.device_bound_at
+    }));
+    res.json({ codes });
+  } catch (err) {
+    console.error('[DEVICES]', err.message);
+    res.status(500).json({ error: 'Erreur lecture appareils' });
+  }
+});
+
+/* Libérer (déverrouiller) un code — depuis le dashboard, si le PC est perdu.
+   Sans activation_id : libère TOUS les codes du compte. */
+router.post('/devices/release', requireAuth, async (req, res) => {
+  try {
+    const supabase = req.app.locals.supabase;
+    const { activation_id } = req.body || {};
+    let q = supabase.from('activation_codes')
+      .update({ device_id: null, device_bound_at: null })
+      .eq('user_id', req.user.id);
+    if (activation_id) q = q.eq('activation_id', activation_id);
+    const { error } = await q;
+    if (error) throw new Error(error.message);
+    res.json({ success: true, released: true });
+  } catch (err) {
+    console.error('[DEVICES/RELEASE]', err.message);
+    res.status(500).json({ error: 'Erreur libération' });
+  }
+});
+
 /* ── Quota ── */
 router.get('/quota', requireAuth, (req, res) => {
   const limits = getLimits(req.user.plan);

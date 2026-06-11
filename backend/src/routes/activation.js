@@ -25,7 +25,7 @@ async function findValidCode(supabase, activation_id, activation_secret) {
 /* ── Valider ID + Secret (appelé par l'extension) ── */
 router.post('/activate', async (req, res) => {
   try {
-    const { activation_id, activation_secret } = req.body;
+    const { activation_id, activation_secret, device_id } = req.body;
     if (!activation_id || !activation_secret) {
       return res.status(400).json({ error: 'ID et Secret requis' });
     }
@@ -40,6 +40,23 @@ router.post('/activate', async (req, res) => {
     const now = new Date();
     if (expiryDate < now) {
       return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+    }
+
+    // 🔒 Verrouillage par appareil (blocage strict) — 1 code = 1 PC à la fois
+    if (device_id) {
+      if (!code.device_id) {
+        // Première activation : on lie le code à cet appareil
+        await supabase.from('activation_codes')
+          .update({ device_id, device_bound_at: new Date().toISOString() })
+          .eq('activation_id', activation_id);
+      } else if (code.device_id !== device_id) {
+        // Déjà lié à un autre appareil → refus
+        return res.status(403).json({
+          error: 'Ce code est déjà utilisé sur un autre appareil. Libère-le depuis cet appareil (bouton 🔑) ou contacte le support.',
+          code: 'DEVICE_LOCKED'
+        });
+      }
+      // sinon (même appareil) → OK
     }
 
     const { data: user } = await supabase
@@ -78,6 +95,33 @@ router.post('/activate', async (req, res) => {
   } catch (err) {
     console.error('[ACTIVATION]', err.message);
     res.status(500).json({ error: 'Erreur lors de l\'activation' });
+  }
+});
+
+/* ── Libérer le code de cet appareil (pour le réutiliser ailleurs) ── */
+router.post('/release', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, device_id } = req.body;
+    if (!activation_id || !activation_secret) {
+      return res.status(400).json({ error: 'ID et Secret requis' });
+    }
+    const supabase = req.app.locals.supabase;
+    const code = await findValidCode(supabase, activation_id, activation_secret);
+    if (!code) return res.status(401).json({ error: 'ID ou Secret invalide' });
+
+    // Seul l'appareil actuellement lié peut libérer le code
+    if (code.device_id && device_id && code.device_id !== device_id) {
+      return res.status(403).json({ error: 'Seul l\'appareil lié peut libérer ce code.', code: 'NOT_BOUND_DEVICE' });
+    }
+
+    await supabase.from('activation_codes')
+      .update({ device_id: null, device_bound_at: null })
+      .eq('activation_id', activation_id);
+
+    res.json({ success: true, released: true });
+  } catch (err) {
+    console.error('[RELEASE]', err.message);
+    res.status(500).json({ error: 'Erreur lors de la libération' });
   }
 });
 
