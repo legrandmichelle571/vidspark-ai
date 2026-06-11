@@ -500,7 +500,7 @@ router.post('/ai/shorts', async (req, res) => {
     // sinon tentative serveur (souvent bloquée), sinon repli sur timestamps estimés.
     let opts = { hasTranscript: false, transcript: '', durationStr: '' };
     if (clientTranscript && clientTranscript.trim().length > 30) {
-      opts.transcript = clientTranscript.slice(0, 6000);
+      opts.transcript = clientTranscript.slice(0, 3500);
       opts.hasTranscript = true;
     }
     if (videoId) {
@@ -516,7 +516,7 @@ router.post('/ai/shorts', async (req, res) => {
               else if (lines.length) lines[lines.length - 1] += ' ' + s.text;
             }
             let t = lines.join('\n');
-            if (t.length > 6000) t = t.slice(0, 6000) + '…';
+            if (t.length > 3500) t = t.slice(0, 3500) + '…';
             opts.transcript = t;
             opts.hasTranscript = true;
           }
@@ -524,7 +524,14 @@ router.post('/ai/shorts', async (req, res) => {
       } catch (e) { /* transcription optionnelle */ }
     }
 
-    const result = await generateShorts(source, language, opts);
+    // Tentative avec transcription ; si l'IA échoue (JSON tronqué/invalide), repli sans transcription
+    let result;
+    try {
+      result = await generateShorts(source, language, opts);
+    } catch (e1) {
+      console.error('[AI/SHORTS] 1st attempt failed, retrying without transcript:', e1.message);
+      result = await generateShorts(source, language, { hasTranscript: false, transcript: '', durationStr: opts.durationStr });
+    }
 
     // Ajouter les timestamps formatés (M:SS) à chaque passage
     (result.shorts || []).forEach(sh => {

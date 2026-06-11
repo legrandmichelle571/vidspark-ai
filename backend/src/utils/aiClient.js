@@ -49,7 +49,47 @@ function parseJson(text) {
   let t = (text || '').replace(/```json|```/g, '').trim();
   const s = t.indexOf('{'), e = t.lastIndexOf('}');   // extrait le bloc JSON si entouré de texte
   if (s >= 0 && e > s) t = t.slice(s, e + 1);
-  return JSON.parse(t);
+  try {
+    return JSON.parse(t);
+  } catch (err) {
+    return repairJson(t);
+  }
+}
+
+/* Répare un JSON tronqué : coupe le token incomplet de fin, puis ferme
+   les accolades/crochets ouverts dans le bon ordre (pile). */
+function repairJson(t) {
+  const stack = [];
+  let inStr = false, esc = false, lastSafe = -1;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') inStr = true;
+    else if (c === '{' || c === '[') stack.push(c === '{' ? '}' : ']');
+    else if (c === '}' || c === ']') { stack.pop(); lastSafe = i; }
+    else if (c === ',') lastSafe = i - 1;   // après une valeur complète
+    else if (/[\d"truefalsn]/.test(c)) lastSafe = i; // fin probable d'une valeur
+  }
+  // Couper après le dernier token complet, retirer une virgule traînante
+  let body = lastSafe >= 0 ? t.slice(0, lastSafe + 1) : t;
+  body = body.replace(/,\s*$/, '');
+  // Recalculer la pile sur le corps tronqué
+  const st = [];
+  inStr = false; esc = false;
+  for (const c of body) {
+    if (inStr) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true;
+    else if (c === '{') st.push('}');
+    else if (c === '[') st.push(']');
+    else if (c === '}' || c === ']') st.pop();
+  }
+  while (st.length) body += st.pop();
+  return JSON.parse(body);
 }
 
 /* Génération de texte via Cloudflare Workers AI (Llama) — gratuit, sans quota Gemini */
@@ -233,8 +273,8 @@ Réponds UNIQUEMENT en JSON valide :
     }
   ]
 }
-Toutes les explications en ${langName}. 3 Shorts variés (éducatif, émotionnel, surprenant). Les passages doivent rester dans la durée de la vidéo.`;
-  return geminiJson(prompt, 2600);
+Toutes les explications en ${langName}. 3 Shorts variés (éducatif, émotionnel, surprenant). Les passages doivent rester dans la durée de la vidéo. Sois CONCIS pour garder un JSON complet et valide.`;
+  return geminiJson(prompt, 3000);
 }
 
 /* Décrit une image via Cloudflare LLAVA (vision) */
