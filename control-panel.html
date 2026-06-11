@@ -111,6 +111,16 @@
 let API='', KEY='';
 
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2200);}
+function fmtMode(i){return i==='year'?'📅 Annuel':i==='month'?'🗓️ Mensuel':'—';}
+function fmtEnd(d){
+  if(!d)return '<span class="muted">—</span>';
+  const end=new Date(d), now=new Date();
+  const days=Math.ceil((end-now)/86400000);
+  const date=end.toLocaleDateString('fr-FR');
+  if(days<0)return `<span style="color:var(--red)">${date} (expiré)</span>`;
+  const col=days<=7?'var(--amber)':'var(--green)';
+  return `<span style="color:${col}">${date}</span><div class="muted">${days} j restants</div>`;
+}
 async function api(path,opts={}){
   const r=await fetch(API+'/api/admin'+path,{...opts,headers:{'Content-Type':'application/json','x-admin-key':KEY,...(opts.headers||{})}});
   if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||('HTTP '+r.status));}
@@ -186,12 +196,14 @@ async function renderUsers(){
   try{
     const d=await api(`/users?limit=100&search=${encodeURIComponent(search)}&plan=${plan}`);
     if(!d.users.length){el.innerHTML='<div class="empty">Aucun utilisateur</div>';return;}
-    el.innerHTML=`<table><thead><tr><th>Email</th><th>Plan</th><th>Statut</th><th>Inscrit</th><th>Actions</th></tr></thead><tbody>
+    el.innerHTML=`<table><thead><tr><th>Email</th><th>Plan</th><th>Statut</th><th>Fin forfait</th><th>Mode</th><th>Inscrit</th><th>Actions</th></tr></thead><tbody>
       ${d.users.map(u=>`
         <tr>
           <td><div>${u.email||'—'}</div><div class="muted">${u.name||''}</div></td>
           <td><span class="pill ${u.plan}">${(u.plan||'free').toUpperCase()}</span></td>
           <td><span class="pill ${u.status}">${u.status||'active'}</span></td>
+          <td>${fmtEnd(u.subscription_end)}</td>
+          <td class="muted">${fmtMode(u.subscription_interval)}</td>
           <td class="muted">${u.created_at?new Date(u.created_at).toLocaleDateString('fr-FR'):'—'}</td>
           <td><div class="row-actions">
             <select onchange="changePlan('${u.id}',this.value)">

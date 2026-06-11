@@ -81,8 +81,34 @@ router.get('/users', async (req, res) => {
     const { data, error, count } = await query;
     if (error) return res.status(400).json({ error: error.message });
 
+    /* Enrichir avec fin de forfait + mode (mensuel/annuel) */
+    const ids = (data || []).map(u => u.id);
+    let subsByUser = {}, expByUser = {};
+    if (ids.length) {
+      const [{ data: subs }, { data: codes }] = await Promise.all([
+        supabase.from('subscriptions')
+          .select('user_id, interval, current_period_end, status, created_at')
+          .in('user_id', ids).eq('status', 'active'),
+        supabase.from('activation_codes')
+          .select('user_id, subscription_expiry').in('user_id', ids)
+      ]);
+      (subs || []).forEach(s => {
+        const cur = subsByUser[s.user_id];
+        if (!cur || new Date(s.created_at) > new Date(cur.created_at)) subsByUser[s.user_id] = s;
+      });
+      (codes || []).forEach(c => { if (c.subscription_expiry) expByUser[c.user_id] = c.subscription_expiry; });
+    }
+    const users = (data || []).map(u => {
+      const s = subsByUser[u.id];
+      return {
+        ...u,
+        subscription_end:      s?.current_period_end || expByUser[u.id] || null,
+        subscription_interval: s?.interval || null
+      };
+    });
+
     res.json({
-      users: data,
+      users,
       pagination: { page, limit, total: count, pages: Math.ceil(count / limit) }
     });
   } catch (err) {
