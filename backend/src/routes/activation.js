@@ -340,7 +340,7 @@ router.post('/ai/competitor', async (req, res) => {
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
 const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments } = require('../utils/youtube');
-const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas } = require('../utils/aiClient');
+const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity } = require('../utils/aiClient');
 const { getThumbnailLimit } = require('../config/thumbnailLimits');
 
 router.post('/youtube/video', async (req, res) => {
@@ -406,7 +406,14 @@ router.post('/youtube/keywords', async (req, res) => {
     const ctx = await getCodeUser(supabase, activation_id, activation_secret);
     if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Recherche de mots-clés réservée aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    const { language = 'fr', opportunity: wantOpp } = req.body;
     const ideas = await getKeywordIdeas(query);
+
+    // Score d'opportunité IA (optionnel — demandé explicitement par l'extension)
+    if (wantOpp) {
+      try { ideas.opportunity = await keywordOpportunity(query, ideas, language); }
+      catch (e) { /* non bloquant */ }
+    }
     res.json(ideas);
   } catch (err) {
     console.error('[YT/KW]', err.message);

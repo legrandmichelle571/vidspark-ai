@@ -398,6 +398,34 @@ Toutes les explications en ${langName}. Sois précis et actionnable.`;
   return geminiJson(prompt, 1400);
 }
 
+/* Score d'opportunité d'un mot-clé : combine la vraie concurrence YouTube + estimation IA */
+async function keywordOpportunity(query, info = {}, language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const sugg = (info.suggestions || []).slice(0, 12).join(', ');
+  const prompt = `Tu es un expert SEO YouTube. Évalue l'OPPORTUNITÉ de se positionner sur le mot-clé : "${query}".
+
+Données réelles YouTube observées :
+- Concurrence (vues moyennes du top) : ${info.competition || 'inconnue'} (${info.top_avg_views ? '~' + info.top_avg_views + ' vues' : 'n/d'})
+- Suggestions/recherches associées : ${sugg || 'aucune'}
+
+En te basant sur ces données ET ta connaissance des tendances, estime la demande de recherche et la tendance.
+Plus l'opportunité est élevée = forte demande + concurrence faible (facile à classer).
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "score": <0-100, score d'opportunité global>,
+  "difficulty": "facile" | "moyen" | "difficile",
+  "demand": "faible" | "moyen" | "élevé",
+  "trend": "montant" | "stable" | "déclin",
+  "verdict": "<recommandation en ${langName}, 1-2 phrases>",
+  "best_keywords": [
+    {"keyword": "<mot-clé long-tail à fort potentiel, lié à '${query}'>", "difficulty": "facile" | "moyen" | "difficile", "why": "<pourquoi en ${langName}>"}
+  ]
+}
+Donne 4 à 6 best_keywords (privilégie les long-tail faciles à classer). Tout en ${langName}.`;
+  return geminiJson(prompt, 1500);
+}
+
 /* Générateur d'idées de vidéos à fort potentiel selon niche/région/sujet */
 async function generateVideoIdeas(niche = '', region = '', topic = '', language = 'fr') {
   const langName = LANG_NAMES[language] || language;
@@ -620,4 +648,4 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas };
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity };
