@@ -1003,9 +1003,13 @@ router.post('/ai/trends', async (req, res) => {
     if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Détecteur de tendances réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
 
-    const query = region ? `${niche} ${region}` : niche;
-    const videos = await getTrendingVideos(query, 12);
-    if (!videos.length) return res.json({ videos: [], trends: [], rising_keywords: [], advice: [] });
+    // On cherche la niche seule (ajouter la région polluerait la requête) ;
+    // les régions/pays précis affinent, les groupes génériques (Mondial…) sont ignorés.
+    const generic = /mondial|monde|pays |worldwide|عالمي|世界|général/i.test(region);
+    const query = (region && !generic) ? `${niche} ${region}` : niche;
+    let videos = await getTrendingVideos(query, 12);
+    if (!videos.length && query !== niche) videos = await getTrendingVideos(niche, 12);  // repli sur la niche seule
+    if (!videos.length) return res.json({ videos: [], trends: [], rising_keywords: [], advice: [], empty: true });
     const analysis = await detectTrends(videos, niche, language);
     res.json({ videos: videos.slice(0, 8), ...analysis });
   } catch (err) {
