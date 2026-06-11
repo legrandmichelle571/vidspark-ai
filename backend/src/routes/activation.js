@@ -280,7 +280,7 @@ router.post('/ai/competitor', async (req, res) => {
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
 const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas } = require('../utils/youtube');
-const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles } = require('../utils/aiClient');
+const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts } = require('../utils/aiClient');
 const { getThumbnailLimit } = require('../config/thumbnailLimits');
 
 router.post('/youtube/video', async (req, res) => {
@@ -479,6 +479,34 @@ router.post('/ai/ab-test/history', async (req, res) => {
   } catch (err) {
     console.error('[AI/AB-HISTORY]', err.message);
     res.status(500).json({ error: 'Historique indisponible', details: err.message });
+  }
+});
+
+/* ── Générateur de Shorts IA (Pro/Business, Free = 1 aperçu) ── */
+router.post('/ai/shorts', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, title, description = '', language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
+    if (!title) return res.status(400).json({ error: 'Titre requis' });
+
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+
+    const source = description ? `${title} — ${description.slice(0, 300)}` : title;
+    const result = await generateShorts(source, language);
+
+    // FREE = aperçu : 1 seul Short visible, le reste verrouillé
+    if (!requirePaidPlan(ctx.plan)) {
+      const all = result.shorts || [];
+      return res.json({ shorts: all.slice(0, 1), preview: true, locked: Math.max(0, all.length - 1) });
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/SHORTS]', err.message);
+    res.status(500).json({ error: 'Génération de Shorts indisponible', details: err.message });
   }
 });
 

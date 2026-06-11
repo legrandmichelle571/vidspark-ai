@@ -194,6 +194,31 @@ Langue de toutes les explications : ${langName}.`;
   return geminiJson(prompt, 1600);
 }
 
+/* Générateur de YouTube Shorts : transforme une vidéo longue / un sujet en idées de Shorts */
+async function generateShorts(source, language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const prompt = `Tu es un expert YouTube Shorts et créateur viral spécialisé dans les formats courts (moins de 60s).
+À partir de cette vidéo / ce sujet : "${source}", génère 3 idées de Shorts à fort potentiel viral.
+
+Pour CHAQUE Short, fournis : un titre accrocheur, un hook (les 3 premières secondes qui retiennent), un script structuré en plans courts, et des hashtags.
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "shorts": [
+    {
+      "title": "<titre court et viral, max 50 caractères>",
+      "hook": "<phrase d'accroche des 3 premières secondes>",
+      "script": ["<plan 1 : ce qui se passe>", "<plan 2>", "<plan 3>", "<plan 4>"],
+      "hashtags": ["#short1", "#short2", "#short3"],
+      "viral_score": <0-100>,
+      "duration": "<durée conseillée, ex: 30s>"
+    }
+  ]
+}
+Toutes les explications en ${langName}. 3 Shorts au total, variés (un éducatif, un émotionnel, un surprenant).`;
+  return geminiJson(prompt, 2048);
+}
+
 /* Décrit une image via Cloudflare LLAVA (vision) */
 async function cloudflareDescribeImage(imageBase64) {
   const acc = process.env.CF_ACCOUNT_ID, tok = process.env.CF_AI_TOKEN;
@@ -270,4 +295,4 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles };
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts };
