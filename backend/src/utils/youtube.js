@@ -151,4 +151,60 @@ async function getKeywordIdeas(query) {
   return { query, suggestions, competition, top_avg_views: topAvgViews, sampled };
 }
 
-module.exports = { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas };
+/* Convertit une durée ISO 8601 (PT#M#S) en secondes */
+function iso8601ToSeconds(iso) {
+  if (!iso) return 0;
+  const m = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!m) return 0;
+  return (+m[1] || 0) * 3600 + (+m[2] || 0) * 60 + (+m[3] || 0);
+}
+
+/* Formate des secondes en M:SS (ou H:MM:SS) */
+function secToTimestamp(s) {
+  s = Math.max(0, Math.round(s));
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  const mm = h ? String(m).padStart(2, '0') : String(m);
+  return (h ? `${h}:` : '') + `${mm}:${String(sec).padStart(2, '0')}`;
+}
+
+/* Récupère la transcription (sous-titres horodatés) d'une vidéo YouTube.
+   Retourne { available, segments:[{start, text}], language } — sans clé API.
+   Méthode : on lit la page watch, on extrait captionTracks, on récupère le json3. */
+async function getTranscript(videoId) {
+  try {
+    const r = await fetch(`https://www.youtube.com/watch?v=${videoId}&hl=en`, {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept-Language': 'en-US,en' }
+    });
+    const html = await r.text();
+    const m = html.match(/"captionTracks":(\[.*?\])/);
+    if (!m) return { available: false, segments: [] };
+
+    let tracks;
+    try { tracks = JSON.parse(m[1]); } catch { return { available: false, segments: [] }; }
+    if (!tracks.length) return { available: false, segments: [] };
+
+    // Préférer une piste non auto-générée, sinon la première
+    const track = tracks.find(t => t.kind !== 'asr') || tracks[0];
+    let baseUrl = track.baseUrl.replace(/\\u0026/g, '&');
+    if (!/[?&]fmt=/.test(baseUrl)) baseUrl += '&fmt=json3';
+
+    const cr = await fetch(baseUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const cj = await cr.json().catch(() => null);
+    if (!cj || !cj.events) return { available: false, segments: [] };
+
+    const segments = cj.events
+      .filter(e => e.segs)
+      .map(e => ({
+        start: Math.round((e.tStartMs || 0) / 1000),
+        text: e.segs.map(s => s.utf8).join('').replace(/\n/g, ' ').trim()
+      }))
+      .filter(s => s.text);
+
+    return { available: segments.length > 0, segments, language: track.languageCode || 'en' };
+  } catch (e) {
+    console.error('[TRANSCRIPT]', e.message);
+    return { available: false, segments: [] };
+  }
+}
+
+module.exports = { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp };

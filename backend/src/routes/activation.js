@@ -279,7 +279,7 @@ router.post('/ai/competitor', async (req, res) => {
 });
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
-const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas } = require('../utils/youtube');
+const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp } = require('../utils/youtube');
 const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts } = require('../utils/aiClient');
 const { getThumbnailLimit } = require('../config/thumbnailLimits');
 
@@ -485,7 +485,7 @@ router.post('/ai/ab-test/history', async (req, res) => {
 /* ── Générateur de Shorts IA (Pro/Business, Free = 1 aperçu) ── */
 router.post('/ai/shorts', async (req, res) => {
   try {
-    const { activation_id, activation_secret, title, description = '', language = 'fr' } = req.body;
+    const { activation_id, activation_secret, title, description = '', language = 'fr', transcript: clientTranscript = '' } = req.body;
     if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
     if (!title) return res.status(400).json({ error: 'Titre requis' });
 
@@ -495,12 +495,50 @@ router.post('/ai/shorts', async (req, res) => {
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
 
     const source = description ? `${title} — ${description.slice(0, 300)}` : title;
-    const result = await generateShorts(source, language);
+
+    // Transcription : priorité à celle envoyée par l'extension (cookies/session de la page),
+    // sinon tentative serveur (souvent bloquée), sinon repli sur timestamps estimés.
+    let opts = { hasTranscript: false, transcript: '', durationStr: '' };
+    if (clientTranscript && clientTranscript.trim().length > 30) {
+      opts.transcript = clientTranscript.slice(0, 6000);
+      opts.hasTranscript = true;
+    }
+    if (videoId) {
+      try {
+        const stats = await getVideoStats(videoId).catch(() => null);
+        if (stats?.duration) opts.durationStr = secToTimestamp(iso8601ToSeconds(stats.duration));
+        if (!opts.hasTranscript) {
+          const tr = await getTranscript(videoId);
+          if (tr.available && tr.segments.length) {
+            let lastStart = -100, lines = [];
+            for (const s of tr.segments) {
+              if (s.start - lastStart >= 12) { lines.push(`[${secToTimestamp(s.start)}] ${s.text}`); lastStart = s.start; }
+              else if (lines.length) lines[lines.length - 1] += ' ' + s.text;
+            }
+            let t = lines.join('\n');
+            if (t.length > 6000) t = t.slice(0, 6000) + '…';
+            opts.transcript = t;
+            opts.hasTranscript = true;
+          }
+        }
+      } catch (e) { /* transcription optionnelle */ }
+    }
+
+    const result = await generateShorts(source, language, opts);
+
+    // Ajouter les timestamps formatés (M:SS) à chaque passage
+    (result.shorts || []).forEach(sh => {
+      (sh.clips || []).forEach(c => {
+        c.start = secToTimestamp(c.start_sec || 0);
+        c.end   = secToTimestamp(c.end_sec || 0);
+      });
+    });
+    result.transcript_used = opts.hasTranscript;
 
     // FREE = aperçu : 1 seul Short visible, le reste verrouillé
     if (!requirePaidPlan(ctx.plan)) {
       const all = result.shorts || [];
-      return res.json({ shorts: all.slice(0, 1), preview: true, locked: Math.max(0, all.length - 1) });
+      return res.json({ shorts: all.slice(0, 1), preview: true, locked: Math.max(0, all.length - 1), transcript_used: opts.hasTranscript });
     }
 
     res.json(result);

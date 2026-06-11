@@ -194,29 +194,47 @@ Langue de toutes les explications : ${langName}.`;
   return geminiJson(prompt, 1600);
 }
 
-/* Générateur de YouTube Shorts : transforme une vidéo longue / un sujet en idées de Shorts */
-async function generateShorts(source, language = 'fr') {
+/* Générateur de YouTube Shorts : transforme une vidéo longue / un sujet en idées de Shorts.
+   opts = { transcript, hasTranscript, durationStr } pour proposer de vrais passages à couper. */
+async function generateShorts(source, language = 'fr', opts = {}) {
   const langName = LANG_NAMES[language] || language;
-  const prompt = `Tu es un expert YouTube Shorts et créateur viral spécialisé dans les formats courts (moins de 60s).
-À partir de cette vidéo / ce sujet : "${source}", génère 3 idées de Shorts à fort potentiel viral.
+  const { transcript = '', hasTranscript = false, durationStr = '' } = opts;
 
-Pour CHAQUE Short, fournis : un titre accrocheur, un hook (les 3 premières secondes qui retiennent), un script structuré en plans courts, et des hashtags.
+  const clipInstruction = hasTranscript
+    ? `Voici la transcription horodatée de la vidéo (chaque ligne commence par [m:ss]) :
+---
+${transcript}
+---
+Pour chaque Short, identifie les VRAIS passages à découper en te basant sur cette transcription. Donne les timestamps de début/fin précis (en secondes) correspondant aux moments les plus forts.`
+    : `Aucune transcription disponible (durée totale : ${durationStr || 'inconnue'}). Propose des passages ESTIMÉS répartis dans la vidéo, en marquant "estimated": true.`;
+
+  const prompt = `Tu es un expert YouTube Shorts et monteur vidéo viral (formats < 60s).
+À partir de cette vidéo : "${source}", génère 3 idées de Shorts à fort potentiel viral.
+
+${clipInstruction}
+
+Pour CHAQUE Short, fournis : un résumé, un titre accrocheur, un hook (3 premières sec), un script en plans courts, des hashtags, ET les passages exacts à couper dans la vidéo source (1 à 3 passages).
 
 Réponds UNIQUEMENT en JSON valide :
 {
   "shorts": [
     {
       "title": "<titre court et viral, max 50 caractères>",
+      "summary": "<résumé en 1 phrase de ce que raconte ce Short>",
       "hook": "<phrase d'accroche des 3 premières secondes>",
-      "script": ["<plan 1 : ce qui se passe>", "<plan 2>", "<plan 3>", "<plan 4>"],
+      "script": ["<plan 1>", "<plan 2>", "<plan 3>"],
+      "clips": [
+        {"start_sec": <début en secondes>, "end_sec": <fin en secondes>, "reason": "<pourquoi ce passage>"}
+      ],
+      "estimated": <true si timestamps estimés, false si basés sur la transcription>,
       "hashtags": ["#short1", "#short2", "#short3"],
       "viral_score": <0-100>,
       "duration": "<durée conseillée, ex: 30s>"
     }
   ]
 }
-Toutes les explications en ${langName}. 3 Shorts au total, variés (un éducatif, un émotionnel, un surprenant).`;
-  return geminiJson(prompt, 2048);
+Toutes les explications en ${langName}. 3 Shorts variés (éducatif, émotionnel, surprenant). Les passages doivent rester dans la durée de la vidéo.`;
+  return geminiJson(prompt, 2600);
 }
 
 /* Décrit une image via Cloudflare LLAVA (vision) */
