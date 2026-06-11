@@ -3,7 +3,18 @@
  * Sert de lead magnet : extracteur de tags / miniatures depuis une URL YouTube.
  */
 const router = require('express').Router();
+const rateLimit = require('express-rate-limit');
 const { getVideoStats } = require('../utils/youtube');
+const { generateTags, generateTitles, generateDescription } = require('../utils/aiClient');
+
+/* Anti-abus : 15 générations IA / heure / IP sur les outils gratuits */
+const aiLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Limite gratuite atteinte (15/heure). Passe à VidSpark Pro pour un accès illimité !', code: 'RATE_LIMIT' }
+});
 
 /* Extrait l'ID vidéo d'une URL YouTube (ou accepte un ID brut) */
 function extractId(input) {
@@ -42,6 +53,42 @@ router.get('/video', async (req, res) => {
   } catch (err) {
     console.error('[PUBLIC/VIDEO]', err.message);
     res.status(500).json({ error: 'Service indisponible', details: err.message });
+  }
+});
+
+/* POST /api/public/ai/tags {topic, language} → 15 tags SEO (gratuit, rate-limité) */
+router.post('/ai/tags', aiLimiter, async (req, res) => {
+  try {
+    const { topic, language = 'fr' } = req.body;
+    if (!topic || topic.trim().length < 3) return res.status(400).json({ error: 'Sujet requis (3 caractères min)' });
+    res.json(await generateTags(topic.slice(0, 150), language));
+  } catch (err) {
+    console.error('[PUBLIC/AI-TAGS]', err.message);
+    res.status(500).json({ error: 'Génération indisponible' });
+  }
+});
+
+/* POST /api/public/ai/titles {topic, language} → 5 titres optimisés */
+router.post('/ai/titles', aiLimiter, async (req, res) => {
+  try {
+    const { topic, language = 'fr' } = req.body;
+    if (!topic || topic.trim().length < 3) return res.status(400).json({ error: 'Sujet requis (3 caractères min)' });
+    res.json(await generateTitles(topic.slice(0, 150), language));
+  } catch (err) {
+    console.error('[PUBLIC/AI-TITLES]', err.message);
+    res.status(500).json({ error: 'Génération indisponible' });
+  }
+});
+
+/* POST /api/public/ai/description {topic, language} → description + hashtags */
+router.post('/ai/description', aiLimiter, async (req, res) => {
+  try {
+    const { topic, language = 'fr' } = req.body;
+    if (!topic || topic.trim().length < 3) return res.status(400).json({ error: 'Sujet requis (3 caractères min)' });
+    res.json(await generateDescription(topic.slice(0, 150), language));
+  } catch (err) {
+    console.error('[PUBLIC/AI-DESC]', err.message);
+    res.status(500).json({ error: 'Génération indisponible' });
   }
 });
 
