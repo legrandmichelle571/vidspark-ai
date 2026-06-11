@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VidSpark AI — Centre de commande</title>
+<style>
+  :root{
+    --bg:#07070a; --s1:#0e0e12; --s2:#141418; --b1:#1e1e26; --b2:#2a2a35;
+    --text:#e8e8f0; --muted:#8888a0; --purple:#7c6dfa; --purple-l:#a78bfa;
+    --green:#22c55e; --red:#ef4444; --amber:#f5b301; --blue:#3b82f6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif;}
+  body{background:var(--bg);color:var(--text);min-height:100vh;}
+  a{color:var(--purple-l);text-decoration:none;}
+  button{cursor:pointer;font-family:inherit;}
+  input,select{font-family:inherit;}
+
+  /* Login */
+  #login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .login-card{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:32px;width:100%;max-width:400px;}
+  .login-card h1{font-size:22px;margin-bottom:6px;}
+  .login-card p{color:var(--muted);font-size:13px;margin-bottom:20px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;}
+  .field input{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:10px;color:var(--text);font-size:13px;}
+  .btn{background:var(--purple);color:#fff;border:none;border-radius:8px;padding:11px 18px;font-weight:700;font-size:14px;width:100%;}
+  .btn:hover{opacity:.9;}
+  .btn-sm{width:auto;padding:6px 12px;font-size:12px;border-radius:6px;}
+  .btn-ghost{background:transparent;border:1px solid var(--b2);color:var(--muted);}
+  .btn-red{background:var(--red);} .btn-green{background:var(--green);} .btn-amber{background:var(--amber);color:#1a1a1a;}
+
+  /* App */
+  #app{display:none;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--b1);background:var(--s1);position:sticky;top:0;z-index:10;}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;}
+  .logo .badge{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#7c6dfa,#a78bfa);display:flex;align-items:center;justify-content:center;}
+  .layout{display:flex;}
+  .nav{width:200px;flex-shrink:0;border-right:1px solid var(--b1);min-height:calc(100vh - 60px);padding:14px 10px;}
+  .nav button{display:flex;align-items:center;gap:9px;width:100%;background:transparent;border:none;color:var(--muted);padding:10px 12px;border-radius:8px;font-size:14px;text-align:left;margin-bottom:2px;}
+  .nav button.active,.nav button:hover{background:var(--s2);color:var(--text);}
+  .main{flex:1;padding:24px;min-width:0;}
+  .page-title{font-size:20px;font-weight:800;margin-bottom:16px;}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px;}
+  .card{background:var(--s1);border:1px solid var(--b1);border-radius:12px;padding:16px;}
+  .card .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+  .card .val{font-size:26px;font-weight:800;margin-top:6px;}
+
+  .toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .toolbar input,.toolbar select{background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:9px;color:var(--text);font-size:13px;}
+
+  table{width:100%;border-collapse:collapse;background:var(--s1);border:1px solid var(--b1);border-radius:12px;overflow:hidden;}
+  th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--b1);font-size:13px;}
+  th{background:var(--s2);color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;}
+  tr:last-child td{border-bottom:none;}
+  td .row-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  td select{background:var(--s2);border:1px solid var(--b2);border-radius:6px;padding:4px 6px;color:var(--text);font-size:12px;}
+
+  .pill{display:inline-block;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;}
+  .pill.free{background:rgba(136,136,160,.18);color:var(--muted);}
+  .pill.pro{background:rgba(124,109,250,.2);color:var(--purple-l);}
+  .pill.business{background:rgba(245,179,1,.18);color:var(--amber);}
+  .pill.active{background:rgba(34,197,94,.15);color:var(--green);}
+  .pill.suspended{background:rgba(239,68,68,.15);color:var(--red);}
+  .muted{color:var(--muted);font-size:12px;}
+  #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--s2);border:1px solid var(--b2);padding:12px 20px;border-radius:10px;font-size:13px;display:none;z-index:100;}
+  .empty{color:var(--muted);text-align:center;padding:40px;font-size:14px;}
+</style>
+</head>
+<body>
+
+<!-- ════ LOGIN ════ -->
+<div id="login">
+  <div class="login-card">
+    <h1>🎛️ Centre de commande</h1>
+    <p>Connecte-toi à ton backend VidSpark AI avec ta clé admin.</p>
+    <div class="field">
+      <label>URL du backend</label>
+      <input id="inUrl" value="https://vidspark-ai-production-9ac7.up.railway.app" placeholder="https://...railway.app">
+    </div>
+    <div class="field">
+      <label>Clé admin (ADMIN_API_KEY)</label>
+      <input id="inKey" type="password" placeholder="Ta clé secrète admin">
+    </div>
+    <button class="btn" onclick="login()">Se connecter</button>
+    <p id="loginErr" style="color:var(--red);margin-top:12px;display:none;"></p>
+  </div>
+</div>
+
+<!-- ════ APP ════ -->
+<div id="app">
+  <div class="topbar">
+    <div class="logo"><span class="badge">✦</span> VidSpark AI — Commande</div>
+    <button class="btn btn-sm btn-ghost" onclick="logout()">Déconnexion</button>
+  </div>
+  <div class="layout">
+    <div class="nav">
+      <button class="active" data-page="dashboard" onclick="nav('dashboard')">📊 Tableau de bord</button>
+      <button data-page="users" onclick="nav('users')">👥 Utilisateurs</button>
+      <button data-page="logs" onclick="nav('logs')">📜 Journal</button>
+      <button data-page="dashboard" onclick="loadAll()">🔄 Actualiser</button>
+    </div>
+    <div class="main" id="main"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let API='', KEY='';
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2200);}
+async function api(path,opts={}){
+  const r=await fetch(API+'/api/admin'+path,{...opts,headers:{'Content-Type':'application/json','x-admin-key':KEY,...(opts.headers||{})}});
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||('HTTP '+r.status));}
+  return r.json();
+}
+
+function login(){
+  API=document.getElementById('inUrl').value.trim().replace(/\/$/,'');
+  KEY=document.getElementById('inKey').value.trim();
+  const err=document.getElementById('loginErr');
+  err.style.display='none';
+  api('/stats').then(()=>{
+    localStorage.setItem('vs_api',API);localStorage.setItem('vs_key',KEY);
+    document.getElementById('login').style.display='none';
+    document.getElementById('app').style.display='block';
+    nav('dashboard');
+  }).catch(e=>{err.textContent='❌ '+e.message;err.style.display='block';});
+}
+function logout(){localStorage.removeItem('vs_key');location.reload();}
+
+let curPage='dashboard';
+function nav(p){
+  curPage=p;
+  document.querySelectorAll('.nav button[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===p));
+  if(p==='dashboard')loadDashboard();
+  else if(p==='users')loadUsers();
+  else if(p==='logs')loadLogs();
+}
+function loadAll(){nav(curPage);}
+
+async function loadDashboard(){
+  const m=document.getElementById('main');
+  m.innerHTML='<div class="page-title">📊 Tableau de bord</div><div class="muted">Chargement…</div>';
+  try{
+    const s=await api('/stats');
+    m.innerHTML=`
+      <div class="page-title">📊 Tableau de bord</div>
+      <div class="cards">
+        <div class="card"><div class="lbl">Utilisateurs</div><div class="val">${s.users.total}</div></div>
+        <div class="card"><div class="lbl">Free</div><div class="val" style="color:var(--muted)">${s.users.free}</div></div>
+        <div class="card"><div class="lbl">Pro</div><div class="val" style="color:var(--purple-l)">${s.users.pro}</div></div>
+        <div class="card"><div class="lbl">Business</div><div class="val" style="color:var(--amber)">${s.users.business}</div></div>
+      </div>
+      <div class="cards">
+        <div class="card"><div class="lbl">MRR (30j)</div><div class="val" style="color:var(--green)">${s.revenue.mrr} €</div></div>
+        <div class="card"><div class="lbl">ARR estimé</div><div class="val" style="color:var(--green)">${s.revenue.arr} €</div></div>
+        <div class="card"><div class="lbl">Transactions 30j</div><div class="val">${s.revenue.transactions_30d}</div></div>
+        <div class="card"><div class="lbl">Nouveaux (30j)</div><div class="val">${s.users.new_30d}</div></div>
+        <div class="card"><div class="lbl">Actifs (7j)</div><div class="val">${s.users.active_7d}</div></div>
+        <div class="card"><div class="lbl">Analyses totales</div><div class="val">${s.analyses.total}</div></div>
+        <div class="card"><div class="lbl">Conversion</div><div class="val">${s.users.conversion_rate}%</div></div>
+      </div>`;
+  }catch(e){m.innerHTML='<div class="empty">❌ '+e.message+'</div>';}
+}
+
+async function loadUsers(){
+  const m=document.getElementById('main');
+  m.innerHTML=`
+    <div class="page-title">👥 Utilisateurs</div>
+    <div class="toolbar">
+      <input id="uSearch" placeholder="🔍 Email ou nom…" style="flex:1;min-width:160px" onkeydown="if(event.key==='Enter')renderUsers()">
+      <select id="uPlan" onchange="renderUsers()"><option value="">Tous les plans</option><option value="free">Free</option><option value="pro">Pro</option><option value="business">Business</option></select>
+      <button class="btn btn-sm" onclick="renderUsers()">Filtrer</button>
+    </div>
+    <div id="usersTable"></div>`;
+  renderUsers();
+}
+async function renderUsers(){
+  const el=document.getElementById('usersTable');
+  el.innerHTML='<div class="muted">Chargement…</div>';
+  const search=document.getElementById('uSearch')?.value||'';
+  const plan=document.getElementById('uPlan')?.value||'';
+  try{
+    const d=await api(`/users?limit=100&search=${encodeURIComponent(search)}&plan=${plan}`);
+    if(!d.users.length){el.innerHTML='<div class="empty">Aucun utilisateur</div>';return;}
+    el.innerHTML=`<table><thead><tr><th>Email</th><th>Plan</th><th>Statut</th><th>Inscrit</th><th>Actions</th></tr></thead><tbody>
+      ${d.users.map(u=>`
+        <tr>
+          <td><div>${u.email||'—'}</div><div class="muted">${u.name||''}</div></td>
+          <td><span class="pill ${u.plan}">${(u.plan||'free').toUpperCase()}</span></td>
+          <td><span class="pill ${u.status}">${u.status||'active'}</span></td>
+          <td class="muted">${u.created_at?new Date(u.created_at).toLocaleDateString('fr-FR'):'—'}</td>
+          <td><div class="row-actions">
+            <select onchange="changePlan('${u.id}',this.value)">
+              <option ${u.plan==='free'?'selected':''} value="free">Free</option>
+              <option ${u.plan==='pro'?'selected':''} value="pro">Pro</option>
+              <option ${u.plan==='business'?'selected':''} value="business">Business</option>
+            </select>
+            ${u.status==='suspended'
+              ? `<button class="btn btn-sm btn-green" onclick="setStatus('${u.id}','active')">Réactiver</button>`
+              : `<button class="btn btn-sm btn-amber" onclick="setStatus('${u.id}','suspended')">Suspendre</button>`}
+            <button class="btn btn-sm btn-red" onclick="delUser('${u.id}','${(u.email||'').replace(/'/g,'')}')">Suppr</button>
+          </div></td>
+        </tr>`).join('')}
+    </tbody></table><div class="muted" style="margin-top:8px">${d.pagination.total} utilisateur(s)</div>`;
+  }catch(e){el.innerHTML='<div class="empty">❌ '+e.message+'</div>';}
+}
+async function changePlan(id,plan){try{await api(`/users/${id}/plan`,{method:'PUT',body:JSON.stringify({plan})});toast('✅ Plan → '+plan);}catch(e){toast('❌ '+e.message);renderUsers();}}
+async function setStatus(id,status){try{await api(`/users/${id}/status`,{method:'PUT',body:JSON.stringify({status})});toast('✅ Statut → '+status);renderUsers();}catch(e){toast('❌ '+e.message);}}
+async function delUser(id,email){if(!confirm('Supprimer définitivement '+email+' ?'))return;try{await api(`/users/${id}`,{method:'DELETE'});toast('🗑️ Supprimé');renderUsers();}catch(e){toast('❌ '+e.message);}}
+
+async function loadLogs(){
+  const m=document.getElementById('main');
+  m.innerHTML='<div class="page-title">📜 Journal admin</div><div class="muted">Chargement…</div>';
+  try{
+    const d=await api('/logs');
+    const logs=d.logs||d||[];
+    if(!logs.length){m.innerHTML='<div class="page-title">📜 Journal admin</div><div class="empty">Aucune action récente</div>';return;}
+    m.innerHTML='<div class="page-title">📜 Journal admin</div><table><thead><tr><th>Action</th><th>Cible</th><th>Date</th></tr></thead><tbody>'+
+      logs.map(l=>`<tr><td>${l.action||'—'}</td><td class="muted">${l.target_user_id||l.details?.changed_by||'—'}</td><td class="muted">${l.created_at?new Date(l.created_at).toLocaleString('fr-FR'):'—'}</td></tr>`).join('')+
+      '</tbody></table>';
+  }catch(e){m.innerHTML='<div class="page-title">📜 Journal admin</div><div class="empty">❌ '+e.message+'</div>';}
+}
+
+/* Auto-login si déjà connecté */
+(function(){
+  const a=localStorage.getItem('vs_api'),k=localStorage.getItem('vs_key');
+  if(a)document.getElementById('inUrl').value=a;
+  if(a&&k){API=a;KEY=k;api('/stats').then(()=>{document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';nav('dashboard');}).catch(()=>{});}
+})();
+</script>
+</body>
+</html>
