@@ -340,7 +340,7 @@ router.post('/ai/competitor', async (req, res) => {
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
 const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments } = require('../utils/youtube');
-const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments } = require('../utils/aiClient');
+const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters } = require('../utils/aiClient');
 const { getThumbnailLimit } = require('../config/thumbnailLimits');
 
 router.post('/youtube/video', async (req, res) => {
@@ -775,6 +775,43 @@ router.post('/ai/comments', async (req, res) => {
   } catch (err) {
     console.error('[AI/COMMENTS]', err.message);
     res.status(500).json({ error: 'Analyse des commentaires indisponible', details: err.message });
+  }
+});
+
+/* ── Chapitres horodatés (Pro/Business) ── */
+router.post('/ai/chapters', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, videoId, transcript: clientTranscript = '', language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
+
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+    if (!requirePaidPlan(ctx.plan)) {
+      return res.status(403).json({ error: 'Chapitres réservés aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    }
+
+    // Transcription : celle de l'extension en priorité, sinon tentative serveur
+    let transcript = (clientTranscript && clientTranscript.trim().length > 30) ? clientTranscript : '';
+    if (!transcript && videoId) {
+      const tr = await getTranscript(videoId);
+      if (tr.available && tr.segments.length) {
+        let last = -100, lines = [];
+        for (const s of tr.segments) {
+          if (s.start - last >= 15) { lines.push(`[${secToTimestamp(s.start)}] ${s.text}`); last = s.start; }
+          else if (lines.length) lines[lines.length - 1] += ' ' + s.text;
+        }
+        transcript = lines.join('\n').slice(0, 6000);
+      }
+    }
+    if (!transcript) return res.status(404).json({ error: 'Sous-titres indisponibles pour cette vidéo (chapitres impossibles).' });
+
+    const result = await generateChapters(transcript, language);
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/CHAPTERS]', err.message);
+    res.status(500).json({ error: 'Génération des chapitres indisponible', details: err.message });
   }
 });
 

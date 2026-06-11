@@ -320,6 +320,29 @@ Toutes les explications en ${langName}. Sois précis et actionnable.`;
   return geminiJson(prompt, 1800);
 }
 
+/* Génère des chapitres horodatés à partir de la transcription (prêts pour la description) */
+async function generateChapters(transcript, language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const prompt = `Tu es un expert YouTube. À partir de cette transcription horodatée (chaque ligne commence par [m:ss]), génère des CHAPITRES logiques pour la description de la vidéo.
+
+Transcription :
+"""
+${(transcript || '').slice(0, 6000)}
+"""
+
+Règles YouTube : le 1er chapitre DOIT commencer à 0:00. Titres courts et clairs. Entre 4 et 10 chapitres.
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "chapters": [
+    {"time": "0:00", "title": "<titre du chapitre en ${langName}>"},
+    {"time": "<m:ss>", "title": "<titre>"}
+  ]
+}
+Titres en ${langName}.`;
+  return geminiJson(prompt, 1200);
+}
+
 /* Analyse des commentaires : sentiment + demandes + idées de vidéos + réponses suggérées */
 async function analyzeComments(comments = [], title = '', language = 'fr') {
   const langName = LANG_NAMES[language] || language;
@@ -572,4 +595,4 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments };
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters };
