@@ -274,7 +274,7 @@ Réponds UNIQUEMENT en JSON valide :
   ]
 }
 Toutes les explications en ${langName}. 3 Shorts variés (éducatif, émotionnel, surprenant). Les passages doivent rester dans la durée de la vidéo. Sois CONCIS pour garder un JSON complet et valide.`;
-  return geminiJson(prompt, 3000);
+  return geminiJson(prompt, 2048);
 }
 
 /* Décrit une image via Cloudflare LLAVA (vision) */

@@ -551,7 +551,7 @@ router.post('/ai/shorts', async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error('[AI/SHORTS]', err.message);
-    res.status(500).json({ error: 'Génération de Shorts indisponible', details: err.message });
+    res.status(500).json({ error: 'Shorts: ' + err.message, details: err.message });
   }
 });
 
