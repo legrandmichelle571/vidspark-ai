@@ -320,6 +320,32 @@ Toutes les explications en ${langName}. Sois précis et actionnable.`;
   return geminiJson(prompt, 1800);
 }
 
+/* Estimateur de vues (J+7) et de revenus AdSense selon titre/niche/région/abonnés */
+async function estimateRevenue(title, niche = '', region = '', subscribers = 0, language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const subs = parseInt(subscribers, 10) || 0;
+  const prompt = `Tu es un analyste YouTube spécialisé dans la monétisation. Estime de façon RÉALISTE les performances d'une vidéo.
+Titre : "${title}".
+Niche : "${niche || 'généraliste'}".
+Audience cible : "${region || 'mondial'}".
+Abonnés de la chaîne : ${subs}.
+
+Tiens compte de :
+- Le RPM/CPM varie ÉNORMÉMENT selon la niche (finance/business/tech = élevé 5-25$ ; divertissement/vlog/gaming = faible 1-4$) ET selon le pays de l'audience (USA/Europe/Golfe = élevé ; Maghreb/Inde/Afrique = beaucoup plus faible).
+- Les vues à J+7 dépendent surtout du nombre d'abonnés et de l'attrait du titre.
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "views_7d": { "low": <entier>, "expected": <entier>, "high": <entier> },
+  "rpm_usd": <revenu estimé pour 1000 vues monétisées, en USD>,
+  "revenue_usd": { "low": <nombre>, "expected": <nombre>, "high": <nombre> },
+  "factors": ["<facteur clé 1 en ${langName}>", "<facteur 2>", "<facteur 3>"],
+  "tips": ["<conseil pour augmenter vues/revenus 1 en ${langName}>", "<conseil 2>", "<conseil 3>"]
+}
+Sois réaliste (pas trop optimiste). Explications en ${langName}.`;
+  return geminiJson(prompt, 1400);
+}
+
 /* Pack vidéo complet : description (+ abonne-toi) + hashtags + tags, selon titre/niche/région */
 async function generateVideoPackage(title, niche = '', region = '', language = 'fr') {
   const langName = LANG_NAMES[language] || language;
@@ -491,4 +517,4 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage };
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue };

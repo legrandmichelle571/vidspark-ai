@@ -340,7 +340,7 @@ router.post('/ai/competitor', async (req, res) => {
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
 const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp } = require('../utils/youtube');
-const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage } = require('../utils/aiClient');
+const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue } = require('../utils/aiClient');
 const { getThumbnailLimit } = require('../config/thumbnailLimits');
 
 router.post('/youtube/video', async (req, res) => {
@@ -705,6 +705,28 @@ router.post('/ai/video-package', async (req, res) => {
   } catch (err) {
     console.error('[AI/VIDEO-PACKAGE]', err.message);
     res.status(500).json({ error: 'Génération de la description indisponible', details: err.message });
+  }
+});
+
+/* ── Estimateur de vues + revenus (Pro/Business) ── */
+router.post('/ai/revenue', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, title = '', niche = '', region = '', subscribers = 0, language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
+
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+    if (!requirePaidPlan(ctx.plan)) {
+      return res.status(403).json({ error: 'Estimateur de revenus réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    }
+
+    const result = await estimateRevenue(title, niche, region, subscribers, language);
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/REVENUE]', err.message);
+    res.status(500).json({ error: 'Estimateur indisponible', details: err.message });
   }
 });
 
