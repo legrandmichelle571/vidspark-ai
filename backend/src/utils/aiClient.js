@@ -320,6 +320,23 @@ Toutes les explications en ${langName}. Sois précis et actionnable.`;
   return geminiJson(prompt, 1800);
 }
 
+/* Pack vidéo complet : description (+ abonne-toi) + hashtags + tags, selon titre/niche/région */
+async function generateVideoPackage(title, niche = '', region = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const ctx = [niche && `Niche : ${niche}`, region && `Audience cible : ${region}`].filter(Boolean).join('. ');
+  const prompt = `Tu es un expert YouTube SEO et copywriter. Rédige le pack COMPLET pour cette vidéo, en ${langName}.
+Titre : "${title}".${ctx ? ' ' + ctx + '.' : ''}
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "description": "<description engageante de 4 à 6 lignes, riche en mots-clés, adaptée à la niche et à l'audience, en ${langName}>",
+  "subscribe_cta": "<une phrase d'appel à l'abonnement accrocheuse, en ${langName}>",
+  "hashtags": ["#mot1","#mot2","#mot3","#mot4","#mot5"],
+  "tags": ["<tag SEO 1>","<tag 2>","<tag 3>","<...jusqu'à 15 tags pertinents>"]
+}`;
+  return geminiJson(prompt, 1500);
+}
+
 /* Optimiseur d'audience : cible (mondial/région/pays) + langue → heures, tendances, hashtags, sujets */
 async function optimizeAudience(target, contentLang = 'fr', uiLang = 'fr', niche = '') {
   const contentName = LANG_NAMES[contentLang] || contentLang;
@@ -474,4 +491,4 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience };
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage };
