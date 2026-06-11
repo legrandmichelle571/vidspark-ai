@@ -23,8 +23,25 @@ const PLAN_LIMITS = {
     daily_analyses: 1000,
     daily_titles:   500,
     quota_limit:    1000
+  },
+  // 💎 Palier premium — inclut tout Business + outils exclusifs (site web)
+  diamant: {
+    daily_analyses: 5000,
+    daily_titles:   2000,
+    quota_limit:    5000,
+    channels:       10,      // chaînes maximum
+    channel_audit:  true,    // 💎 Audit de chaîne avancé sur le site
+    rank_tracker:   true     // 💎 Suivi de position dans le temps
   }
 };
+
+/* Plans payants donnant accès aux outils premium de base (Pro et +) */
+const PAID_PLANS = ['pro', 'business', 'diamant'];
+
+/* Vérifie si un plan donne accès aux outils 💎 exclusifs Diamant */
+function isDiamant(plan) {
+  return plan === 'diamant';
+}
 
 /**
  * Retourne les limites du plan.
@@ -36,4 +53,4 @@ function getLimits(plan) {
   return PLAN_LIMITS[plan] || PLAN_LIMITS.free;
 }
 
-module.exports = { PLAN_LIMITS, getLimits };
+module.exports = { PLAN_LIMITS, getLimits, PAID_PLANS, isDiamant };

@@ -72,12 +72,24 @@ async function requireAdmin(req, res, next) {
   });
 }
 
-/* ── Middleware plan Pro ou Business ── */
+/* ── Middleware plan Pro ou Business (ou Diamant) ── */
 function requirePro(req, res, next) {
-  if (!['pro', 'business'].includes(req.user?.plan)) {
+  if (!['pro', 'business', 'diamant'].includes(req.user?.plan)) {
     return res.status(403).json({
       error:       'Pro subscription required',
       code:        'UPGRADE_REQUIRED',
+      upgrade_url: process.env.FRONTEND_URL + '/pricing'
+    });
+  }
+  next();
+}
+
+/* ── Middleware plan Diamant 💎 (outils premium exclusifs du site) ── */
+function requireDiamant(req, res, next) {
+  if (req.user?.plan !== 'diamant') {
+    return res.status(403).json({
+      error:       'Diamant subscription required',
+      code:        'UPGRADE_DIAMANT',
       upgrade_url: process.env.FRONTEND_URL + '/pricing'
     });
   }
@@ -144,6 +156,7 @@ module.exports = {
   requireAuth,
   requireAdmin,
   requirePro,
+  requireDiamant,
   checkQuota,
   checkTitlesQuota
 };

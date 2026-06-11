@@ -150,7 +150,7 @@ router.get('/users/:id', async (req, res) => {
 router.put('/users/:id/plan', async (req, res) => {
   try {
     const { plan } = req.body;
-    if (!['free','pro','business'].includes(plan)) {
+    if (!['free','pro','business','diamant'].includes(plan)) {
       return res.status(400).json({ error: 'Invalid plan' });
     }
 
