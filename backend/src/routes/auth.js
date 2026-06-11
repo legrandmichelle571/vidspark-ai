@@ -186,40 +186,51 @@ router.post('/google', async (req, res) => {
 
     console.log('🔥 [POST /auth/google] Found user_id:', userData.id);
 
-    // ♻️ Codes STABLES : réutiliser le code existant du compte s'il y en a un.
-    //    (sinon même email = nouveaux codes à chaque connexion / navigateur)
+    // ♻️ Codes STABLES : réutiliser les codes existants du compte.
+    //    Business = 5 codes (5 PC), autres plans = 1 code. On complète si besoin.
     let activationId, activationSecret, subscriptionExpiry;
-    const { data: existing } = await supabase
+    const neededCodes = (userData.plan === 'business') ? 5 : 1;
+
+    const { data: existingCodes } = await supabase
       .from('activation_codes')
       .select('activation_id, activation_secret, subscription_expiry')
       .eq('user_id', userData.id)
-      .maybeSingle();
+      .order('created_at', { ascending: true });
 
-    if (existing && existing.activation_id) {
-      activationId       = existing.activation_id;
-      activationSecret   = existing.activation_secret;
-      subscriptionExpiry = existing.subscription_expiry; // déjà une string ISO
-      console.log('[POST /auth/google] ♻️ Code existant réutilisé:', activationId);
-    } else {
-      activationId       = generateActivationId();
-      activationSecret   = generateActivationSecret();
-      subscriptionExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    let codes = existingCodes || [];
 
-      const { error: activationErr } = await supabase
-        .from('activation_codes')
-        .insert({
+    // Expiry de référence (réutilise l'existant, sinon +30j)
+    subscriptionExpiry = codes[0]?.subscription_expiry
+      || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    // Compléter jusqu'au nombre requis (sans toucher aux codes existants)
+    if (codes.length < neededCodes) {
+      const toCreate = [];
+      for (let i = codes.length; i < neededCodes; i++) {
+        toCreate.push({
           user_id:             userData.id,
-          activation_id:       activationId,
-          activation_secret:   activationSecret,
+          activation_id:       generateActivationId(),
+          activation_secret:   generateActivationSecret(),
           subscription_expiry: subscriptionExpiry
         });
-
+      }
+      const { data: created, error: activationErr } = await supabase
+        .from('activation_codes')
+        .insert(toCreate)
+        .select('activation_id, activation_secret, subscription_expiry');
       if (activationErr) {
         console.error('[POST /auth/google] Activation codes INSERT error:', activationErr);
       } else {
-        console.log('[POST /auth/google] ✅ Nouveau code créé:', activationId);
+        codes = codes.concat(created || []);
+        console.log(`[POST /auth/google] ✅ ${toCreate.length} code(s) créé(s) pour ${userData.plan}`);
       }
+    } else {
+      console.log(`[POST /auth/google] ♻️ ${codes.length} code(s) réutilisé(s)`);
     }
+
+    // Code principal (1er) renvoyé pour compat ; la liste complète est dans `codes`
+    activationId     = codes[0]?.activation_id;
+    activationSecret = codes[0]?.activation_secret;
 
     // Vérifier le statut du compte
     if (userData.status === 'suspended') {
@@ -236,6 +247,7 @@ router.post('/google', async (req, res) => {
       activation_id: activationId,
       activation_secret: activationSecret,
       subscription_expiry: subscriptionExpiry,
+      codes: codes.map(c => ({ activation_id: c.activation_id, activation_secret: c.activation_secret })),
       user: {
         id:          userData.id,
         email:       userData.email,

@@ -137,23 +137,42 @@ router.get('/me', requireAuth, async (req, res) => {
     const { id, email, name, avatar, plan, status, role,
             quota_used, quota_limit, language, created_at } = req.user;
 
-    // Récupérer l'ID d'activation et le Secret depuis la table activation_codes
-    const { data: userData, error } = await supabase
+    // Récupérer TOUS les codes d'activation (Business = 5, autres = 1)
+    const { data: codeRows, error } = await supabase
       .from('activation_codes')
       .select('activation_id, activation_secret, subscription_expiry')
       .eq('user_id', id)
-      .maybeSingle();
+      .order('created_at', { ascending: true });
 
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       console.error('[GET /user/me] Error fetching activation codes:', error);
+    }
+
+    let codes = codeRows || [];
+
+    // Compléter les codes si besoin (Business = 5, autres = 1) — idempotent
+    const needed = (plan === 'business') ? 5 : 1;
+    if (codes.length < needed) {
+      const expiry = codes[0]?.subscription_expiry || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const genId = () => 'VID' + Math.random().toString(36).substring(2, 11).toUpperCase() + Date.now().toString(36).toUpperCase();
+      const genSecret = () => Math.random().toString(36).substring(2, 18).toUpperCase() + Math.random().toString(36).substring(2, 18).toUpperCase();
+      const toCreate = [];
+      for (let i = codes.length; i < needed; i++) {
+        toCreate.push({ user_id: id, activation_id: genId(), activation_secret: genSecret(), subscription_expiry: expiry });
+      }
+      const { data: created } = await supabase
+        .from('activation_codes').insert(toCreate)
+        .select('activation_id, activation_secret, subscription_expiry');
+      codes = codes.concat(created || []);
     }
 
     res.json({
       id, email, name, avatar, plan, status, role,
       quota_used, quota_limit, language, created_at,
-      activation_id: userData?.activation_id,
-      activation_secret: userData?.activation_secret,
-      subscription_expiry: userData?.subscription_expiry
+      activation_id: codes[0]?.activation_id,
+      activation_secret: codes[0]?.activation_secret,
+      subscription_expiry: codes[0]?.subscription_expiry,
+      codes: codes.map(c => ({ activation_id: c.activation_id, activation_secret: c.activation_secret }))
     });
   } catch (err) {
     console.error('[GET /me]', err);
