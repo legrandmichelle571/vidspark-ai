@@ -485,7 +485,7 @@ router.post('/ai/ab-test/history', async (req, res) => {
 /* ── Générateur de Shorts IA (Pro/Business, Free = 1 aperçu) ── */
 router.post('/ai/shorts', async (req, res) => {
   try {
-    const { activation_id, activation_secret, title, description = '', language = 'fr', transcript: clientTranscript = '' } = req.body;
+    const { activation_id, activation_secret, videoId, title, description = '', language = 'fr', transcript: clientTranscript = '' } = req.body;
     if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
     if (!title) return res.status(400).json({ error: 'Titre requis' });
 
@@ -551,7 +551,7 @@ router.post('/ai/shorts', async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error('[AI/SHORTS]', err.message);
-    res.status(500).json({ error: 'Shorts: ' + err.message, details: err.message });
+    res.status(500).json({ error: 'Génération de Shorts indisponible', details: err.message });
   }
 });
 
