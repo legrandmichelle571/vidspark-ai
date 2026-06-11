@@ -21,31 +21,35 @@ router.get('/stats', async (req, res) => {
   try {
     const supabase = req.app.locals.supabase;
 
-    const [statsRes, analysisRes, revenueRes] = await Promise.all([
-      supabase.from('admin_stats').select('*').single(),
-      supabase.from('analysis_history').select('id', { count: 'exact', head: true }),
-      supabase.from('payments')
-        .select('amount, created_at')
-        .eq('status', 'succeeded')
-        .gte('created_at', new Date(Date.now() - 30*24*60*60*1000).toISOString())
+    const d30 = new Date(Date.now() - 30*24*60*60*1000).toISOString();
+    const d7  = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+    const cnt = (q) => q.select('id', { count: 'exact', head: true });
+
+    const [total, free, pro, biz, new30, active7, analysisRes, revenueRes] = await Promise.all([
+      cnt(supabase.from('users')),
+      cnt(supabase.from('users')).eq('plan', 'free'),
+      cnt(supabase.from('users')).eq('plan', 'pro'),
+      cnt(supabase.from('users')).eq('plan', 'business'),
+      cnt(supabase.from('users')).gte('created_at', d30),
+      cnt(supabase.from('users')).gte('last_login', d7),
+      cnt(supabase.from('analysis_history')),
+      supabase.from('payments').select('amount, created_at').eq('status', 'succeeded').gte('created_at', d30)
     ]);
 
     const mrr = (revenueRes.data || []).reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-    const stats = statsRes.data || {};
+    const totalU = total.count || 0, paid = (pro.count || 0) + (biz.count || 0);
 
     res.json({
       users: {
-        total:    stats.total_users || 0,
-        free:     stats.free_users  || 0,
-        pro:      stats.pro_users   || 0,
-        business: stats.business_users || 0,
-        new_30d:  stats.new_last_30d || 0,
-        active_7d:stats.active_last_7d || 0,
-        conversion_rate: stats.conversion_rate || 0
+        total:    totalU,
+        free:     free.count || 0,
+        pro:      pro.count  || 0,
+        business: biz.count  || 0,
+        new_30d:  new30.count || 0,
+        active_7d:active7.count || 0,
+        conversion_rate: totalU ? Math.round((paid / totalU) * 1000) / 10 : 0
       },
-      analyses: {
-        total: analysisRes.count || 0
-      },
+      analyses: { total: analysisRes.count || 0 },
       revenue: {
         mrr: mrr.toFixed(2),
         arr: (mrr * 12).toFixed(2),
@@ -120,10 +124,12 @@ router.get('/users', async (req, res) => {
 router.get('/users/:id', async (req, res) => {
   try {
     const supabase = req.app.locals.supabase;
-    const [userRes, subRes, histRes] = await Promise.all([
+    const [userRes, subRes, histRes, codesRes, devRes] = await Promise.all([
       supabase.from('users').select('*').eq('id', req.params.id).single(),
       supabase.from('subscriptions').select('*').eq('user_id', req.params.id).order('created_at', { ascending: false }),
-      supabase.from('analysis_history').select('id,title,score_seo,score_global,created_at').eq('user_id', req.params.id).limit(10).order('created_at', { ascending: false })
+      supabase.from('analysis_history').select('id,title,score_seo,score_global,created_at').eq('user_id', req.params.id).limit(10).order('created_at', { ascending: false }),
+      supabase.from('activation_codes').select('activation_id, activation_secret, subscription_expiry').eq('user_id', req.params.id),
+      supabase.from('activation_devices').select('device_id, bound_at').eq('user_id', req.params.id)
     ]);
 
     if (userRes.error) return res.status(404).json({ error: 'User not found' });
@@ -131,7 +137,9 @@ router.get('/users/:id', async (req, res) => {
     res.json({
       user:          userRes.data,
       subscriptions: subRes.data  || [],
-      recent_analyses: histRes.data || []
+      recent_analyses: histRes.data || [],
+      codes:         codesRes.data || [],
+      devices:       devRes.data || []
     });
   } catch (err) {
     res.status(500).json({ error: 'Fetch failed' });
@@ -201,6 +209,56 @@ router.put('/users/:id/status', async (req, res) => {
     res.json({ message: `User status set to ${status}` });
   } catch (err) {
     res.status(500).json({ error: 'Status update failed' });
+  }
+});
+
+/* ── Libérer les appareils d'un utilisateur (anti-revente) ── */
+router.post('/users/:id/release-devices', async (req, res) => {
+  try {
+    const supabase = req.app.locals.supabase;
+    await supabase.from('activation_devices').delete().eq('user_id', req.params.id);
+    await supabase.from('admin_logs').insert({ admin_id: req.user.id, action: 'release_devices', target_user_id: req.params.id });
+    res.json({ message: 'Devices released' });
+  } catch (err) {
+    res.status(500).json({ error: 'Release failed' });
+  }
+});
+
+/* ── Modifier la date de fin de forfait ── */
+router.put('/users/:id/expiry', async (req, res) => {
+  try {
+    const { date } = req.body;
+    const iso = new Date(date).toISOString();
+    if (isNaN(new Date(date))) return res.status(400).json({ error: 'Date invalide' });
+    const supabase = req.app.locals.supabase;
+    await supabase.from('activation_codes').update({ subscription_expiry: iso }).eq('user_id', req.params.id);
+    await supabase.from('subscriptions').update({ current_period_end: iso }).eq('user_id', req.params.id).eq('status', 'active');
+    await supabase.from('admin_logs').insert({ admin_id: req.user.id, action: 'set_expiry', target_user_id: req.params.id, details: { expiry: iso } });
+    res.json({ message: 'Expiry updated', expiry: iso });
+  } catch (err) {
+    res.status(500).json({ error: 'Expiry update failed' });
+  }
+});
+
+/* ── Liste des paiements ── */
+router.get('/payments', async (req, res) => {
+  try {
+    const supabase = req.app.locals.supabase;
+    const { data } = await supabase
+      .from('payments')
+      .select('id, user_id, provider, amount, currency, status, created_at')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    // joindre les emails
+    const ids = [...new Set((data || []).map(p => p.user_id).filter(Boolean))];
+    let emails = {};
+    if (ids.length) {
+      const { data: us } = await supabase.from('users').select('id, email').in('id', ids);
+      (us || []).forEach(u => emails[u.id] = u.email);
+    }
+    res.json({ payments: (data || []).map(p => ({ ...p, email: emails[p.user_id] || '—' })) });
+  } catch (err) {
+    res.status(500).json({ error: 'Payments fetch failed' });
   }
 });
 
