@@ -340,7 +340,7 @@ router.post('/ai/competitor', async (req, res) => {
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
 const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp } = require('../utils/youtube');
-const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails } = require('../utils/aiClient');
+const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook } = require('../utils/aiClient');
 const { getThumbnailLimit } = require('../config/thumbnailLimits');
 
 router.post('/youtube/video', async (req, res) => {
@@ -637,6 +637,29 @@ router.post('/ai/thumbnail-ab', async (req, res) => {
   } catch (err) {
     console.error('[AI/THUMB-AB]', err.message);
     res.status(500).json({ error: 'A/B Test de miniatures indisponible', details: err.message });
+  }
+});
+
+/* ── Hook Analyzer : prédit la rétention de l'intro (Pro/Business) ── */
+router.post('/ai/hook', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, script, language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
+    if (!script || script.trim().length < 10) return res.status(400).json({ error: 'Script d\'intro requis (10 caractères min)' });
+
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+    if (!requirePaidPlan(ctx.plan)) {
+      return res.status(403).json({ error: 'Hook Analyzer réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    }
+
+    const result = await analyzeHook(script, language);
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/HOOK]', err.message);
+    res.status(500).json({ error: 'Hook Analyzer indisponible', details: err.message });
   }
 });
 

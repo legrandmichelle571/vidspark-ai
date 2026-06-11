@@ -291,6 +291,35 @@ Réponds UNIQUEMENT en JSON valide :
   return geminiJson(prompt, 1500);
 }
 
+/* Hook Analyzer : analyse le script d'intro et prédit la rétention + points de décrochage */
+async function analyzeHook(script, language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const prompt = `Tu es un expert YouTube de la RÉTENTION (le facteur #1 de l'algorithme).
+On te donne le script de l'INTRODUCTION d'une vidéo (les premières secondes). Analyse-le et prédis où les spectateurs vont décrocher.
+
+Script de l'intro :
+"""
+${script.slice(0, 1500)}
+"""
+
+Évalue : la force du hook (3 premières secondes), la promesse, le rythme, la clarté, et ce qui retient ou fait fuir.
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "retention_estimate": <0-100, % estimé de spectateurs qui restent après l'intro>,
+  "hook_score": <0-100>,
+  "verdict": "<analyse globale en ${langName}, 2-3 phrases>",
+  "drop_points": [
+    {"quote": "<phrase exacte du script où le spectateur risque de partir>", "reason": "<pourquoi en ${langName}>", "severity": "high" ou "medium"}
+  ],
+  "strengths": ["<point fort 1>", "<point fort 2>"],
+  "fixes": ["<correction concrète 1>", "<correction 2>", "<correction 3>"],
+  "rewritten_hook": "<une version réécrite de l'intro, beaucoup plus accrocheuse, en ${langName}>"
+}
+Toutes les explications en ${langName}. Sois précis et actionnable.`;
+  return geminiJson(prompt, 1800);
+}
+
 /* Générateur de YouTube Shorts : transforme une vidéo longue / un sujet en idées de Shorts.
    opts = { transcript, hasTranscript, durationStr } pour proposer de vrais passages à couper. */
 async function generateShorts(source, language = 'fr', opts = {}) {
@@ -410,4 +439,4 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails };
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook };
