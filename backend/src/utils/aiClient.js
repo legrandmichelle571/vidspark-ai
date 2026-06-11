@@ -256,7 +256,7 @@ async function compareThumbnails(imageA, imageB, language = 'fr') {
     if (!key) throw new Error('Analyse de miniatures indisponible');
     const prompt = `Tu es un expert des miniatures YouTube (CTR). Compare ces DEUX miniatures (A = première image, B = seconde).
 Prédis laquelle obtiendra le meilleur taux de clics et explique pourquoi (contraste, visage, émotion, lisibilité du texte, composition).
-Réponds UNIQUEMENT en JSON : { "winner":"A"|"B","confidence":<0-100>,"a":{"ctr_estimate":<nb>,"score":<0-100>,"strengths":["..."],"weaknesses":["..."]},"b":{"ctr_estimate":<nb>,"score":<0-100>,"strengths":["..."],"weaknesses":["..."]},"verdict":"<en ${langName}>","tips":["<conseil pour améliorer la gagnante en ${langName}>"] }`;
+Réponds UNIQUEMENT en JSON : { "winner":"A"|"B","confidence":<0-100>,"a":{"ctr_estimate":<nb>,"score":<0-100>,"strengths":["..."],"weaknesses":["..."]},"b":{"ctr_estimate":<nb>,"score":<0-100>,"strengths":["..."],"weaknesses":["..."]},"verdict":"<en ${langName}>","tips":["<conseil pour améliorer la gagnante en ${langName}>"],"improve_prompt":"<prompt EN ANGLAIS, détaillé, pour générer via IA une version améliorée de la miniature gagnante : décris la scène, les couleurs vives, le texte gros et lisible, l'émotion du visage, le contraste élevé, format 16:9>" }`;
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -285,9 +285,10 @@ Réponds UNIQUEMENT en JSON valide :
   "a": { "ctr_estimate": <nombre, ex 6.4>, "score": <0-100>, "strengths": ["<force 1>","<force 2>"], "weaknesses": ["<faiblesse 1>"] },
   "b": { "ctr_estimate": <nombre>, "score": <0-100>, "strengths": ["<force 1>","<force 2>"], "weaknesses": ["<faiblesse 1>"] },
   "verdict": "<explication en ${langName}, 2-3 phrases>",
-  "tips": ["<conseil pour rendre la miniature gagnante encore meilleure, en ${langName}>"]
+  "tips": ["<conseil pour rendre la miniature gagnante encore meilleure, en ${langName}>"],
+  "improve_prompt": "<prompt EN ANGLAIS, détaillé, pour générer via IA une version améliorée de la miniature gagnante : décris la scène, les couleurs vives, le texte gros et lisible, l'émotion du visage, le contraste élevé, format 16:9>"
 }`;
-  return geminiJson(prompt, 1400);
+  return geminiJson(prompt, 1500);
 }
 
 /* Générateur de YouTube Shorts : transforme une vidéo longue / un sujet en idées de Shorts.
