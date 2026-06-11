@@ -234,6 +234,62 @@ Langue de toutes les explications : ${langName}.`;
   return geminiJson(prompt, 1600);
 }
 
+/* A/B Test de MINIATURES : décrit 2 images via Vision puis prédit celle qui aura le meilleur CTR */
+async function compareThumbnails(imageA, imageB, language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+
+  // 1) Décrire les deux miniatures via Cloudflare LLAVA (vision)
+  let descA = '', descB = '';
+  if (process.env.CF_ACCOUNT_ID && process.env.CF_AI_TOKEN) {
+    try {
+      [descA, descB] = await Promise.all([
+        cloudflareDescribeImage(imageA),
+        cloudflareDescribeImage(imageB)
+      ]);
+    } catch (e) { /* on tentera Gemini Vision ci-dessous */ }
+  }
+
+  // 2) Si pas de description (CF indispo), comparer directement via Gemini Vision
+  if (!descA || !descB) {
+    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) throw new Error('Analyse de miniatures indisponible');
+    const prompt = `Tu es un expert des miniatures YouTube (CTR). Compare ces DEUX miniatures (A = première image, B = seconde).
+Prédis laquelle obtiendra le meilleur taux de clics et explique pourquoi (contraste, visage, émotion, lisibilité du texte, composition).
+Réponds UNIQUEMENT en JSON : { "winner":"A"|"B","confidence":<0-100>,"a":{"ctr_estimate":<nb>,"score":<0-100>,"strengths":["..."],"weaknesses":["..."]},"b":{"ctr_estimate":<nb>,"score":<0-100>,"strengths":["..."],"weaknesses":["..."]},"verdict":"<en ${langName}>","tips":["<conseil pour améliorer la gagnante en ${langName}>"] }`;
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [
+          { text: prompt },
+          { inlineData: { mimeType: 'image/jpeg', data: imageA } },
+          { inlineData: { mimeType: 'image/jpeg', data: imageB } }
+        ] }],
+        generationConfig: { maxOutputTokens: 1200, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 0 } }
+      })
+    });
+    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error?.message || `Gemini ${r.status}`); }
+    const d = await r.json();
+    return parseJson(d.candidates?.[0]?.content?.parts?.[0]?.text || '');
+  }
+
+  // 3) Comparaison textuelle des deux descriptions (Llama, gratuit)
+  const prompt = `Tu es un expert des miniatures YouTube (CTR). Voici la description de deux miniatures concurrentes.
+Miniature A : "${descA}"
+Miniature B : "${descB}"
+Prédis laquelle obtiendra le meilleur taux de clics et explique pourquoi (contraste, visage, émotion, lisibilité du texte, composition).
+Réponds UNIQUEMENT en JSON valide :
+{
+  "winner": "A" ou "B",
+  "confidence": <0-100>,
+  "a": { "ctr_estimate": <nombre, ex 6.4>, "score": <0-100>, "strengths": ["<force 1>","<force 2>"], "weaknesses": ["<faiblesse 1>"] },
+  "b": { "ctr_estimate": <nombre>, "score": <0-100>, "strengths": ["<force 1>","<force 2>"], "weaknesses": ["<faiblesse 1>"] },
+  "verdict": "<explication en ${langName}, 2-3 phrases>",
+  "tips": ["<conseil pour rendre la miniature gagnante encore meilleure, en ${langName}>"]
+}`;
+  return geminiJson(prompt, 1400);
+}
+
 /* Générateur de YouTube Shorts : transforme une vidéo longue / un sujet en idées de Shorts.
    opts = { transcript, hasTranscript, durationStr } pour proposer de vrais passages à couper. */
 async function generateShorts(source, language = 'fr', opts = {}) {
@@ -353,4 +409,4 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts };
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails };

@@ -280,7 +280,7 @@ router.post('/ai/competitor', async (req, res) => {
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
 const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp } = require('../utils/youtube');
-const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts } = require('../utils/aiClient');
+const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails } = require('../utils/aiClient');
 const { getThumbnailLimit } = require('../config/thumbnailLimits');
 
 router.post('/youtube/video', async (req, res) => {
@@ -552,6 +552,31 @@ router.post('/ai/shorts', async (req, res) => {
   } catch (err) {
     console.error('[AI/SHORTS]', err.message);
     res.status(500).json({ error: 'Génération de Shorts indisponible', details: err.message });
+  }
+});
+
+/* ── A/B Test de miniatures par IA Vision (Pro/Business) ── */
+router.post('/ai/thumbnail-ab', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, imageA, imageB, language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
+    if (!imageA || !imageB) return res.status(400).json({ error: 'Deux images requises (imageA et imageB en base64)' });
+
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+    if (!requirePaidPlan(ctx.plan)) {
+      return res.status(403).json({ error: 'A/B Test de miniatures réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    }
+
+    // Nettoyer un éventuel préfixe data URL
+    const clean = s => (s || '').replace(/^data:image\/\w+;base64,/, '');
+    const result = await compareThumbnails(clean(imageA), clean(imageB), language);
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/THUMB-AB]', err.message);
+    res.status(500).json({ error: 'A/B Test de miniatures indisponible', details: err.message });
   }
 });
 
