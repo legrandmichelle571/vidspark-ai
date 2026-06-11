@@ -151,6 +151,20 @@ async function getKeywordIdeas(query) {
   return { query, suggestions, competition, top_avg_views: topAvgViews, sampled };
 }
 
+/* Récupère les commentaires les plus pertinents d'une vidéo (lecture seule, clé API) */
+async function getVideoComments(videoId, max = 40) {
+  const j = await ytFetch(`/commentThreads?part=snippet&videoId=${videoId}&maxResults=${Math.min(100, max)}&order=relevance&textFormat=plainText`);
+  return (j.items || []).map(it => {
+    const c = it.snippet?.topLevelComment?.snippet || {};
+    return {
+      author: c.authorDisplayName || '',
+      text: (c.textDisplay || '').slice(0, 300),
+      likes: +c.likeCount || 0,
+      replies: +it.snippet?.totalReplyCount || 0
+    };
+  });
+}
+
 /* Convertit une durée ISO 8601 (PT#M#S) en secondes */
 function iso8601ToSeconds(iso) {
   if (!iso) return 0;
@@ -207,4 +221,4 @@ async function getTranscript(videoId) {
   }
 }
 
-module.exports = { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp };
+module.exports = { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments };

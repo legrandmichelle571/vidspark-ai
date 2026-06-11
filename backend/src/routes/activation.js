@@ -339,8 +339,8 @@ router.post('/ai/competitor', async (req, res) => {
 });
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
-const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp } = require('../utils/youtube');
-const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport } = require('../utils/aiClient');
+const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments } = require('../utils/youtube');
+const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments } = require('../utils/aiClient');
 const { getThumbnailLimit } = require('../config/thumbnailLimits');
 
 router.post('/youtube/video', async (req, res) => {
@@ -749,6 +749,32 @@ router.post('/ai/channel-report', async (req, res) => {
   } catch (err) {
     console.error('[AI/CHANNEL-REPORT]', err.message);
     res.status(500).json({ error: 'Rapport de chaîne indisponible', details: err.message });
+  }
+});
+
+/* ── Analyse des commentaires (Pro/Business) ── */
+router.post('/ai/comments', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, videoId, title = '', language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret || !videoId) return res.status(400).json({ error: 'Paramètres requis' });
+
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+    if (!requirePaidPlan(ctx.plan)) {
+      return res.status(403).json({ error: 'Analyse des commentaires réservée aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    }
+
+    const comments = await getVideoComments(videoId, 40);
+    if (!comments.length) return res.json({ empty: true, sentiment: {}, summary: '', themes: [], requests: [], video_ideas: [], suggested_replies: [] });
+
+    const result = await analyzeComments(comments, title, language);
+    result.count = comments.length;
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/COMMENTS]', err.message);
+    res.status(500).json({ error: 'Analyse des commentaires indisponible', details: err.message });
   }
 });
 

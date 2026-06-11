@@ -320,6 +320,33 @@ Toutes les explications en ${langName}. Sois précis et actionnable.`;
   return geminiJson(prompt, 1800);
 }
 
+/* Analyse des commentaires : sentiment + demandes + idées de vidéos + réponses suggérées */
+async function analyzeComments(comments = [], title = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const list = (comments || []).slice(0, 40)
+    .map((c, i) => `${i + 1}. (${c.likes || 0}👍) ${c.text}`).join('\n');
+  const prompt = `Tu es un expert de l'engagement YouTube. Analyse ces commentaires de la vidéo "${title}".
+
+Commentaires :
+"""
+${list}
+"""
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "sentiment": { "positive": <% entier>, "neutral": <% entier>, "negative": <% entier> },
+  "summary": "<résumé global du ressenti de l'audience en ${langName}, 2-3 phrases>",
+  "themes": ["<sujet récurrent 1>", "<sujet 2>", "<sujet 3>"],
+  "requests": ["<demande/attente récurrente de l'audience 1>", "<demande 2>", "<demande 3>"],
+  "video_ideas": ["<idée de prochaine vidéo basée sur les commentaires 1>", "<idée 2>", "<idée 3>"],
+  "suggested_replies": [
+    {"comment": "<extrait court du commentaire>", "reply": "<réponse suggérée chaleureuse et engageante en ${langName}>"}
+  ]
+}
+Donne 3 réponses suggérées pour les commentaires les plus importants. Tout en ${langName}. Les pourcentages de sentiment totalisent 100.`;
+  return geminiJson(prompt, 1800);
+}
+
 /* Rapport de santé de chaîne : score + forces/faiblesses + recommandations à partir des stats d'audit */
 async function generateChannelReport(stats = {}, language = 'fr') {
   const langName = LANG_NAMES[language] || language;
@@ -545,4 +572,4 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport };
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments };
