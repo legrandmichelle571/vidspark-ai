@@ -444,6 +444,77 @@ Donne 4 à 6 best_keywords (privilégie les long-tail faciles à classer). Tout 
   return geminiJson(prompt, 1500);
 }
 
+/* Générateur de script complet à partir d'un sujet */
+async function generateScript(topic, niche = '', duration = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const dur = duration ? `Durée cible : ${duration}.` : '';
+  const prompt = `Tu es un scénariste YouTube expert en rétention. Écris un SCRIPT complet et structuré pour une vidéo.
+Sujet : "${topic}". Niche : "${niche || 'généraliste'}". ${dur}
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "hook": "<accroche des 5 premières secondes en ${langName}>",
+  "intro": "<intro courte qui pose la promesse en ${langName}>",
+  "sections": [
+    {"title": "<titre de section>", "content": "<ce qu'il faut dire/montrer, 2-4 phrases en ${langName}>"}
+  ],
+  "cta": "<appel à l'action (abonnement/commentaire) en ${langName}>",
+  "outro": "<conclusion + teaser de la prochaine vidéo en ${langName}>"
+}
+4 à 6 sections. Concret et actionnable. Tout en ${langName}.`;
+  return geminiJson(prompt, 2600);
+}
+
+/* Vérif Titre + Miniature : se complètent-ils ? Lisibles TV/mobile ? */
+async function pairCheck(title, imageBase64, language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  let desc = '';
+  if (process.env.CF_ACCOUNT_ID && process.env.CF_AI_TOKEN) {
+    try { desc = await cloudflareDescribeImage(imageBase64); } catch (e) {}
+  }
+  if (desc) {
+    const prompt = `Tu es un expert YouTube CTR. Voici une miniature décrite : "${desc}". Le titre de la vidéo est : "${title}".
+Évalue si le TITRE et la MINIATURE se COMPLÈTENT (idéalement la miniature ne répète pas le texte du titre, mais ajoute une info/émotion) et s'ils sont lisibles sur grand écran (TV) ET mobile.
+Réponds UNIQUEMENT en JSON valide :
+{ "match_score": <0-100>, "complement": <true|false>, "verdict": "<analyse en ${langName}, 2-3 phrases>", "issues": ["<problème 1 en ${langName}>"], "tips": ["<conseil 1 en ${langName}>","<conseil 2>"], "tv_readable": <true|false>, "mobile_readable": <true|false> }`;
+    return geminiJson(prompt, 1100);
+  }
+  // Fallback Gemini Vision
+  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) throw new Error('Analyse indisponible');
+  const prompt = `Tu es un expert YouTube CTR. Le titre est : "${title}". Analyse si cette miniature COMPLÈTE le titre (sans répéter le même texte) et sa lisibilité sur TV et mobile, en ${langName}.
+Réponds UNIQUEMENT en JSON : { "match_score": <0-100>, "complement": <true|false>, "verdict": "<...>", "issues": ["..."], "tips": ["...","..."], "tv_readable": <true|false>, "mobile_readable": <true|false> }`;
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: 'image/jpeg', data: imageBase64 } }] }], generationConfig: { maxOutputTokens: 1024, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 0 } } })
+  });
+  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error?.message || `Gemini ${r.status}`); }
+  const d = await r.json();
+  return parseJson(d.candidates?.[0]?.content?.parts?.[0]?.text || '');
+}
+
+/* Optimiseur de playlists : regroupe les vidéos en playlists optimisées */
+async function optimizePlaylists(videos = [], language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const list = (videos || []).slice(0, 30).map((v, i) => `${i + 1}. ${v.title}`).join('\n');
+  const prompt = `Tu es un stratège YouTube. À partir de ces vidéos d'une chaîne, propose des PLAYLISTS optimisées pour augmenter le temps de session et la satisfaction (regroupe par thème/série logique).
+
+Vidéos :
+"""
+${list}
+"""
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "playlists": [
+    {"name": "<nom de playlist accrocheur en ${langName}>", "description": "<description SEO courte en ${langName}>", "videos": ["<titre exact d'une vidéo de la liste>", "..."]}
+  ]
+}
+3 à 6 playlists. Utilise les titres EXACTS de la liste. Tout en ${langName}.`;
+  return geminiJson(prompt, 2000);
+}
+
 /* Planificateur de contenu : planning 7 jours adapté à la niche */
 async function generateContentPlan(niche = '', region = '', frequency = '', language = 'fr') {
   const langName = LANG_NAMES[language] || language;
@@ -741,4 +812,4 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts };
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists };

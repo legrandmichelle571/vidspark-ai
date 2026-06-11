@@ -339,8 +339,8 @@ router.post('/ai/competitor', async (req, res) => {
 });
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
-const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments } = require('../utils/youtube');
-const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts } = require('../utils/aiClient');
+const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments, getChannelVideos } = require('../utils/youtube');
+const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists } = require('../utils/aiClient');
 const { getThumbnailLimit } = require('../config/thumbnailLimits');
 
 router.post('/youtube/video', async (req, res) => {
@@ -934,6 +934,62 @@ router.post('/ai/community', async (req, res) => {
   } catch (err) {
     console.error('[AI/COMMUNITY]', err.message);
     res.status(500).json({ error: 'Posts communautaires indisponibles', details: err.message });
+  }
+});
+
+/* ── Générateur de script (Pro/Business) ── */
+router.post('/ai/script', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, topic, niche = '', duration = '', language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret || !topic) return res.status(400).json({ error: 'Sujet requis' });
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Générateur de script réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    res.json(await generateScript(topic, niche, duration, language));
+  } catch (err) {
+    console.error('[AI/SCRIPT]', err.message);
+    res.status(500).json({ error: 'Générateur de script indisponible', details: err.message });
+  }
+});
+
+/* ── Vérif Titre + Miniature (Pro/Business) ── */
+router.post('/ai/pair-check', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, videoId, title = '', language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret || !videoId) return res.status(400).json({ error: 'Paramètres requis' });
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Vérif Titre+Miniature réservée aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+
+    let b64 = null;
+    for (const q of ['maxresdefault', 'hqdefault', 'mqdefault']) {
+      try { const ir = await fetch(`https://i.ytimg.com/vi/${videoId}/${q}.jpg`); if (ir.ok) { const buf = Buffer.from(await ir.arrayBuffer()); if (buf.length > 1000) { b64 = buf.toString('base64'); break; } } } catch (e) {}
+    }
+    if (!b64) return res.status(404).json({ error: 'Miniature introuvable' });
+    res.json(await pairCheck(title, b64, language));
+  } catch (err) {
+    console.error('[AI/PAIR-CHECK]', err.message);
+    res.status(500).json({ error: 'Vérif indisponible', details: err.message });
+  }
+});
+
+/* ── Optimiseur de playlists (Pro/Business) ── */
+router.post('/ai/playlists', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, channelId, language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret || !channelId) return res.status(400).json({ error: 'channelId requis' });
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Optimiseur de playlists réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    const videos = await getChannelVideos(channelId, 30);
+    if (!videos.length) return res.status(404).json({ error: 'Aucune vidéo trouvée' });
+    res.json(await optimizePlaylists(videos, language));
+  } catch (err) {
+    console.error('[AI/PLAYLISTS]', err.message);
+    res.status(500).json({ error: 'Optimiseur de playlists indisponible', details: err.message });
   }
 });
 

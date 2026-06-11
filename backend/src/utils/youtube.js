@@ -151,6 +151,22 @@ async function getKeywordIdeas(query) {
   return { query, suggestions, competition, top_avg_views: topAvgViews, sampled };
 }
 
+/* Récupère les vidéos récentes d'une chaîne (titre + vues) pour l'optimiseur de playlists */
+async function getChannelVideos(channelId, max = 25) {
+  const cj = await ytFetch(`/channels?part=contentDetails&id=${channelId}`);
+  const uploads = cj.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+  if (!uploads) return [];
+  const pj = await ytFetch(`/playlistItems?part=contentDetails&maxResults=${Math.min(50, max)}&playlistId=${uploads}`);
+  const ids = (pj.items || []).map(i => i.contentDetails.videoId).filter(Boolean);
+  if (!ids.length) return [];
+  const vj = await ytFetch(`/videos?part=snippet,statistics&id=${ids.join(',')}`);
+  return (vj.items || []).map(v => ({
+    videoId: v.id,
+    title: v.snippet.title,
+    views: +v.statistics.viewCount || 0
+  }));
+}
+
 /* Récupère les commentaires les plus pertinents d'une vidéo (lecture seule, clé API) */
 async function getVideoComments(videoId, max = 40) {
   const j = await ytFetch(`/commentThreads?part=snippet&videoId=${videoId}&maxResults=${Math.min(100, max)}&order=relevance&textFormat=plainText`);
@@ -221,4 +237,4 @@ async function getTranscript(videoId) {
   }
 }
 
-module.exports = { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments };
+module.exports = { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments, getChannelVideos };
