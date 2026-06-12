@@ -11,7 +11,14 @@
  */
 const express = require('express');
 const { requireAuth, requirePro } = require('../middleware/auth');
-const { getChannelAudit, searchVideos } = require('../utils/youtube');
+const { getChannelAudit, searchVideos, getVideoStats, getKeywordIdeas, getTrendingVideos, getVideoComments } = require('../utils/youtube');
+const { analyzeComments } = require('../utils/aiClient');
+
+/* Extrait l'ID d'une vidéo depuis une URL YouTube ou renvoie la valeur telle quelle */
+function extractVideoId(v){
+  const m = String(v || '').match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : String(v || '').trim();
+}
 
 const router = express.Router();
 
@@ -141,6 +148,53 @@ router.post('/discover', requireAuth, requirePro, async (req, res, next) => {
     console.error('[DIAMANT/DISCOVER]', err.message);
     next(err);
   }
+});
+
+/* ── 💎 Analyze : détails complets d'une vidéo ── */
+router.post('/analyze', requireAuth, requirePro, async (req, res, next) => {
+  try {
+    const videoId = extractVideoId(req.body.videoId);
+    if (!videoId) return res.status(400).json({ error: 'videoId requis' });
+    const stats = await getVideoStats(videoId);
+    if (!stats) return res.status(404).json({ error: 'Vidéo introuvable' });
+    res.json({ videoId, ...stats });
+  } catch (err) { console.error('[DIAMANT/ANALYZE]', err.message); next(err); }
+});
+
+/* ── 💎 Keyword Tool ── */
+router.post('/keywords', requireAuth, requirePro, async (req, res, next) => {
+  try {
+    const { query } = req.body;
+    if (!query) return res.status(400).json({ error: 'query requis' });
+    const ideas = await getKeywordIdeas(query);
+    res.json(ideas);
+  } catch (err) { console.error('[DIAMANT/KW]', err.message); next(err); }
+});
+
+/* ── 💎 Trending : vidéos en hausse dans une niche ── */
+router.post('/trending', requireAuth, requirePro, async (req, res, next) => {
+  try {
+    const { query } = req.body;
+    if (!query) return res.status(400).json({ error: 'query requis' });
+    const videos = await getTrendingVideos(query, 12);
+    res.json({ query, count: videos.length, videos });
+  } catch (err) { console.error('[DIAMANT/TREND]', err.message); next(err); }
+});
+
+/* ── 💎 Analyse des commentaires (IA) ── */
+router.post('/comments', requireAuth, requirePro, async (req, res, next) => {
+  try {
+    const videoId = extractVideoId(req.body.videoId);
+    const language = req.body.language || 'fr';
+    if (!videoId) return res.status(400).json({ error: 'videoId requis' });
+    const comments = await getVideoComments(videoId, 40);
+    if (!comments.length) return res.json({ empty: true });
+    let title = '';
+    try { const s = await getVideoStats(videoId); title = s?.title || ''; } catch (e) {}
+    const result = await analyzeComments(comments, title, language);
+    result.count = comments.length;
+    res.json(result);
+  } catch (err) { console.error('[DIAMANT/COMMENTS]', err.message); next(err); }
 });
 
 module.exports = router;
