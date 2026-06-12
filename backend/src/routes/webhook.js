@@ -231,7 +231,9 @@ function resolvePayPalPlan(planId) {
     [process.env.PAYPAL_PLAN_PRO_MONTHLY]:      'pro',
     [process.env.PAYPAL_PLAN_PRO_YEARLY]:        'pro',
     [process.env.PAYPAL_PLAN_BUSINESS_MONTHLY]:  'business',
-    [process.env.PAYPAL_PLAN_BUSINESS_YEARLY]:   'business'
+    [process.env.PAYPAL_PLAN_BUSINESS_YEARLY]:   'business',
+    [process.env.PAYPAL_PLAN_DIAMANT_MONTHLY]:   'diamant',
+    [process.env.PAYPAL_PLAN_DIAMANT_YEARLY]:    'diamant'
   };
   return map[planId] || null;
 }
@@ -358,7 +360,7 @@ router.post('/cryptomus', async (req, res) => {
     const userId = metadata.user_id;
     const plan = metadata.plan;
 
-    if (!userId || !plan || !['pro', 'business'].includes(plan)) {
+    if (!userId || !plan || !['pro', 'business', 'diamant'].includes(plan)) {
       console.error('[CRYPTOMUS] Invalid metadata:', metadata);
       return res.json({ received: true });
     }

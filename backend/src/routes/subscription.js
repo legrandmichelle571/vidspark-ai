@@ -72,6 +72,27 @@ const PLANS = [
       daily_analyses: 1000,
       daily_titles:   500
     }
+  },
+  {
+    id:                   'diamant',
+    name:                 'Diamant',
+    price_monthly:        49.99,
+    price_yearly:         539.89,
+    stripe_price_monthly: process.env.STRIPE_PRICE_DIAMANT_MONTHLY,
+    stripe_price_yearly:  process.env.STRIPE_PRICE_DIAMANT_YEARLY,
+    features: [
+      '5 000 analyses/jour',
+      '2 000 titres IA/jour',
+      'Tout Business +',
+      '10 chaînes',
+      '💎 Audit de chaîne avancé (site)',
+      '💎 Rank Tracker (site)',
+      'Support prioritaire'
+    ],
+    limits: {
+      daily_analyses: 5000,
+      daily_titles:   2000
+    }
   }
 ];
 
@@ -84,7 +105,7 @@ router.get('/plans', (req, res) => {
 router.post('/checkout/stripe', requireAuth, async (req, res) => {
   try {
     const { plan, interval = 'month' } = req.body;
-    if (!['pro', 'business'].includes(plan)) {
+    if (!['pro', 'business', 'diamant'].includes(plan)) {
       return res.status(400).json({ error: 'Invalid plan' });
     }
 
@@ -134,7 +155,7 @@ router.post('/checkout/stripe', requireAuth, async (req, res) => {
 router.post('/checkout/cryptomus', requireAuth, async (req, res) => {
   try {
     const { plan, interval = 'month' } = req.body;
-    if (!['pro', 'business'].includes(plan)) {
+    if (!['pro', 'business', 'diamant'].includes(plan)) {
       return res.status(400).json({ error: 'Invalid plan' });
     }
 
@@ -184,7 +205,7 @@ router.post('/checkout/cryptomus', requireAuth, async (req, res) => {
 router.post('/checkout/paypal', requireAuth, async (req, res) => {
   try {
     const { plan, interval = 'month' } = req.body;
-    if (!['pro', 'business'].includes(plan)) {
+    if (!['pro', 'business', 'diamant'].includes(plan)) {
       return res.status(400).json({ error: 'Invalid plan' });
     }
 
