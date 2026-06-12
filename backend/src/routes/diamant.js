@@ -10,7 +10,7 @@
  * ═══════════════════════════════════════════════════════════════
  */
 const express = require('express');
-const { requireAuth, requireDiamant } = require('../middleware/auth');
+const { requireAuth, requirePro } = require('../middleware/auth');
 const { getChannelAudit, searchVideos } = require('../utils/youtube');
 
 const router = express.Router();
@@ -67,7 +67,7 @@ function buildRecommendations(a, health) {
 }
 
 /* ── 💎 Audit de chaîne avancé ── */
-router.post('/channel-audit', requireAuth, requireDiamant, async (req, res, next) => {
+router.post('/channel-audit', requireAuth, requirePro, async (req, res, next) => {
   try {
     const supabase = req.app.locals.supabase;
 
@@ -97,7 +97,7 @@ router.post('/channel-audit', requireAuth, requireDiamant, async (req, res, next
 });
 
 /* ── 💎 Vérification de position (rank) sur un mot-clé ── */
-router.post('/rank-check', requireAuth, requireDiamant, async (req, res, next) => {
+router.post('/rank-check', requireAuth, requirePro, async (req, res, next) => {
   try {
     const { keyword, videoId } = req.body;
     if (!keyword || !videoId) return res.status(400).json({ error: 'keyword et videoId requis' });
@@ -121,7 +121,7 @@ router.post('/rank-check', requireAuth, requireDiamant, async (req, res, next) =
 });
 
 /* ── 💎 Discover : top vidéos + stats pour un mot-clé ── */
-router.post('/discover', requireAuth, requireDiamant, async (req, res, next) => {
+router.post('/discover', requireAuth, requirePro, async (req, res, next) => {
   try {
     const { keyword, sort = 'views', max = 20 } = req.body;
     if (!keyword) return res.status(400).json({ error: 'keyword requis' });
