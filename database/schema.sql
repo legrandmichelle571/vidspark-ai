@@ -13,7 +13,7 @@ CREATE TABLE public.users (
   email           TEXT NOT NULL UNIQUE,
   name            TEXT,
   avatar          TEXT,
-  plan            TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free','pro','business')),
+  plan            TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free','pro','business','diamant')),
   status          TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','cancelled','suspended')),
   role            TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user','admin')),
   country         TEXT DEFAULT 'unknown',
@@ -33,7 +33,7 @@ CREATE TABLE public.users (
 CREATE TABLE public.subscriptions (
   id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id         UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  plan            TEXT NOT NULL CHECK (plan IN ('free','pro','business')),
+  plan            TEXT NOT NULL CHECK (plan IN ('free','pro','business','diamant')),
   provider        TEXT CHECK (provider IN ('stripe','paypal','manual')),
   provider_sub_id TEXT UNIQUE,
   status          TEXT DEFAULT 'active' CHECK (status IN ('active','cancelled','past_due','trialing')),
@@ -216,7 +216,7 @@ CREATE TABLE public.promo_codes (
   id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   code          TEXT NOT NULL UNIQUE,
   type          TEXT NOT NULL CHECK (type IN ('discount','trial','lifetime','beta')),
-  plan          TEXT CHECK (plan IN ('pro','business')),
+  plan          TEXT CHECK (plan IN ('pro','business','diamant')),
   discount_pct  INTEGER DEFAULT 0,
   trial_days    INTEGER DEFAULT 0,
   max_uses      INTEGER DEFAULT 1,
@@ -231,7 +231,7 @@ CREATE TABLE public.promo_codes (
 CREATE TABLE public.manual_licenses (
   id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id       UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  plan          TEXT NOT NULL CHECK (plan IN ('pro','business','lifetime')),
+  plan          TEXT NOT NULL CHECK (plan IN ('pro','business','lifetime','diamant')),
   granted_by    UUID REFERENCES public.users(id),
   reason        TEXT,
   expires_at    TIMESTAMPTZ,  -- NULL = lifetime
