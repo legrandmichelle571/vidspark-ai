@@ -25,11 +25,12 @@ router.get('/stats', async (req, res) => {
     const d7  = new Date(Date.now() - 7*24*60*60*1000).toISOString();
     const cnt = (q) => q.select('id', { count: 'exact', head: true });
 
-    const [total, free, pro, biz, new30, active7, analysisRes, revenueRes] = await Promise.all([
+    const [total, free, pro, biz, diam, new30, active7, analysisRes, revenueRes] = await Promise.all([
       cnt(supabase.from('users')),
       cnt(supabase.from('users')).eq('plan', 'free'),
       cnt(supabase.from('users')).eq('plan', 'pro'),
       cnt(supabase.from('users')).eq('plan', 'business'),
+      cnt(supabase.from('users')).eq('plan', 'diamant'),
       cnt(supabase.from('users')).gte('created_at', d30),
       cnt(supabase.from('users')).gte('last_login', d7),
       cnt(supabase.from('analysis_history')),
@@ -37,7 +38,7 @@ router.get('/stats', async (req, res) => {
     ]);
 
     const mrr = (revenueRes.data || []).reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-    const totalU = total.count || 0, paid = (pro.count || 0) + (biz.count || 0);
+    const totalU = total.count || 0, paid = (pro.count || 0) + (biz.count || 0) + (diam.count || 0);
 
     res.json({
       users: {
@@ -45,6 +46,7 @@ router.get('/stats', async (req, res) => {
         free:     free.count || 0,
         pro:      pro.count  || 0,
         business: biz.count  || 0,
+        diamant:  diam.count || 0,
         new_30d:  new30.count || 0,
         active_7d:active7.count || 0,
         conversion_rate: totalU ? Math.round((paid / totalU) * 1000) / 10 : 0
