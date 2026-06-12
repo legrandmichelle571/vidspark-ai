@@ -12,7 +12,7 @@
 const express = require('express');
 const { requireAuth, requirePro } = require('../middleware/auth');
 const { getChannelAudit, searchVideos, getVideoStats, getKeywordIdeas, getTrendingVideos, getVideoComments } = require('../utils/youtube');
-const { analyzeComments, titleDoctor, generateTags, generateCompetitorInsights } = require('../utils/aiClient');
+const { analyzeComments, titleDoctor, generateTags, generateCompetitorInsights, generateTitles, generateDescription } = require('../utils/aiClient');
 
 /* Extrait l'ID d'une vidéo depuis une URL YouTube ou renvoie la valeur telle quelle */
 function extractVideoId(v){
@@ -240,6 +240,26 @@ router.post('/comments', requireAuth, requireTier('business'), async (req, res, 
     result.count = comments.length;
     res.json(result);
   } catch (err) { console.error('[DIAMANT/COMMENTS]', err.message); next(err); }
+});
+
+/* ── 💎 Générer (IA) : titres + tags + description + hashtags depuis un sujet ── */
+router.post('/generate', requireAuth, requireTier('pro'), async (req, res, next) => {
+  try {
+    const { topic, language = 'fr' } = req.body;
+    if (!topic) return res.status(400).json({ error: 'topic requis' });
+    const [titles, tags, desc] = await Promise.all([
+      generateTitles(topic, language).catch(() => null),
+      generateTags(topic, language).catch(() => null),
+      generateDescription(topic, language).catch(() => null)
+    ]);
+    res.json({
+      topic,
+      titles: (titles && titles.titles) || [],
+      tags: (tags && tags.tags) || [],
+      description: (desc && desc.description) || '',
+      hashtags: (desc && desc.hashtags) || []
+    });
+  } catch (err) { console.error('[DIAMANT/GENERATE]', err.message); next(err); }
 });
 
 module.exports = router;
