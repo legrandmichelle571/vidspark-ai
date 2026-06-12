@@ -12,7 +12,7 @@
 const express = require('express');
 const { requireAuth, requirePro } = require('../middleware/auth');
 const { getChannelAudit, searchVideos, getVideoStats, getKeywordIdeas, getTrendingVideos, getVideoComments } = require('../utils/youtube');
-const { analyzeComments } = require('../utils/aiClient');
+const { analyzeComments, titleDoctor, generateTags, generateCompetitorInsights } = require('../utils/aiClient');
 
 /* Extrait l'ID d'une vidéo depuis une URL YouTube ou renvoie la valeur telle quelle */
 function extractVideoId(v){
@@ -162,14 +162,47 @@ router.post('/discover', requireAuth, requireTier('pro'), async (req, res, next)
   }
 });
 
-/* ── 💎 Analyze : détails complets d'une vidéo ── */
+/* ── 💎 Analyze : analyse IA complète d'une vidéo ──────────────
+   Va au-delà des chiffres visibles sur YouTube : score CTR du titre,
+   titre amélioré, tags suggérés, verdict de performance, opportunités. */
 router.post('/analyze', requireAuth, requireTier('pro'), async (req, res, next) => {
   try {
     const videoId = extractVideoId(req.body.videoId);
+    const language = req.body.language || 'fr';
     if (!videoId) return res.status(400).json({ error: 'videoId requis' });
     const stats = await getVideoStats(videoId);
     if (!stats) return res.status(404).json({ error: 'Vidéo introuvable' });
-    res.json({ videoId, ...stats });
+
+    /* Analyses IA en parallèle (ce qu'on ne voit PAS sur YouTube) */
+    const [titleAI, tagsAI, insights] = await Promise.all([
+      titleDoctor(stats.title, language).catch(() => null),
+      generateTags(stats.title, language).catch(() => null),
+      generateCompetitorInsights(stats.title, language).catch(() => null)
+    ]);
+
+    /* Verdict de performance (calculé) : vues/heure rapportées à la taille de la chaîne */
+    const subs = stats.channel_subs || 0;
+    const vph = stats.views_per_hour || 0;
+    const eng = stats.engagement_rate || 0;
+    // ratio = part des abonnés touchée par heure (×100000 pour lisibilité)
+    const reach = subs ? (vph / subs) * 100000 : 0;
+    let perf, perfLabel;
+    if (reach > 50 || (subs < 1000 && vph > 20)) { perf = 'excellent'; perfLabel = '🔥 Surperforme — au-dessus de sa taille de chaîne'; }
+    else if (reach > 15) { perf = 'good'; perfLabel = '✅ Bonne performance pour la taille de la chaîne'; }
+    else if (reach > 4)  { perf = 'average'; perfLabel = '➖ Performance moyenne'; }
+    else { perf = 'low'; perfLabel = '⚠️ Sous-performe — peu de traction'; }
+
+    const engVerdict = eng >= 5 ? 'Excellent engagement' : eng >= 2 ? 'Engagement correct' : 'Engagement faible';
+
+    res.json({
+      videoId, ...stats,
+      analysis: {
+        title: titleAI,                                  // { score, ctr_estimate, missing, improved, tips }
+        suggested_tags: (tagsAI && tagsAI.tags) || [],   // tags que la vidéo DEVRAIT utiliser
+        insights,                                        // { niche, opportunities, angles, keywords }
+        performance: { label: perfLabel, level: perf, engagement_verdict: engVerdict }
+      }
+    });
   } catch (err) { console.error('[DIAMANT/ANALYZE]', err.message); next(err); }
 });
 
