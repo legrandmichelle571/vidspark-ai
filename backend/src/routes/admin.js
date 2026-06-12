@@ -317,6 +317,21 @@ router.get('/logs', async (req, res) => {
   }
 });
 
+/* ── Config du site (clé/valeur) : emplacements pub, etc. ── */
+router.get('/config/:key', async (req, res) => {
+  const supabase = req.app.locals.supabase;
+  const { data } = await supabase.from('site_config').select('value').eq('key', req.params.key).single();
+  res.json({ key: req.params.key, value: data?.value || '' });
+});
+router.put('/config/:key', async (req, res) => {
+  const supabase = req.app.locals.supabase;
+  await supabase.from('site_config').upsert(
+    { key: req.params.key, value: req.body.value || '', updated_at: new Date().toISOString() },
+    { onConflict: 'key' }
+  );
+  res.json({ message: 'saved' });
+});
+
 module.exports = router;
 
 

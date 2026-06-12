@@ -104,4 +104,17 @@ router.post('/ai/description', requireAuth, requireProPlan, aiLimiter, async (re
   }
 });
 
+/* ── Pubs du site (publiques) — affichées sur l'accueil et le dashboard ── */
+router.get('/ads', async (req, res) => {
+  try {
+    const supabase = req.app.locals.supabase;
+    const { data } = await supabase.from('site_config').select('key,value').in('key', ['ad_home', 'ad_dashboard']);
+    const out = {};
+    (data || []).forEach(r => { out[r.key] = r.value; });
+    res.json({ home: out.ad_home || '', dashboard: out.ad_dashboard || '' });
+  } catch (e) {
+    res.json({ home: '', dashboard: '' });
+  }
+});
+
 module.exports = router;
