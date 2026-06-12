@@ -120,4 +120,27 @@ router.post('/rank-check', requireAuth, requireDiamant, async (req, res, next) =
   }
 });
 
+/* ── 💎 Discover : top vidéos + stats pour un mot-clé ── */
+router.post('/discover', requireAuth, requireDiamant, async (req, res, next) => {
+  try {
+    const { keyword, sort = 'views', max = 20 } = req.body;
+    if (!keyword) return res.status(400).json({ error: 'keyword requis' });
+
+    const videos = await searchVideos(keyword, Math.min(40, Math.max(5, +max || 20)));
+
+    const sorters = {
+      views:  (a, b) => b.views - a.views,
+      likes:  (a, b) => (b.likes || 0) - (a.likes || 0),
+      vph:    (a, b) => b.views_per_hour - a.views_per_hour,
+      recent: (a, b) => new Date(b.published_at) - new Date(a.published_at)
+    };
+    videos.sort(sorters[sort] || sorters.views);
+
+    res.json({ keyword, sort, count: videos.length, videos });
+  } catch (err) {
+    console.error('[DIAMANT/DISCOVER]', err.message);
+    next(err);
+  }
+});
+
 module.exports = router;
