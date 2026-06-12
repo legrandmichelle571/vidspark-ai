@@ -20,6 +20,18 @@ function extractVideoId(v){
   return m ? m[1] : String(v || '').trim();
 }
 
+/* Contrôle d'accès par palier : free<pro<business<diamant */
+const TIER = { free: 0, pro: 1, business: 2, diamant: 3 };
+function requireTier(min){
+  return (req, res, next) => {
+    if ((TIER[req.user?.plan] || 0) >= TIER[min]) return next();
+    return res.status(403).json({
+      error: `Forfait ${min.charAt(0).toUpperCase() + min.slice(1)} requis pour cet outil.`,
+      code: 'UPGRADE_REQUIRED', required: min
+    });
+  };
+}
+
 const router = express.Router();
 
 /* Calcule un score de santé /100 à partir des données d'audit.
@@ -74,7 +86,7 @@ function buildRecommendations(a, health) {
 }
 
 /* ── 💎 Audit de chaîne avancé ── */
-router.post('/channel-audit', requireAuth, requirePro, async (req, res, next) => {
+router.post('/channel-audit', requireAuth, requireTier('diamant'), async (req, res, next) => {
   try {
     const supabase = req.app.locals.supabase;
 
@@ -104,7 +116,7 @@ router.post('/channel-audit', requireAuth, requirePro, async (req, res, next) =>
 });
 
 /* ── 💎 Vérification de position (rank) sur un mot-clé ── */
-router.post('/rank-check', requireAuth, requirePro, async (req, res, next) => {
+router.post('/rank-check', requireAuth, requireTier('diamant'), async (req, res, next) => {
   try {
     const { keyword, videoId } = req.body;
     if (!keyword || !videoId) return res.status(400).json({ error: 'keyword et videoId requis' });
@@ -128,7 +140,7 @@ router.post('/rank-check', requireAuth, requirePro, async (req, res, next) => {
 });
 
 /* ── 💎 Discover : top vidéos + stats pour un mot-clé ── */
-router.post('/discover', requireAuth, requirePro, async (req, res, next) => {
+router.post('/discover', requireAuth, requireTier('pro'), async (req, res, next) => {
   try {
     const { keyword, sort = 'views', max = 20 } = req.body;
     if (!keyword) return res.status(400).json({ error: 'keyword requis' });
@@ -151,7 +163,7 @@ router.post('/discover', requireAuth, requirePro, async (req, res, next) => {
 });
 
 /* ── 💎 Analyze : détails complets d'une vidéo ── */
-router.post('/analyze', requireAuth, requirePro, async (req, res, next) => {
+router.post('/analyze', requireAuth, requireTier('pro'), async (req, res, next) => {
   try {
     const videoId = extractVideoId(req.body.videoId);
     if (!videoId) return res.status(400).json({ error: 'videoId requis' });
@@ -162,7 +174,7 @@ router.post('/analyze', requireAuth, requirePro, async (req, res, next) => {
 });
 
 /* ── 💎 Keyword Tool ── */
-router.post('/keywords', requireAuth, requirePro, async (req, res, next) => {
+router.post('/keywords', requireAuth, requireTier('pro'), async (req, res, next) => {
   try {
     const { query } = req.body;
     if (!query) return res.status(400).json({ error: 'query requis' });
@@ -172,7 +184,7 @@ router.post('/keywords', requireAuth, requirePro, async (req, res, next) => {
 });
 
 /* ── 💎 Trending : vidéos en hausse dans une niche ── */
-router.post('/trending', requireAuth, requirePro, async (req, res, next) => {
+router.post('/trending', requireAuth, requireTier('business'), async (req, res, next) => {
   try {
     const { query } = req.body;
     if (!query) return res.status(400).json({ error: 'query requis' });
@@ -182,7 +194,7 @@ router.post('/trending', requireAuth, requirePro, async (req, res, next) => {
 });
 
 /* ── 💎 Analyse des commentaires (IA) ── */
-router.post('/comments', requireAuth, requirePro, async (req, res, next) => {
+router.post('/comments', requireAuth, requireTier('business'), async (req, res, next) => {
   try {
     const videoId = extractVideoId(req.body.videoId);
     const language = req.body.language || 'fr';
