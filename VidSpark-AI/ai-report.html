@@ -584,6 +584,44 @@ const RI = {
 };
 /* Fallback anglais pour langues non définies */
 ["zh","hi","pt","it","tr","nl"].forEach(c=>{ if(!RI[c]) RI[c]=RI.en; });
+
+/* ── Clés ajoutées (résumé exécutif, unités, concurrents) ── */
+const RI_EXTRA = {
+  fr:{ exec_summary:"Score global <strong>{glob}/100</strong> — potentiel viral <strong>{level}</strong>. En corrigeant les {n} point(s), le score pourrait atteindre <strong>{globPot}/100</strong> et le CTR passer de <strong>{ctr}%</strong> à <strong>{ctrPot}%</strong>.",
+       char_unit:"car.", punct_ctr:"Ponctuation CTR", add_punct:"Ajouter ? ou !",
+       comp_why_1:"Hook fort + miniature optimisée", comp_why_2:"Chiffre en début + mot émotionnel", comp_why_3:"Hook CTR + description riche",
+       months_ago:"il y a {n} mois", year_ago:"il y a 1 an" },
+  en:{ exec_summary:"Global score <strong>{glob}/100</strong> — viral potential <strong>{level}</strong>. By fixing {n} point(s), the score could reach <strong>{globPot}/100</strong> and CTR rise from <strong>{ctr}%</strong> to <strong>{ctrPot}%</strong>.",
+       char_unit:"chars", punct_ctr:"CTR punctuation", add_punct:"Add ? or !",
+       comp_why_1:"Strong hook + optimized thumbnail", comp_why_2:"Number at start + emotional word", comp_why_3:"CTR hook + rich description",
+       months_ago:"{n} months ago", year_ago:"1 year ago" },
+  ar:{ exec_summary:"النقاط الكلية <strong>{glob}/100</strong> — الإمكانية الفيروسية <strong>{level}</strong>. بتصحيح {n} نقطة، يمكن أن تصل النقاط إلى <strong>{globPot}/100</strong> وأن يرتفع CTR من <strong>{ctr}%</strong> إلى <strong>{ctrPot}%</strong>.",
+       char_unit:"حرف", punct_ctr:"علامات الترقيم CTR", add_punct:"إضافة ؟ أو !",
+       comp_why_1:"خطاف قوي + صورة مصغرة محسّنة", comp_why_2:"رقم في البداية + كلمة عاطفية", comp_why_3:"خطاف CTR + وصف غني",
+       months_ago:"قبل {n} أشهر", year_ago:"قبل سنة" },
+  es:{ exec_summary:"Puntuación global <strong>{glob}/100</strong> — potencial viral <strong>{level}</strong>. Al corregir {n} punto(s), la puntuación podría alcanzar <strong>{globPot}/100</strong> y el CTR pasar de <strong>{ctr}%</strong> a <strong>{ctrPot}%</strong>.",
+       char_unit:"car.", punct_ctr:"Puntuación CTR", add_punct:"Agregar ? o !",
+       comp_why_1:"Hook fuerte + miniatura optimizada", comp_why_2:"Número al inicio + palabra emocional", comp_why_3:"Hook CTR + descripción rica",
+       months_ago:"hace {n} meses", year_ago:"hace 1 año" },
+  de:{ exec_summary:"Gesamt-Score <strong>{glob}/100</strong> — virales Potenzial <strong>{level}</strong>. Durch Behebung von {n} Punkt(en) könnte der Score <strong>{globPot}/100</strong> erreichen und der CTR von <strong>{ctr}%</strong> auf <strong>{ctrPot}%</strong> steigen.",
+       char_unit:"Z.", punct_ctr:"CTR-Interpunktion", add_punct:"? oder ! hinzufügen",
+       comp_why_1:"Starker Hook + optimiertes Vorschaubild", comp_why_2:"Zahl am Anfang + emotionales Wort", comp_why_3:"CTR-Hook + reiche Beschreibung",
+       months_ago:"vor {n} Monaten", year_ago:"vor 1 Jahr" },
+  ru:{ exec_summary:"Общий балл <strong>{glob}/100</strong> — вирусный потенциал <strong>{level}</strong>. Исправив {n} пункт(ов), балл может достичь <strong>{globPot}/100</strong>, а CTR вырасти с <strong>{ctr}%</strong> до <strong>{ctrPot}%</strong>.",
+       char_unit:"симв.", punct_ctr:"Пунктуация CTR", add_punct:"Добавить ? или !",
+       comp_why_1:"Сильный крючок + оптимизированное превью", comp_why_2:"Цифра в начале + эмоциональное слово", comp_why_3:"CTR-крючок + насыщенное описание",
+       months_ago:"{n} мес. назад", year_ago:"1 год назад" },
+  ja:{ exec_summary:"総合スコア <strong>{glob}/100</strong> — バイラル潜在力 <strong>{level}</strong>。{n}項目を修正すると、スコアは <strong>{globPot}/100</strong> に達し、CTRは <strong>{ctr}%</strong> から <strong>{ctrPot}%</strong> に上昇する可能性があります。",
+       char_unit:"文字", punct_ctr:"CTR句読点", add_punct:"？または！を追加",
+       comp_why_1:"強力なフック + 最適化サムネイル", comp_why_2:"冒頭に数字 + 感情的ワード", comp_why_3:"CTRフック + 充実した説明",
+       months_ago:"{n}か月前", year_ago:"1年前" },
+  ko:{ exec_summary:"종합 점수 <strong>{glob}/100</strong> — 바이럴 잠재력 <strong>{level}</strong>. {n}개 항목을 수정하면 점수가 <strong>{globPot}/100</strong>에 도달하고 CTR이 <strong>{ctr}%</strong>에서 <strong>{ctrPot}%</strong>로 상승할 수 있습니다.",
+       char_unit:"자", punct_ctr:"CTR 문장부호", add_punct:"? 또는 ! 추가",
+       comp_why_1:"강력한 훅 + 최적화된 썸네일", comp_why_2:"시작에 숫자 + 감성 단어", comp_why_3:"CTR 훅 + 풍부한 설명",
+       months_ago:"{n}개월 전", year_ago:"1년 전" },
+};
+Object.keys(RI_EXTRA).forEach(c=>{ if(!RI[c]) RI[c]=RI.en; Object.assign(RI[c], RI_EXTRA[c]); });
+
 let RL = RI.fr;
 function RT(k){ return RL[k] || RI.en[k] || k; }
 
@@ -660,15 +698,15 @@ async function callProxy(action,data,lang,token){
   /* ── Checklist locale ── */
   const chk=[
     {ok:tLen>=45&&tLen<=75, label:RT("top10_1"), gain:18,
-     fix:`${tLen} car. — 55–70`, ex:tLen<45?`"${data.title} — Guide 2024"`:`"${(data.title||"").slice(0,55)}…"`},
+     fix:`${tLen} ${RT("char_unit")} — 55–70`, ex:tLen<45?`"${data.title} — Guide 2024"`:`"${(data.title||"").slice(0,55)}…"`},
     {ok:/\d/.test(data.title||""), label:RT("top10_2"), gain:8,
      fix:RT("viral_add_num"), ex:`"5 ${(data.title||"").split(" ").slice(0,4).join(" ")}…"`},
     {ok:/amazing|best|free|secret|viral|gratuit|incroyable|ultime/.test((data.title||"").toLowerCase()),
      label:RT("top10_3"), gain:12, fix:RT("viral_add_em"), ex:`"Incroyable : ${(data.title||"").slice(0,35)}…"`},
     {ok:/^(comment|pourquoi|why|how|what|\d)/i.test(data.title||"")||/[?]/.test(data.title||""),
      label:RT("top10_4"), gain:18, fix:RT("viral_add_hook"), ex:`"Comment ${(data.title||"").slice(0,40)}…"`},
-    {ok:dLen>=300, label:RT("top10_5"), gain:10, fix:`${dLen} car. — 500+`, ex:"timestamps + mots-clés"},
-    {ok:/[?!]/.test(data.title||""), label:"Ponctuation CTR", gain:5, fix:"Ajouter ? ou !",ex:`"${data.title}?"`},
+    {ok:dLen>=300, label:RT("top10_5"), gain:10, fix:`${dLen} ${RT("char_unit")} — 500+`, ex:"timestamps + mots-clés"},
+    {ok:/[?!]/.test(data.title||""), label:RT("punct_ctr"), gain:5, fix:RT("add_punct"),ex:`"${data.title}?"`},
   ];
   const okChk=chk.filter(c=>c.ok);
   const fixChk=chk.filter(c=>!c.ok);
@@ -692,12 +730,12 @@ async function callProxy(action,data,lang,token){
 
   /* ── Concurrent simulés (P3) ── */
   const fakeCompetitors=[
-    {title:(data.title||"").slice(0,30)+" — Guide Complet", views:"2.4M", date:"il y a 8 mois",
-     score:78, kw:["guide","complet","2024"], why:"Hook fort + miniature optimisée"},
-    {title:"5 "+ (data.title||"").slice(0,25)+"…", views:"890K", date:"il y a 3 mois",
-     score:71, kw:["5","astuces","débutant"], why:"Chiffre en début + mot émotionnel"},
-    {title:"Comment "+(data.title||"").slice(0,28)+" (Tuto)", views:"340K", date:"il y a 1 an",
-     score:65, kw:["comment","tuto","gratuit"], why:"CTR hook + description riche"},
+    {title:(data.title||"").slice(0,30)+" — Guide Complet", views:"2.4M", date:RT("months_ago").replace("{n}","8"),
+     score:78, kw:["guide","complet","2024"], why:RT("comp_why_1")},
+    {title:"5 "+ (data.title||"").slice(0,25)+"…", views:"890K", date:RT("months_ago").replace("{n}","3"),
+     score:71, kw:["5","astuces","débutant"], why:RT("comp_why_2")},
+    {title:"Comment "+(data.title||"").slice(0,28)+" (Tuto)", views:"340K", date:RT("year_ago"),
+     score:65, kw:["comment","tuto","gratuit"], why:RT("comp_why_3")},
   ];
 
   /* ══ RENDU PRINCIPAL ══ */
@@ -730,7 +768,9 @@ async function callProxy(action,data,lang,token){
     </div>
     <div class="exec-ai-summary" id="exec-ai-text">
       ${fixChk.length>0
-        ?`Score global <strong>${glob}/100</strong> — potentiel viral <strong>${viralLevel}</strong>. En corrigeant les ${fixChk.length} point(s), le score pourrait atteindre <strong>${globPot}/100</strong> et le CTR passer de <strong>${ctr}%</strong> à <strong>${ctrPot}%</strong>.`
+        ?RT("exec_summary")
+          .replace("{glob}",glob).replace("{level}",viralLevel).replace("{n}",fixChk.length)
+          .replace("{globPot}",globPot).replace("{ctr}",ctr).replace("{ctrPot}",ctrPot)
         :RT("exec_summary_text_ok")}
     </div>
     <div class="exec-lists">
