@@ -20,6 +20,13 @@ function extractVideoId(v){
   return m ? m[1] : String(v || '').trim();
 }
 
+/* Extrait l'ID de chaîne (UC...) depuis une URL /channel/ ou renvoie la valeur */
+function extractChannelId(v){
+  const s = String(v || '');
+  const m = s.match(/channel\/(UC[A-Za-z0-9_-]{22})/) || s.match(/(UC[A-Za-z0-9_-]{22})/);
+  return m ? m[1] : s.trim();
+}
+
 /* Contrôle d'accès par palier : free<pro<business<diamant */
 const TIER = { free: 0, pro: 1, business: 2, diamant: 3 };
 function requireTier(min){
@@ -90,8 +97,8 @@ router.post('/channel-audit', requireAuth, requireTier('diamant'), async (req, r
   try {
     const supabase = req.app.locals.supabase;
 
-    // channelId fourni, sinon on prend la chaîne principale de l'utilisateur
-    let channelId = req.body.channelId;
+    // channelId fourni (ID ou URL), sinon on prend la chaîne principale de l'utilisateur
+    let channelId = req.body.channelId ? extractChannelId(req.body.channelId) : null;
     if (!channelId) {
       const { data: chans } = await supabase
         .from('user_channels')
@@ -100,7 +107,7 @@ router.post('/channel-audit', requireAuth, requireTier('diamant'), async (req, r
       const primary = (chans || []).find(c => c.is_primary) || (chans || [])[0];
       channelId = primary?.youtube_channel_id;
     }
-    if (!channelId) return res.status(400).json({ error: 'Aucune chaîne sélectionnée' });
+    if (!channelId) return res.status(400).json({ error: 'Entre l\'ID ou l\'URL de ta chaîne YouTube ci-dessus' });
 
     const audit = await getChannelAudit(channelId);
     if (!audit) return res.status(404).json({ error: 'Chaîne introuvable' });
