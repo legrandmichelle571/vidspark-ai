@@ -12,7 +12,7 @@
 const express = require('express');
 const { requireAuth, requirePro } = require('../middleware/auth');
 const { getChannelAudit, searchVideos, getVideoStats, getKeywordIdeas, getTrendingVideos, getVideoComments } = require('../utils/youtube');
-const { analyzeComments, titleDoctor, generateTags, generateCompetitorInsights, generateTitles, generateDescription } = require('../utils/aiClient');
+const { analyzeComments, titleDoctor, generateTags, generateCompetitorInsights, generateTitles, generateDescription, compareTitles, generateVideoIdeas, translateMetadata } = require('../utils/aiClient');
 
 /* Extrait l'ID d'une vidéo depuis une URL YouTube ou renvoie la valeur telle quelle */
 function extractVideoId(v){
@@ -260,6 +260,33 @@ router.post('/generate', requireAuth, requireTier('pro'), async (req, res, next)
       hashtags: (desc && desc.hashtags) || []
     });
   } catch (err) { console.error('[DIAMANT/GENERATE]', err.message); next(err); }
+});
+
+/* ── 💎 A/B Test de titres (IA prédit le gagnant) ── */
+router.post('/ab-titles', requireAuth, requireTier('pro'), async (req, res, next) => {
+  try {
+    const { titleA, titleB, language = 'fr' } = req.body;
+    if (!titleA || !titleB) return res.status(400).json({ error: 'titleA et titleB requis' });
+    res.json(await compareTitles(titleA, titleB, language));
+  } catch (err) { console.error('[DIAMANT/ABTITLES]', err.message); next(err); }
+});
+
+/* ── 💎 Idées de vidéos à fort potentiel ── */
+router.post('/ideas', requireAuth, requireTier('pro'), async (req, res, next) => {
+  try {
+    const { niche = '', topic = '', language = 'fr' } = req.body;
+    if (!niche && !topic) return res.status(400).json({ error: 'niche ou topic requis' });
+    res.json(await generateVideoIdeas(niche, '', topic, language));
+  } catch (err) { console.error('[DIAMANT/IDEAS]', err.message); next(err); }
+});
+
+/* ── 💎 Traduire / localiser les métadonnées (Languages) ── */
+router.post('/translate', requireAuth, requireTier('business'), async (req, res, next) => {
+  try {
+    const { title = '', description = '', targetLang = 'en', language = 'fr' } = req.body;
+    if (!title) return res.status(400).json({ error: 'title requis' });
+    res.json(await translateMetadata(title, description, targetLang, language));
+  } catch (err) { console.error('[DIAMANT/TRANSLATE]', err.message); next(err); }
 });
 
 module.exports = router;
