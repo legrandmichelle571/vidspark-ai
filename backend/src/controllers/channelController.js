@@ -1,4 +1,5 @@
 const { getSupabase } = require('../config/supabase');
+const { getChannelLimit } = require('../config/channelLimits');
 
 class ChannelController {
   async listChannels(req, res, next) {
@@ -32,7 +33,7 @@ class ChannelController {
         .eq('id', userId)
         .single();
 
-      const limit = user.plan === 'business' ? 5 : 1;
+      const limit = getChannelLimit(user.plan);
 
       if (channels.length > limit) {
         return res.status(400).json({ error: `Your plan allows a maximum of ${limit} channel(s)` });

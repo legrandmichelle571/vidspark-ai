@@ -242,7 +242,7 @@ router.get('/devices', requireAuth, async (req, res) => {
       .from('activation_devices')
       .select('device_id, bound_at')
       .eq('user_id', req.user.id);
-    const max = (req.user.plan === 'business') ? 5 : 1;
+    const max = getChannelLimit(req.user.plan);
     res.json({ devices: data || [], used: (data || []).length, max });
   } catch (err) {
     console.error('[DEVICES]', err.message);
@@ -392,6 +392,13 @@ function getFeaturesForPlan(plan) {
     full_report: true, ai_titles: true, competitor_analysis: true,
     pdf_export: true,  history: true,   vision_ai: true,
     multi_channel: true, team: true, api_access: true, advanced_reports: true
+  };
+  if (plan === 'diamant') return {
+    ...base,
+    full_report: true, ai_titles: true, competitor_analysis: true,
+    pdf_export: true,  history: true,   vision_ai: true,
+    multi_channel: true, team: true, api_access: true, advanced_reports: true,
+    channel_audit: true, rank_tracker: true   // 💎 exclusifs Diamant (site)
   };
   return base;
 }

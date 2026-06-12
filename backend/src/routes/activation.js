@@ -49,9 +49,9 @@ router.post('/activate', async (req, res) => {
       .maybeSingle();
 
     // 🔒 Verrouillage par appareil — 1 code marche sur N PC selon le plan
-    //    (Free/Pro = 1 PC, Business = 5 PC). Table activation_devices.
+    //    (Free/Pro = 1 · Business = 5 · Diamant = 10). Table activation_devices.
     if (device_id) {
-      const maxDevices = (user?.plan === 'business') ? 5 : 1;
+      const maxDevices = getChannelLimit(user?.plan);
 
       // Cet appareil est-il déjà lié à ce code ?
       const { data: existingDev } = await supabase
