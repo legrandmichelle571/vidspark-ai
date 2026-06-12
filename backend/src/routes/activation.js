@@ -220,9 +220,9 @@ async function getCodeUser(supabase, activation_id, activation_secret) {
   return { code, user, plan: (user?.plan || 'free') };
 }
 
-/* Middleware-like : exige un plan payant (pro/business) */
+/* Middleware-like : exige un plan payant (pro/business/diamant) */
 function requirePaidPlan(plan) {
-  return ['pro', 'business'].includes((plan || '').toLowerCase());
+  return ['pro', 'business', 'diamant'].includes((plan || '').toLowerCase());
 }
 
 /* ── Titres IA (Pro/Business) ── */
