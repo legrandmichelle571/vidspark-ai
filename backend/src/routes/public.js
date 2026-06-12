@@ -108,10 +108,14 @@ router.post('/ai/description', requireAuth, requireProPlan, aiLimiter, async (re
 router.get('/ads', async (req, res) => {
   try {
     const supabase = req.app.locals.supabase;
-    const { data } = await supabase.from('site_config').select('key,value').in('key', ['ad_home', 'ad_dashboard']);
+    const keys = ['ad_home', 'ad_home_left', 'ad_home_right', 'ad_dashboard', 'ad_dashboard_right'];
+    const { data } = await supabase.from('site_config').select('key,value').in('key', keys);
     const out = {};
     (data || []).forEach(r => { out[r.key] = r.value; });
-    res.json({ home: out.ad_home || '', dashboard: out.ad_dashboard || '' });
+    res.json({
+      home: out.ad_home || '', home_left: out.ad_home_left || '', home_right: out.ad_home_right || '',
+      dashboard: out.ad_dashboard || '', dashboard_right: out.ad_dashboard_right || ''
+    });
   } catch (e) {
     res.json({ home: '', dashboard: '' });
   }
