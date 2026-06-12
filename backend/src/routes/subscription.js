@@ -9,6 +9,7 @@
  */
 const router  = require('express').Router();
 const { requireAuth } = require('../middleware/auth');
+const { getLimits }   = require('../config/plans');
 
 /* ── Définition unique des plans — source de vérité ─────────────
    Chaque plan est défini ici une seule fois et utilisé dans
@@ -294,6 +295,93 @@ router.post('/checkout/paypal', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('[PAYPAL]', err.message);
     res.status(500).json({ error: 'PayPal checkout failed: ' + err.message });
+  }
+});
+
+/* ── Capturer le paiement PayPal + activer le plan ──────────────
+   Appelé par la page /success au retour de PayPal.
+   Sécurité : le plan est déduit du MONTANT réellement payé (non
+   falsifiable), et la commande doit appartenir à l'utilisateur. ── */
+router.post('/paypal/capture', requireAuth, async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    if (!orderId) return res.status(400).json({ error: 'orderId requis' });
+
+    const clientId     = process.env.PAYPAL_CLIENT_ID;
+    const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+    const mode         = process.env.PAYPAL_MODE || 'sandbox';
+    if (!clientId || !clientSecret) throw new Error('PayPal credentials not configured');
+    const apiBase = mode === 'live'
+      ? 'https://api-m.paypal.com'
+      : 'https://api-m.sandbox.paypal.com';
+
+    /* Token d'accès */
+    const creds = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const tokenRes = await fetch(`${apiBase}/v1/oauth2/token`, {
+      method: 'POST',
+      headers: { 'Authorization': `Basic ${creds}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'grant_type=client_credentials'
+    });
+    const tokenData = await tokenRes.json();
+    if (!tokenData.access_token) throw new Error('Failed to get PayPal token');
+
+    /* Capturer la commande */
+    const capRes = await fetch(`${apiBase}/v2/checkout/orders/${orderId}/capture`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${tokenData.access_token}`, 'Content-Type': 'application/json' }
+    });
+    const cap = await capRes.json();
+    if (!capRes.ok || cap.status !== 'COMPLETED') {
+      console.error('[PAYPAL/CAPTURE] non complété:', JSON.stringify(cap).slice(0, 400));
+      return res.status(400).json({ error: 'Paiement non complété' });
+    }
+
+    /* Vérifier que la commande appartient bien à cet utilisateur */
+    const pu = (cap.purchase_units && cap.purchase_units[0]) || {};
+    if (!String(pu.reference_id || '').startsWith(req.user.id)) {
+      return res.status(403).json({ error: 'Commande non associée à cet utilisateur' });
+    }
+
+    /* Déduire le plan du montant payé (non falsifiable) */
+    const capture = pu.payments?.captures?.[0] || {};
+    const amount  = parseFloat(capture.amount?.value || pu.amount?.value || '0');
+    let plan = null, interval = null;
+    for (const p of PLANS) {
+      if (p.id === 'free') continue;
+      if (Math.abs((p.price_monthly || 0) - amount) < 0.01) { plan = p.id; interval = 'month'; break; }
+      if (Math.abs((p.price_yearly  || 0) - amount) < 0.01) { plan = p.id; interval = 'year';  break; }
+    }
+    if (!plan) return res.status(400).json({ error: 'Aucun plan ne correspond au montant payé' });
+
+    /* Activer le plan (même logique que les webhooks) */
+    const supabase = req.app.locals.supabase;
+    const now = new Date();
+    const endDate = interval === 'year'
+      ? new Date(new Date(now).setFullYear(now.getFullYear() + 1))
+      : new Date(new Date(now).setMonth(now.getMonth() + 1));
+
+    await supabase.from('users').update({
+      plan, status: 'active', quota_limit: getLimits(plan).daily_analyses
+    }).eq('id', req.user.id);
+
+    await supabase.from('subscriptions').upsert({
+      user_id: req.user.id, plan, provider: 'paypal',
+      provider_sub_id: orderId, status: 'active',
+      amount, currency: 'USD', interval,
+      current_period_start: now.toISOString(), current_period_end: endDate.toISOString()
+    }, { onConflict: 'provider_sub_id' });
+
+    await supabase.from('payments').insert({
+      user_id: req.user.id, email: req.user.email, provider: 'paypal',
+      provider_payment_id: capture.id || orderId,
+      amount, currency: 'USD', status: 'succeeded'
+    });
+
+    console.log(`[PAYPAL/CAPTURE] User ${req.user.id} → ${plan} (${interval})`);
+    res.json({ success: true, plan, interval, amount });
+  } catch (err) {
+    console.error('[PAYPAL/CAPTURE]', err.message);
+    res.status(500).json({ error: 'Capture échouée: ' + err.message });
   }
 });
 
