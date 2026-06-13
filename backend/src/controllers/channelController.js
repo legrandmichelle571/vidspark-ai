@@ -1,5 +1,6 @@
 const { getSupabase } = require('../config/supabase');
 const { getChannelLimit } = require('../config/channelLimits');
+const { resolveChannelId } = require('../utils/youtube');
 
 class ChannelController {
   async listChannels(req, res, next) {
@@ -49,12 +50,26 @@ class ChannelController {
          return res.status(403).json({ error: 'Channels are already selected and cannot be changed.' });
       }
 
+      // Résoudre chaque entrée (lien / @handle / nom) en vrai Channel ID UC
+      const resolved = [];
+      for (const ch of channels) {
+        const raw = ch.youtube_channel_id;
+        let r = null;
+        try { r = await resolveChannelId(raw); } catch (e) { /* géré ci-dessous */ }
+        if (!r || !r.id) {
+          return res.status(400).json({ error: `Chaîne introuvable : ${raw}. Vérifie le lien de ta chaîne.` });
+        }
+        resolved.push(r);
+      }
+
       // Insert new channels
-      const channelsToInsert = channels.map(ch => ({
+      const channelsToInsert = resolved.map((r, i) => ({
         user_id: userId,
-        youtube_channel_id: ch.youtube_channel_id,
-        channel_name: ch.channel_name || 'My Channel',
-        is_primary: true // Set first one as primary
+        youtube_channel_id: r.id,
+        channel_name: (channels[i].channel_name && !/^Chaîne |^My Channel$/.test(channels[i].channel_name))
+          ? channels[i].channel_name
+          : (r.name || 'My Channel'),
+        is_primary: i === 0 // Première chaîne = principale
       }));
 
       const { data, error } = await getSupabase()

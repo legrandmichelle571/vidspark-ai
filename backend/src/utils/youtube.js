@@ -258,4 +258,54 @@ async function getTranscript(videoId) {
   }
 }
 
-module.exports = { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments, getChannelVideos, getTrendingVideos };
+/* Résout un lien / @handle / nom / ID en vrai Channel ID UC (+ titre réel).
+   Accepte : "UC...", "youtube.com/channel/UC...", "@handle",
+   "youtube.com/@handle", "youtube.com/c/Nom", "youtube.com/user/Nom", ou un nom brut.
+   Retourne { id, name } ou null si introuvable. */
+async function resolveChannelId(input) {
+  const s = (input || '').trim();
+  if (!s) return null;
+
+  // 1) ID de chaîne déjà présent (brut ou dans une URL)
+  const uc = s.match(/UC[a-zA-Z0-9_-]{22}/);
+  if (uc) {
+    try {
+      const j = await ytFetch(`/channels?part=snippet&id=${uc[0]}`);
+      const it = j.items && j.items[0];
+      if (it) return { id: it.id, name: it.snippet.title };
+    } catch (e) { /* clé absente : on garde l'ID tel quel */ }
+    return { id: uc[0], name: uc[0] };
+  }
+
+  // 2) Handle @nom (brut ou dans une URL)
+  const hm = s.match(/@[a-zA-Z0-9._-]{2,}/);
+  let username = null;
+  if (hm) {
+    try {
+      const j = await ytFetch(`/channels?part=snippet&forHandle=${encodeURIComponent(hm[0])}`);
+      const it = j.items && j.items[0];
+      if (it) return { id: it.id, name: it.snippet.title };
+    } catch (e) { /* fallback ci-dessous */ }
+    username = hm[0].slice(1);
+  } else {
+    // 3) URL personnalisée /c/Nom ou /user/Nom, sinon nom brut
+    const cm = s.match(/\/(?:c|user)\/([a-zA-Z0-9._-]+)/);
+    username = cm ? cm[1] : s;
+  }
+
+  // 4) forUsername (anciennes chaînes) puis recherche en dernier recours
+  try {
+    const j = await ytFetch(`/channels?part=snippet&forUsername=${encodeURIComponent(username)}`);
+    const it = j.items && j.items[0];
+    if (it) return { id: it.id, name: it.snippet.title };
+  } catch (e) { /* continue */ }
+  try {
+    const sj = await ytFetch(`/search?part=snippet&type=channel&maxResults=1&q=${encodeURIComponent(username)}`);
+    const it = sj.items && sj.items[0];
+    if (it) return { id: it.id.channelId, name: it.snippet.title };
+  } catch (e) { /* introuvable */ }
+
+  return null;
+}
+
+module.exports = { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments, getChannelVideos, getTrendingVideos, resolveChannelId };
