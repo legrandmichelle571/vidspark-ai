@@ -266,6 +266,18 @@ async function resolveChannelId(input) {
   const s = (input || '').trim();
   if (!s) return null;
 
+  // 0) Lien d'une VIDÉO (video:ID, watch?v=, youtu.be/, /shorts/, /live/) → chaîne de la vidéo
+  const vm = s.match(/^video:([a-zA-Z0-9_-]{11})$/)
+          || s.match(/(?:[?&]v=|youtu\.be\/|\/shorts\/|\/live\/|\/embed\/)([a-zA-Z0-9_-]{11})/);
+  if (vm) {
+    try {
+      const j = await ytFetch(`/videos?part=snippet&id=${vm[1]}`);
+      const it = j.items && j.items[0];
+      if (it) return { id: it.snippet.channelId, name: it.snippet.channelTitle };
+    } catch (e) { /* introuvable */ }
+    return null;
+  }
+
   // 1) ID de chaîne déjà présent (brut ou dans une URL)
   const uc = s.match(/UC[a-zA-Z0-9_-]{22}/);
   if (uc) {
