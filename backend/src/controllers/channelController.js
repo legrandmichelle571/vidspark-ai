@@ -55,8 +55,14 @@ class ChannelController {
       for (const ch of channels) {
         const raw = ch.youtube_channel_id;
         let r = null;
-        try { r = await resolveChannelId(raw); } catch (e) { /* géré ci-dessous */ }
+        try {
+          r = await resolveChannelId(raw);
+        } catch (e) {
+          console.error(`[selectChannels] Erreur resolveChannelId(${raw}):`, e.message);
+          return res.status(400).json({ error: `Erreur lors de la résolution du lien : ${e.message}` });
+        }
         if (!r || !r.id) {
+          console.warn(`[selectChannels] Chaîne introuvable : ${raw}`);
           return res.status(400).json({ error: `Chaîne introuvable : ${raw}. Vérifie le lien de ta chaîne.` });
         }
         resolved.push(r);

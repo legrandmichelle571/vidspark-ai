@@ -274,8 +274,10 @@ async function resolveChannelId(input) {
       const j = await ytFetch(`/videos?part=snippet&id=${vm[1]}`);
       const it = j.items && j.items[0];
       if (it) return { id: it.snippet.channelId, name: it.snippet.channelTitle };
-    } catch (e) { /* introuvable */ }
-    return null;
+    } catch (e) {
+      console.error('[resolveChannelId] Erreur vidéo:', e.message);
+      return null;
+    }
   }
 
   // 1) ID de chaîne déjà présent (brut ou dans une URL)
@@ -285,8 +287,10 @@ async function resolveChannelId(input) {
       const j = await ytFetch(`/channels?part=snippet&id=${uc[0]}`);
       const it = j.items && j.items[0];
       if (it) return { id: it.id, name: it.snippet.title };
-    } catch (e) { /* clé absente : on garde l'ID tel quel */ }
-    return { id: uc[0], name: uc[0] };
+    } catch (e) {
+      console.warn('[resolveChannelId] Clé API manquante pour UC${uc[0]}, on renvoie tel quel');
+      return { id: uc[0], name: uc[0] };
+    }
   }
 
   // 2) Handle @nom (brut ou dans une URL)
@@ -297,7 +301,9 @@ async function resolveChannelId(input) {
       const j = await ytFetch(`/channels?part=snippet&forHandle=${encodeURIComponent(hm[0])}`);
       const it = j.items && j.items[0];
       if (it) return { id: it.id, name: it.snippet.title };
-    } catch (e) { /* fallback ci-dessous */ }
+    } catch (e) {
+      console.warn(`[resolveChannelId] @handle ${hm[0]} non trouvé via forHandle, essai fallback:`, e.message);
+    }
     username = hm[0].slice(1);
   } else {
     // 3) URL personnalisée /c/Nom ou /user/Nom, sinon nom brut
@@ -310,12 +316,16 @@ async function resolveChannelId(input) {
     const j = await ytFetch(`/channels?part=snippet&forUsername=${encodeURIComponent(username)}`);
     const it = j.items && j.items[0];
     if (it) return { id: it.id, name: it.snippet.title };
-  } catch (e) { /* continue */ }
+  } catch (e) {
+    console.warn(`[resolveChannelId] forUsername ${username} échoué:`, e.message);
+  }
   try {
     const sj = await ytFetch(`/search?part=snippet&type=channel&maxResults=1&q=${encodeURIComponent(username)}`);
     const it = sj.items && sj.items[0];
     if (it) return { id: it.id.channelId, name: it.snippet.title };
-  } catch (e) { /* introuvable */ }
+  } catch (e) {
+    console.error(`[resolveChannelId] Pas trouvé: ${username}`, e.message);
+  }
 
   return null;
 }
