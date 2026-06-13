@@ -3,6 +3,13 @@
  * La clé API reste côté serveur uniquement (process.env.GEMINI_API_KEY).
  */
 
+/* Supprime le préfixe data-URI (data:image/png;base64,...) pour ne garder que le base64 brut.
+   Gemini inlineData.data et Cloudflare exigent du base64 pur, sans préfixe. */
+function stripDataUri(s) {
+  if (typeof s !== 'string') return s;
+  return s.replace(/^data:[^;]+;base64,/, '').trim();
+}
+
 async function callGemini(prompt, maxTokens = 2048) {
   const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   const key   = process.env.GEMINI_API_KEY;
@@ -255,6 +262,8 @@ Langue de toutes les explications : ${langName}.`;
 /* A/B Test de MINIATURES : décrit 2 images via Vision puis prédit celle qui aura le meilleur CTR */
 async function compareThumbnails(imageA, imageB, language = 'fr') {
   const langName = LANG_NAMES[language] || language;
+  imageA = stripDataUri(imageA);
+  imageB = stripDataUri(imageB);
 
   // 1) Décrire les deux miniatures via Cloudflare LLAVA (vision)
   let descA = '', descB = '';
@@ -775,6 +784,7 @@ async function cloudflareDescribeImage(imageBase64) {
 /* Analyse d'une miniature — Cloudflare (LLAVA décrit → Llama note en JSON), fallback Gemini Vision */
 async function analyzeThumbnail(imageBase64, title = '', language = 'fr') {
   const langName = LANG_NAMES[language] || language;
+  imageBase64 = stripDataUri(imageBase64);
 
   // 1) Cloudflare : LLAVA décrit l'image, puis Llama produit le JSON (gratuit, sans quota Gemini)
   if (process.env.CF_ACCOUNT_ID && process.env.CF_AI_TOKEN) {
