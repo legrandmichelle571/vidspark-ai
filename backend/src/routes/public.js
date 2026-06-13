@@ -111,18 +111,21 @@ router.post('/ai/description', requireAuth, requireProPlan, aiLimiter, async (re
   }
 });
 
-/* POST /api/public/ai/viral-score {title, description, language} */
+/* POST /api/public/ai/viral-score → titleDoctor, normalisé pour le frontend */
 router.post('/ai/viral-score', requireAuth, requireProPlan, aiLimiter, async (req, res) => {
   try {
-    const { title, description = '', language = 'fr' } = req.body;
+    const { title, language = 'fr' } = req.body;
     if (!title || title.trim().length < 3) return res.status(400).json({ error: 'Titre requis' });
-    const result = await titleDoctor(title.trim(), language);
-    // Enrichit avec description si fournie
+    const r = await titleDoctor(title.trim(), language);
+    const score = +r.score || 0;
+    const factors = []
+      .concat((r.tips || []).map(t => ({ label: 'Conseil', ok: true, comment: t })))
+      .concat((r.missing || []).map(m => ({ label: 'À améliorer', ok: false, comment: m })));
     res.json({
-      current_score: result.score || 0,
-      potential_score: Math.min(100, (result.score || 0) + (result.potential_gain || 15)),
-      factors: result.criteria || [],
-      suggestion: result.improved_title || null
+      current_score: score,
+      potential_score: Math.min(100, score + 15),
+      factors,
+      suggestion: r.improved || null
     });
   } catch (err) {
     console.error('[PUBLIC/VIRAL-SCORE]', err.message);
@@ -130,123 +133,181 @@ router.post('/ai/viral-score', requireAuth, requireProPlan, aiLimiter, async (re
   }
 });
 
-/* POST /api/public/ai/ab-test-titles {title_a, title_b, language} */
+/* POST /api/public/ai/ab-test-titles → compareTitles, normalisé */
 router.post('/ai/ab-test-titles', requireAuth, requireProPlan, aiLimiter, async (req, res) => {
   try {
     const { title_a, title_b, language = 'fr' } = req.body;
     if (!title_a || !title_b) return res.status(400).json({ error: 'Les deux titres sont requis' });
-    const result = await compareTitles(title_a.trim(), title_b.trim(), language);
-    res.json(result);
+    const r = await compareTitles(title_a.trim(), title_b.trim(), language);
+    res.json({
+      winner: r.winner || 'A',
+      ctr_a: r.a?.ctr_estimate ?? '—',
+      ctr_b: r.b?.ctr_estimate ?? '—',
+      analysis: r.verdict || '',
+      improved: r.improved || null
+    });
   } catch (err) {
     console.error('[PUBLIC/AB-TITLES]', err.message);
     res.status(500).json({ error: err.message || 'Génération indisponible' });
   }
 });
 
-/* POST /api/public/ai/ab-test-thumbnails {image_a, image_b, language} */
+/* POST /api/public/ai/ab-test-thumbnails → compareThumbnails, normalisé */
 router.post('/ai/ab-test-thumbnails', requireAuth, requireProPlan, aiLimiter, async (req, res) => {
   try {
     const { image_a, image_b, language = 'fr' } = req.body;
     if (!image_a || !image_b) return res.status(400).json({ error: 'Les deux images sont requises' });
-    const result = await compareThumbnails(image_a, image_b, language);
-    res.json(result);
+    const r = await compareThumbnails(image_a, image_b, language);
+    const w = r.winner || 'A';
+    res.json({
+      winner: w,
+      ctr_winner: (w === 'A' ? r.a?.ctr_estimate : r.b?.ctr_estimate) ?? '—',
+      analysis: r.verdict || '',
+      improvement: (r.tips && r.tips[0]) || null
+    });
   } catch (err) {
     console.error('[PUBLIC/AB-THUMBS]', err.message);
     res.status(500).json({ error: err.message || 'Génération indisponible' });
   }
 });
 
-/* POST /api/public/ai/thumbnail-analyzer {image_base64, language} */
+/* POST /api/public/ai/thumbnail-analyzer → analyzeThumbnail, normalisé */
 router.post('/ai/thumbnail-analyzer', requireAuth, requireProPlan, aiLimiter, async (req, res) => {
   try {
     const { image_base64, language = 'fr' } = req.body;
     if (!image_base64) return res.status(400).json({ error: 'Image requise' });
-    const result = await analyzeThumbnail(image_base64, '', language);
-    res.json(result);
+    const r = await analyzeThumbnail(image_base64, '', language);
+    const score = +r.score || 0;
+    res.json({
+      score,
+      ctr_estimate: Math.round((2 + score / 100 * 8) * 10) / 10,
+      face_score: r.has_face ? 85 : 30,
+      text_score: r.has_text ? 80 : 40,
+      tips: (r.tips || []).concat(r.strengths ? [] : []),
+    });
   } catch (err) {
     console.error('[PUBLIC/THUMBNAIL]', err.message);
     res.status(500).json({ error: err.message || 'Génération indisponible' });
   }
 });
 
-/* POST /api/public/ai/hook-analyzer {hook, language} */
+/* POST /api/public/ai/hook-analyzer → analyzeHook, normalisé */
 router.post('/ai/hook-analyzer', requireAuth, requireProPlan, aiLimiter, async (req, res) => {
   try {
     const { hook, language = 'fr' } = req.body;
     if (!hook || hook.trim().length < 20) return res.status(400).json({ error: 'Intro trop courte (20 caractères min)' });
-    const result = await analyzeHook(hook.trim(), language);
-    res.json(result);
+    const r = await analyzeHook(hook.trim(), language);
+    const dp = (r.drop_points && r.drop_points[0]) || null;
+    res.json({
+      retention_score: +r.retention_estimate || +r.hook_score || 0,
+      dropout_moment: dp ? `"${dp.quote}" — ${dp.reason}` : null,
+      issues: r.fixes || [],
+      strengths: r.strengths || [],
+      rewritten_hook: r.rewritten_hook || null
+    });
   } catch (err) {
     console.error('[PUBLIC/HOOK]', err.message);
     res.status(500).json({ error: err.message || 'Génération indisponible' });
   }
 });
 
-/* POST /api/public/ai/shorts-generator {topic, description, language} */
+/* POST /api/public/ai/shorts-generator → generateShorts, normalisé */
 router.post('/ai/shorts-generator', requireAuth, requireProPlan, aiLimiter, async (req, res) => {
   try {
-    const { topic, description = '', language = 'fr' } = req.body;
+    const { topic, language = 'fr' } = req.body;
     if (!topic || topic.trim().length < 3) return res.status(400).json({ error: 'Sujet requis' });
-    const result = await generateShorts(topic.trim(), language);
-    res.json(result);
+    const r = await generateShorts(topic.trim(), language);
+    const shorts = (r.shorts || []).map(s => {
+      const c = (s.clips && s.clips[0]) || null;
+      return {
+        title: s.title || '',
+        hook: s.hook || '',
+        script: Array.isArray(s.script) ? s.script.join(' • ') : (s.script || ''),
+        timestamp: c ? `${c.start_sec}s → ${c.end_sec}s${s.estimated ? ' (estimé)' : ''}` : (s.duration || ''),
+        hashtags: Array.isArray(s.hashtags) ? s.hashtags.join(' ') : (s.hashtags || '')
+      };
+    });
+    res.json({ shorts });
   } catch (err) {
     console.error('[PUBLIC/SHORTS]', err.message);
     res.status(500).json({ error: err.message || 'Génération indisponible' });
   }
 });
 
-/* POST /api/public/ai/video-ideas {niche, topic, language} */
+/* POST /api/public/ai/video-ideas → generateVideoIdeas (déjà compatible) */
 router.post('/ai/video-ideas', requireAuth, requireProPlan, aiLimiter, async (req, res) => {
   try {
     const { niche, topic = '', language = 'fr' } = req.body;
     if (!niche || niche.trim().length < 2) return res.status(400).json({ error: 'Niche requise' });
-    const result = await generateVideoIdeas(niche.trim(), '', topic.trim(), language);
-    res.json(result);
+    res.json(await generateVideoIdeas(niche.trim(), '', topic.trim(), language));
   } catch (err) {
     console.error('[PUBLIC/IDEAS]', err.message);
     res.status(500).json({ error: err.message || 'Génération indisponible' });
   }
 });
 
-/* POST /api/public/ai/audience-optimizer {niche, region, language} */
+/* POST /api/public/ai/audience-optimizer → optimizeAudience, normalisé */
 router.post('/ai/audience-optimizer', requireAuth, requireProPlan, aiLimiter, async (req, res) => {
   try {
     const { niche, region = 'FR', language = 'fr' } = req.body;
     if (!niche || niche.trim().length < 2) return res.status(400).json({ error: 'Niche requise' });
-    const result = await optimizeAudience(niche.trim(), language, language, region);
-    res.json(result);
+    const r = await optimizeAudience(region, language, language, niche.trim());
+    const bt = r.best_times || [];
+    res.json({
+      best_hours: bt.length ? bt.map(t => t.time).filter(Boolean).join(', ') : null,
+      best_days: bt.length ? [...new Set(bt.map(t => t.day).filter(Boolean))].join(', ') : null,
+      trends: r.trends || [],
+      topics: r.topic_ideas || [],
+      hashtags: Array.isArray(r.hashtags) ? r.hashtags.join(' ') : (r.hashtags || ''),
+      tip: (r.tips && r.tips[0]) || null
+    });
   } catch (err) {
     console.error('[PUBLIC/AUDIENCE]', err.message);
     res.status(500).json({ error: err.message || 'Génération indisponible' });
   }
 });
 
-/* POST /api/public/ai/revenue-estimator {niche, subscribers, country, language} */
+/* POST /api/public/ai/revenue-estimator → estimateRevenue, normalisé */
 router.post('/ai/revenue-estimator', requireAuth, requireProPlan, aiLimiter, async (req, res) => {
   try {
     const { niche, subscribers = 0, country = 'FR', language = 'fr' } = req.body;
     if (!niche || niche.trim().length < 2) return res.status(400).json({ error: 'Niche requise' });
-    const result = await estimateRevenue('', niche.trim(), country, subscribers, language);
-    res.json(result);
+    const r = await estimateRevenue(niche.trim(), niche.trim(), country, subscribers, language);
+    res.json({
+      views_7d: r.views_7d?.expected || r.views_7d?.low || 0,
+      revenue_min: Math.round(r.revenue_usd?.low || 0),
+      revenue_max: Math.round(r.revenue_usd?.high || 0),
+      rpm: r.rpm_usd ?? '—',
+      analysis: (r.factors || []).join(' '),
+      tips: r.tips || []
+    });
   } catch (err) {
     console.error('[PUBLIC/REVENUE]', err.message);
     res.status(500).json({ error: err.message || 'Génération indisponible' });
   }
 });
 
-/* POST /api/public/ai/comment-analyzer {video_url, language} */
+/* POST /api/public/ai/comment-analyzer → analyzeComments, normalisé */
 router.post('/ai/comment-analyzer', requireAuth, requireProPlan, aiLimiter, async (req, res) => {
   try {
     const { video_url, language = 'fr' } = req.body;
     if (!video_url) return res.status(400).json({ error: 'URL de vidéo requise' });
     const m = String(video_url).match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([A-Za-z0-9_-]{11})/);
     if (!m) return res.status(400).json({ error: 'URL YouTube invalide' });
-    const videoId = m[1];
     let comments = [];
-    try { comments = await getVideoComments(videoId, 40); } catch (e) { /* clé API optionnelle */ }
+    try { comments = await getVideoComments(m[1], 40); } catch (e) { /* clé API optionnelle */ }
     if (!comments.length) return res.json({ empty: true, sentiment: 'neutre', positive_pct: 0, negative_pct: 0 });
-    const result = await analyzeComments(comments, '', language);
-    res.json(result);
+    const r = await analyzeComments(comments, '', language);
+    const s = r.sentiment || {};
+    const pos = +s.positive || 0, neg = +s.negative || 0;
+    res.json({
+      sentiment: pos > neg ? 'positif' : neg > pos ? 'négatif' : 'neutre',
+      positive_pct: pos,
+      negative_pct: neg,
+      audience_requests: r.requests || [],
+      video_ideas: r.video_ideas || [],
+      top_comment: r.summary || null
+    });
   } catch (err) {
     console.error('[PUBLIC/COMMENTS]', err.message);
     res.status(500).json({ error: err.message || 'Génération indisponible' });
