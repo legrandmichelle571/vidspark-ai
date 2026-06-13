@@ -1,11 +1,11 @@
-const { getSupabase } = require('../config/supabase');
+const { getSupabaseAdmin } = require('../config/supabase');
 const { getChannelLimit } = require('../config/channelLimits');
 const { resolveChannelId } = require('../utils/youtube');
 
 class ChannelController {
   async listChannels(req, res, next) {
     try {
-      const { data: channels, error } = await getSupabase()
+      const { data: channels, error } = await getSupabaseAdmin()
         .from('user_channels')
         .select('*')
         .eq('user_id', req.user.id);
@@ -28,7 +28,7 @@ class ChannelController {
       }
 
       // Check user plan limit
-      const { data: user } = await getSupabase()
+      const { data: user } = await getSupabaseAdmin()
         .from('users')
         .select('plan')
         .eq('id', userId)
@@ -41,7 +41,7 @@ class ChannelController {
       }
 
       // Check if user already has channels locked
-      const { data: existingChannels } = await getSupabase()
+      const { data: existingChannels } = await getSupabaseAdmin()
         .from('user_channels')
         .select('id')
         .eq('user_id', userId);
@@ -78,7 +78,7 @@ class ChannelController {
         is_primary: i === 0 // Première chaîne = principale
       }));
 
-      const { data, error } = await getSupabase()
+      const { data, error } = await getSupabaseAdmin()
         .from('user_channels')
         .insert(channelsToInsert)
         .select();
@@ -103,7 +103,7 @@ class ChannelController {
         });
       }
 
-      const { data: channels, error } = await getSupabase()
+      const { data: channels, error } = await getSupabaseAdmin()
         .from('user_channels')
         .select('id')
         .eq('user_id', userId)
