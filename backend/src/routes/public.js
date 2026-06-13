@@ -16,7 +16,8 @@ const { requireAuth } = require('../middleware/auth');
 
 /* Outils IA du site : réservés aux abonnés Pro/Business connectés */
 function requireProPlan(req, res, next) {
-  if (!['pro', 'business'].includes((req.user?.plan || '').toLowerCase())) {
+  const plan = (req.user?.plan || '').toLowerCase();
+  if (!['pro', 'business', 'diamant'].includes(plan)) {
     return res.status(403).json({
       error: 'Outil réservé aux abonnés Pro et Business. Passe à Pro pour y accéder !',
       code: 'UPGRADE_REQUIRED'
