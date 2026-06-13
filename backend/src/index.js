@@ -15,6 +15,9 @@ const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 
+/* ── Proxy Railway : indispensable pour express-rate-limit (X-Forwarded-For) ── */
+app.set('trust proxy', 1);
+
 /* ── Supabase Admin Client ── */
 const supabase = createClient(
   process.env.SUPABASE_URL,

@@ -32,6 +32,7 @@ const aiLimiter = rateLimit({
   max: 60,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false, xForwardedForHeader: false },
   message: { error: 'Limite horaire atteinte, réessaie dans un moment.', code: 'RATE_LIMIT' }
 });
 
