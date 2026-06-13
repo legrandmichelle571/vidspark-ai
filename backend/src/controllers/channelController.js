@@ -40,14 +40,20 @@ class ChannelController {
         return res.status(400).json({ error: `Your plan allows a maximum of ${limit} channel(s)` });
       }
 
-      // Check if user already has channels locked
+      // Si l'utilisateur a déjà des chaînes, les supprimer pour les remplacer
+      // (Plan Free/Pro: 1 chaîne max, Plan Business: 5 max, Plan Diamant: 10 max)
       const { data: existingChannels } = await getSupabaseAdmin()
         .from('user_channels')
         .select('id')
         .eq('user_id', userId);
 
       if (existingChannels && existingChannels.length > 0) {
-         return res.status(403).json({ error: 'Channels are already selected and cannot be changed.' });
+        // Supprimer les anciennes chaînes pour permettre le changement
+        const { error: deleteError } = await getSupabaseAdmin()
+          .from('user_channels')
+          .delete()
+          .eq('user_id', userId);
+        if (deleteError) throw deleteError;
       }
 
       // Résoudre chaque entrée (lien / @handle / nom) en vrai Channel ID UC
