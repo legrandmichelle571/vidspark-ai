@@ -131,11 +131,12 @@ async function getKeywordIdeas(query) {
   } catch (e) { /* autocomplete optionnel */ }
 
   // Concurrence : moyenne des vues des meilleures vidéos sur ce mot-clé
-  let competition = 'faible', topAvgViews = 0, sampled = 0;
+  let competition = 'faible', topAvgViews = 0, topVph = 0, sampled = 0;
   try {
     const top = await searchVideos(query, 6);
     if (top && top.length > 0) {
       topAvgViews = Math.round(top.reduce((a, b) => a + b.views, 0) / top.length);
+      topVph = Math.round(top.reduce((a, b) => a + (b.views_per_hour || 0), 0) / top.length);
       sampled = top.length;
       competition = topAvgViews > 500000 ? 'forte' : topAvgViews > 50000 ? 'moyenne' : 'faible';
     } else {
@@ -148,7 +149,28 @@ async function getKeywordIdeas(query) {
     competition = 'faible';
   }
 
-  return { query, suggestions, competition, top_avg_views: topAvgViews, sampled };
+  const difficulty = keywordDifficulty(topAvgViews, topVph);
+
+  return { query, suggestions, competition, difficulty, top_avg_views: topAvgViews, top_vph: topVph, sampled };
+}
+
+/* Score de difficulté SEO d'un mot-clé : 0–100 (+ label Facile/Moyen/Difficile/Très difficile)
+   Basé sur les vues moyennes du top (échelle log) ajustées par la fraîcheur (vues/heure). */
+function keywordDifficulty(topAvgViews, topVph) {
+  // Base : log des vues moyennes du top — 1k≈39, 10k≈52, 100k≈65, 1M≈78, 10M≈91
+  let score = topAvgViews > 0 ? Math.round(Math.log10(topAvgViews + 1) * 13) : 8;
+  // Ajustement fraîcheur : un top très actif = concurrence plus dure
+  if (topVph > 2000) score += 8;
+  else if (topVph < 100) score -= 8;
+  score = Math.max(1, Math.min(100, score));
+
+  let label, color, advice;
+  if (score < 35)      { label = 'Facile';          color = '#22c55e'; advice = 'Bonne opportunité — tu peux ranker rapidement.'; }
+  else if (score < 55) { label = 'Moyen';           color = '#f5b301'; advice = 'Faisable avec un bon titre, une bonne miniature et du SEO.'; }
+  else if (score < 75) { label = 'Difficile';       color = '#f7941d'; advice = 'Concurrence forte — vise un angle plus précis (longue traîne).'; }
+  else                 { label = 'Très difficile';  color = '#ef4444'; advice = 'Dominé par de grosses chaînes — cherche un mot-clé de niche.'; }
+
+  return { score, label, color, advice };
 }
 
 /* Vidéos qui "tendent" : publiées récemment (<14j) et fortes vues/heure dans la niche */
