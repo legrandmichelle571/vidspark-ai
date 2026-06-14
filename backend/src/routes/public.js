@@ -4,7 +4,7 @@
  */
 const router = require('express').Router();
 const rateLimit = require('express-rate-limit');
-const { getVideoStats, getVideoComments } = require('../utils/youtube');
+const { getVideoStats, getVideoComments, getKeywordIdeas } = require('../utils/youtube');
 const {
   generateTags, generateTitles, generateDescription,
   compareTitles, compareThumbnails, analyzeThumbnail,
@@ -73,6 +73,20 @@ router.get('/video', async (req, res) => {
   } catch (err) {
     console.error('[PUBLIC/VIDEO]', err.message);
     res.status(500).json({ error: 'Service indisponible', details: err.message });
+  }
+});
+
+/* POST /api/public/ai/keyword-difficulty {query} → score de difficulté de ranking
+   PUBLIC (lead magnet SEO, sans login) + rate-limité pour protéger le quota YouTube. */
+router.post('/ai/keyword-difficulty', aiLimiter, async (req, res) => {
+  try {
+    const { query } = req.body;
+    if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Mot-clé requis (2 caractères min)' });
+    const ideas = await getKeywordIdeas(query.trim().slice(0, 100));
+    res.json(ideas);
+  } catch (err) {
+    console.error('[PUBLIC/KW-DIFF]', err.message);
+    res.status(500).json({ error: 'Service indisponible' });
   }
 });
 
