@@ -333,16 +333,98 @@ router.post('/ai/comment-analyzer', requireAuth, requireProPlan, aiLimiter, asyn
 router.get('/ads', async (req, res) => {
   try {
     const supabase = req.app.locals.supabase;
-    const keys = ['ad_home', 'ad_home_left', 'ad_home_right', 'ad_dashboard', 'ad_dashboard_right'];
+    const keys = ['ad_home', 'ad_home_left', 'ad_home_right', 'ad_dashboard', 'ad_dashboard_right', 'promo_video'];
     const { data } = await supabase.from('site_config').select('key,value').in('key', keys);
     const out = {};
     (data || []).forEach(r => { out[r.key] = r.value; });
     res.json({
       home: out.ad_home || '', home_left: out.ad_home_left || '', home_right: out.ad_home_right || '',
-      dashboard: out.ad_dashboard || '', dashboard_right: out.ad_dashboard_right || ''
+      dashboard: out.ad_dashboard || '', dashboard_right: out.ad_dashboard_right || '',
+      promo_video: out.promo_video || ''
     });
   } catch (e) {
     res.json({ home: '', dashboard: '' });
+  }
+});
+
+/* Anti-spam : 5 messages / heure / IP */
+const contactLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { trustProxy: false, xForwardedForHeader: false },
+  message: { error: 'Trop de messages envoyés, réessaie dans une heure.', code: 'RATE_LIMIT' }
+});
+
+/* POST /api/public/contact → reçoit le formulaire de contact du site.
+   Envoie un email via Resend si RESEND_API_KEY est configurée, et
+   stocke le message dans Supabase (best-effort). Si aucun canal n'est
+   configuré, renvoie 503 EMAIL_NOT_CONFIGURED → le front bascule sur mailto. */
+router.post('/contact', contactLimiter, async (req, res) => {
+  try {
+    const { nom, email, sujet, plan, message, rgpd } = req.body || {};
+
+    /* Validation */
+    if (!nom || String(nom).trim().length < 2)        return res.status(400).json({ error: 'Nom requis' });
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(email))) return res.status(400).json({ error: 'Email invalide' });
+    if (!message || String(message).trim().length < 20) return res.status(400).json({ error: 'Message trop court (20 caractères min)' });
+    if (rgpd !== true && rgpd !== 'true' && rgpd !== 'on') return res.status(400).json({ error: 'Consentement RGPD requis' });
+
+    const clean = s => String(s || '').slice(0, 5000).replace(/[<>]/g, '');
+    const payload = {
+      nom: clean(nom), email: clean(email), sujet: clean(sujet),
+      plan: clean(plan), message: clean(message)
+    };
+
+    let sent = false, stored = false;
+
+    /* 1) Envoi email via Resend (si configuré) */
+    const resendKey = process.env.RESEND_API_KEY;
+    /* CONTACT_TO peut contenir plusieurs adresses séparées par des virgules */
+    const to = (process.env.CONTACT_TO || 'contact@vidsparkpro.com,support@vidsparkpro.com')
+      .split(',').map(s => s.trim()).filter(Boolean);
+    const from = process.env.CONTACT_FROM || 'VidSpark AI <onboarding@resend.dev>';
+    if (resendKey) {
+      try {
+        const r = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from, to, reply_to: payload.email,
+            subject: `[Contact] ${payload.sujet || 'Nouveau message'} — ${payload.nom}`,
+            text:
+`Nom    : ${payload.nom}
+Email  : ${payload.email}
+Sujet  : ${payload.sujet}
+Plan   : ${payload.plan}
+
+${payload.message}`
+          })
+        });
+        sent = r.ok;
+        if (!r.ok) console.error('[CONTACT/RESEND]', await r.text());
+      } catch (e) { console.error('[CONTACT/RESEND]', e.message); }
+    }
+
+    /* 2) Stockage Supabase (best-effort, n'échoue pas la requête) */
+    try {
+      const supabase = req.app.locals.supabase;
+      const { error } = await supabase.from('contact_messages').insert({
+        name: payload.nom, email: payload.email, subject: payload.sujet,
+        plan: payload.plan, message: payload.message
+      });
+      stored = !error;
+      if (error) console.error('[CONTACT/STORE]', error.message);
+    } catch (e) { console.error('[CONTACT/STORE]', e.message); }
+
+    if (!sent && !stored) {
+      return res.status(503).json({ error: 'Email non configuré', code: 'EMAIL_NOT_CONFIGURED' });
+    }
+    res.json({ ok: true, sent, stored });
+  } catch (err) {
+    console.error('[CONTACT]', err.message);
+    res.status(500).json({ error: 'Envoi impossible' });
   }
 });
 
