@@ -124,7 +124,7 @@ async function getChannelAudit(channelId) {
 /* Idées de mots-clés (autocomplétion YouTube) + estimation de concurrence */
 /* Cache mémoire des analyses de mot-clé (limite la consommation de quota YouTube). */
 const _kwCache = new Map();
-const _KW_TTL = 6 * 60 * 60 * 1000; // 6 h
+const _KW_TTL = 24 * 60 * 60 * 1000; // 24 h (économise le quota YouTube)
 
 /* Analyse un mot-clé : concurrence, difficulté, vues moyennes du top. (1 recherche YouTube) */
 async function analyzeKeyword(kw) {
@@ -160,7 +160,7 @@ async function getKeywordIdeas(query) {
   const main = await analyzeKeyword(query);
 
   // Enrichit les 6 meilleures suggestions (hors doublon du mot principal) avec leur propre difficulté
-  const toAnalyze = suggestions.filter(s => s.trim().toLowerCase() !== query.trim().toLowerCase()).slice(0, 6);
+  const toAnalyze = suggestions.filter(s => s.trim().toLowerCase() !== query.trim().toLowerCase()).slice(0, 4);
   const analyzed = await Promise.all(toAnalyze.map(s => analyzeKeyword(s).catch(() => null)));
   const related = analyzed.filter(Boolean);
 
