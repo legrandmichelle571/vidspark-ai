@@ -122,6 +122,32 @@ async function getChannelAudit(channelId) {
 }
 
 /* Idées de mots-clés (autocomplétion YouTube) + estimation de concurrence */
+/* Cache mémoire des analyses de mot-clé (limite la consommation de quota YouTube). */
+const _kwCache = new Map();
+const _KW_TTL = 6 * 60 * 60 * 1000; // 6 h
+
+/* Analyse un mot-clé : concurrence, difficulté, vues moyennes du top. (1 recherche YouTube) */
+async function analyzeKeyword(kw) {
+  const key = kw.trim().toLowerCase();
+  const hit = _kwCache.get(key);
+  if (hit && Date.now() - hit.at < _KW_TTL) return hit.data;
+
+  let topAvgViews = 0, topVph = 0, sampled = 0, competition = 'faible';
+  try {
+    const top = await searchVideos(kw, 6);
+    if (top && top.length > 0) {
+      topAvgViews = Math.round(top.reduce((a, b) => a + b.views, 0) / top.length);
+      topVph = Math.round(top.reduce((a, b) => a + (b.views_per_hour || 0), 0) / top.length);
+      sampled = top.length;
+      competition = topAvgViews > 500000 ? 'forte' : topAvgViews > 50000 ? 'moyenne' : 'faible';
+    }
+  } catch (e) { console.error('[KW] Search failed:', e.message); }
+
+  const data = { keyword: kw, competition, difficulty: keywordDifficulty(topAvgViews, topVph), top_avg_views: topAvgViews, top_vph: topVph, sampled };
+  _kwCache.set(key, { at: Date.now(), data });
+  return data;
+}
+
 async function getKeywordIdeas(query) {
   let suggestions = [];
   try {
@@ -130,28 +156,24 @@ async function getKeywordIdeas(query) {
     suggestions = (j[1] || []).slice(0, 12);
   } catch (e) { /* autocomplete optionnel */ }
 
-  // Concurrence : moyenne des vues des meilleures vidéos sur ce mot-clé
-  let competition = 'faible', topAvgViews = 0, topVph = 0, sampled = 0;
-  try {
-    const top = await searchVideos(query, 6);
-    if (top && top.length > 0) {
-      topAvgViews = Math.round(top.reduce((a, b) => a + b.views, 0) / top.length);
-      topVph = Math.round(top.reduce((a, b) => a + (b.views_per_hour || 0), 0) / top.length);
-      sampled = top.length;
-      competition = topAvgViews > 500000 ? 'forte' : topAvgViews > 50000 ? 'moyenne' : 'faible';
-    } else {
-      // Si pas de résultats, on considère que c'est une faible concurrence (niche)
-      competition = 'faible';
-    }
-  } catch (e) {
-    console.error('[KW] Search failed:', e.message);
-    // Par défaut faible concurrence si erreur
-    competition = 'faible';
-  }
+  // Analyse du mot-clé principal
+  const main = await analyzeKeyword(query);
 
-  const difficulty = keywordDifficulty(topAvgViews, topVph);
+  // Enrichit les 6 meilleures suggestions (hors doublon du mot principal) avec leur propre difficulté
+  const toAnalyze = suggestions.filter(s => s.trim().toLowerCase() !== query.trim().toLowerCase()).slice(0, 6);
+  const analyzed = await Promise.all(toAnalyze.map(s => analyzeKeyword(s).catch(() => null)));
+  const related = analyzed.filter(Boolean);
 
-  return { query, suggestions, competition, difficulty, top_avg_views: topAvgViews, top_vph: topVph, sampled };
+  return {
+    query,
+    competition: main.competition,
+    difficulty: main.difficulty,
+    top_avg_views: main.top_avg_views,
+    top_vph: main.top_vph,
+    sampled: main.sampled,
+    suggestions,            // liste brute (rétro-compat)
+    related                 // liste enrichie : [{keyword, difficulty, competition, top_avg_views}]
+  };
 }
 
 /* Score de difficulté SEO d'un mot-clé : 0–100 (+ label Facile/Moyen/Difficile/Très difficile)
