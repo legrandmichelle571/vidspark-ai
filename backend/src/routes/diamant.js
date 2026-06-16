@@ -11,7 +11,7 @@
  */
 const express = require('express');
 const { requireAuth, requirePro } = require('../middleware/auth');
-const { getChannelAudit, searchVideos, getVideoStats, getKeywordIdeas, getTrendingVideos, getVideoComments } = require('../utils/youtube');
+const { getChannelAudit, searchVideos, getVideoStats, getKeywordIdeas, getTrendingVideos, getVideoComments, resolveChannelId } = require('../utils/youtube');
 const { analyzeComments, titleDoctor, generateTags, generateCompetitorInsights, generateTitles, generateDescription, compareTitles, generateVideoIdeas, translateMetadata } = require('../utils/aiClient');
 
 /* Extrait l'ID d'une vidéo depuis une URL YouTube ou renvoie la valeur telle quelle */
@@ -97,8 +97,22 @@ router.post('/channel-audit', requireAuth, requireTier('diamant'), async (req, r
   try {
     const supabase = req.app.locals.supabase;
 
-    // channelId fourni (ID ou URL), sinon on prend la chaîne principale de l'utilisateur
-    let channelId = req.body.channelId ? extractChannelId(req.body.channelId) : null;
+    // channelId fourni (ID, URL, @handle, /c/, /user/…), sinon chaîne principale de l'utilisateur
+    let channelId = null;
+    if (req.body.channelId) {
+      const raw = String(req.body.channelId).trim();
+      const uc = raw.match(/channel\/(UC[A-Za-z0-9_-]{22})/) || raw.match(/(UC[A-Za-z0-9_-]{22})/);
+      if (uc) {
+        channelId = uc[1];
+      } else {
+        // @handle, /c/Nom, /user/Nom, nom brut → on résout vers un ID UC...
+        const resolved = await resolveChannelId(raw);
+        if (!resolved?.id) {
+          return res.status(404).json({ error: 'Chaîne introuvable. Vérifie le @handle, l\'URL ou l\'ID (UC...) de la chaîne.' });
+        }
+        channelId = resolved.id;
+      }
+    }
     if (!channelId) {
       const { data: chans } = await supabase
         .from('user_channels')
