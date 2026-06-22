@@ -56,8 +56,9 @@ class ChannelController {
         if (deleteError) throw deleteError;
       }
 
-      // Résoudre chaque entrée (lien / @handle / nom) en vrai Channel ID UC
-      const resolved = [];
+      // Résoudre chaque entrée (lien / @handle / nom) en vrai Channel ID UC,
+      // puis dédupliquer par ID (un même UC ne doit pas être inséré deux fois).
+      const resolvedById = new Map();
       for (const ch of channels) {
         const raw = ch.youtube_channel_id;
         let r = null;
@@ -71,15 +72,18 @@ class ChannelController {
           console.warn(`[selectChannels] Chaîne introuvable : ${raw}`);
           return res.status(400).json({ error: `Chaîne introuvable : ${raw}. Vérifie le lien de ta chaîne.` });
         }
-        resolved.push(r);
+        if (!resolvedById.has(r.id)) {
+          resolvedById.set(r.id, { resolved: r, original: ch });
+        }
       }
+      const entries = Array.from(resolvedById.values());
 
       // Insert new channels
-      const channelsToInsert = resolved.map((r, i) => ({
+      const channelsToInsert = entries.map(({ resolved: r, original: ch }, i) => ({
         user_id: userId,
         youtube_channel_id: r.id,
-        channel_name: (channels[i].channel_name && !/^Chaîne |^My Channel$/.test(channels[i].channel_name))
-          ? channels[i].channel_name
+        channel_name: (ch.channel_name && !/^Chaîne |^My Channel$/.test(ch.channel_name))
+          ? ch.channel_name
           : (r.name || 'My Channel'),
         is_primary: i === 0 // Première chaîne = principale
       }));
@@ -89,7 +93,10 @@ class ChannelController {
         .insert(channelsToInsert)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('[selectChannels] Insert error:', error);
+        return res.status(400).json({ error: error.message || 'Could not save channels' });
+      }
 
       res.json({ success: true, data });
     } catch (err) {
