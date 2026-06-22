@@ -307,8 +307,12 @@ async function getTranscript(videoId) {
    "youtube.com/@handle", "youtube.com/c/Nom", "youtube.com/user/Nom", ou un nom brut.
    Retourne { id, name } ou null si introuvable. */
 async function resolveChannelId(input) {
-  const s = (input || '').trim();
+  let s = (input || '').trim();
   if (!s) return null;
+
+  // Préfixe "handle:Nom" (envoyé par l'extension) → on le ramène à "@Nom"
+  const hp = s.match(/^handle:(.+)$/i);
+  if (hp) s = '@' + hp[1].replace(/^@/, '');
 
   // 0) Lien d'une VIDÉO (video:ID, watch?v=, youtu.be/, /shorts/, /live/) → chaîne de la vidéo
   const vm = s.match(/^video:([a-zA-Z0-9_-]{11})$/)
