@@ -268,26 +268,41 @@ router.get('/payments', async (req, res) => {
 router.delete('/users/:id', async (req, res) => {
   try {
     const supabase = req.app.locals.supabase;
+    const id = req.params.id;
 
-    /* Récupérer auth_id */
+    /* Récupérer l'utilisateur */
     const { data: user } = await supabase
-      .from('users').select('auth_id,email').eq('id', req.params.id).single();
+      .from('users').select('auth_id,email').eq('id', id).single();
 
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    /* Supprimer auth user (cascade) */
-    await supabase.auth.admin.deleteUser(user.auth_id);
+    /* 1) Supprimer le compte Supabase Auth SEULEMENT s'il existe (best-effort) */
+    if (user.auth_id) {
+      try { await supabase.auth.admin.deleteUser(user.auth_id); }
+      catch (e) { console.error('[delete user] auth deleteUser:', e.message); }
+    }
 
-    await supabase.from('admin_logs').insert({
-      admin_id:       req.user.id,
-      action:         'delete_user',
-      target_user_id: req.params.id,
-      details:        { deleted_email: user.email }
-    });
+    /* 2) Supprimer les lignes liées puis la ligne users (fiable, sans dépendre d'une cascade) */
+    for (const t of ['activation_devices', 'subscriptions', 'analysis_history', 'payments']) {
+      try { await supabase.from(t).delete().eq('user_id', id); } catch (_) {}
+    }
+    const { error: delErr } = await supabase.from('users').delete().eq('id', id);
+    if (delErr) return res.status(400).json({ error: 'DB delete: ' + delErr.message });
+
+    /* 3) Log (ne bloque pas la suppression ; admin_id peut être null pour la console) */
+    try {
+      await supabase.from('admin_logs').insert({
+        admin_id:       req.user?.id || null,
+        action:         'delete_user',
+        target_user_id: id,
+        details:        { deleted_email: user.email }
+      });
+    } catch (_) {}
 
     res.json({ message: 'User deleted' });
   } catch (err) {
-    res.status(500).json({ error: 'Delete failed' });
+    console.error('[delete user]', err);
+    res.status(500).json({ error: 'Delete failed: ' + (err.message || err) });
   }
 });
 
