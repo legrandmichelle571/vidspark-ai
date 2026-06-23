@@ -452,7 +452,7 @@ router.post('/ai/thumbnail', async (req, res) => {
 /* ── Génération de miniature (Pro=30/mois, Business=50/mois, Free=bloqué) ── */
 router.post('/ai/thumbnail-generate', async (req, res) => {
   try {
-    const { activation_id, activation_secret, title = '', prompt = '' } = req.body;
+    const { activation_id, activation_secret, title = '', prompt = '', no_text = false } = req.body;
     if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
     const supabase = req.app.locals.supabase;
     const ctx = await getCodeUser(supabase, activation_id, activation_secret);
@@ -473,7 +473,10 @@ router.post('/ai/thumbnail-generate', async (req, res) => {
       return res.status(429).json({ error: `Quota mensuel atteint (${used}/${limit} miniatures).`, code: 'QUOTA_REACHED', used, limit });
     }
 
-    const fullPrompt = `YouTube thumbnail, 16:9, ultra eye-catching, vivid colors, high contrast, bold readable text, cinematic, for a video titled "${title}". ${prompt}`.trim();
+    // no_text = fond seul SANS texte (l'IA d'image ne sait pas écrire, surtout en arabe/RTL → le texte est superposé côté client)
+    const fullPrompt = no_text
+      ? `YouTube thumbnail BACKGROUND, 16:9, ultra eye-catching, vivid colors, high contrast, cinematic, dramatic lighting. ${prompt}. IMPORTANT: absolutely NO text, NO letters, NO words, NO writing, NO captions, NO logos — clean image only, leave empty space for a text overlay.`.trim()
+      : `YouTube thumbnail, 16:9, ultra eye-catching, vivid colors, high contrast, bold readable text, cinematic, for a video titled "${title}". ${prompt}`.trim();
     const img = await generateThumbnailImage(fullPrompt);
 
     // Incrémenter le quota
