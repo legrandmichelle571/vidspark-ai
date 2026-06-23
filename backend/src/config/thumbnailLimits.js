@@ -1,11 +1,12 @@
 /**
  * Quota MENSUEL de génération de miniatures par plan.
- * Gratuit = 0 (bloqué), Pro = 30/mois, Business = 50/mois.
+ * Gratuit = 0 (bloqué), Pro = 30/mois, Business = 50/mois, Diamant = 200/mois.
  */
 const THUMBNAIL_LIMITS = {
   free:     0,
   pro:      30,
-  business: 50
+  business: 50,
+  diamant:  200
 };
 
 function getThumbnailLimit(plan) {
