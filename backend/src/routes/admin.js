@@ -347,6 +347,48 @@ router.put('/config/:key', async (req, res) => {
   res.json({ message: 'saved' });
 });
 
+/* ── Données pour graphiques : courbes 30j + répartitions ── */
+router.get('/stats/charts', async (req, res) => {
+  try {
+    const supabase = req.app.locals.supabase;
+    const d30 = new Date(Date.now() - 30 * 864e5).toISOString();
+    const dayKey = (d) => new Date(d).toISOString().slice(0, 10);
+
+    const [usersRes, analysisRes, payRes] = await Promise.all([
+      supabase.from('users').select('created_at,country,language,plan'),
+      supabase.from('analysis_history').select('created_at').gte('created_at', d30),
+      supabase.from('payments').select('amount,created_at').eq('status', 'succeeded').gte('created_at', d30)
+    ]);
+
+    const users = usersRes.data || [];
+    const days = [];
+    for (let i = 29; i >= 0; i--) days.push(dayKey(Date.now() - i * 864e5));
+
+    const bucket = (rows, getDate, getVal) => {
+      const m = {};
+      (rows || []).forEach(r => { const k = dayKey(getDate(r)); m[k] = (m[k] || 0) + (getVal ? getVal(r) : 1); });
+      return days.map(d => ({ date: d, value: Math.round((m[d] || 0) * 100) / 100 }));
+    };
+    const agg = (field) => {
+      const m = {};
+      users.forEach(u => { const v = u[field] || '—'; m[v] = (m[v] || 0) + 1; });
+      return Object.entries(m).map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count);
+    };
+
+    res.json({
+      signups:    bucket(users.filter(u => u.created_at >= d30), u => u.created_at),
+      analyses:   bucket(analysisRes.data, a => a.created_at),
+      revenue:    bucket(payRes.data, p => p.created_at, p => parseFloat(p.amount || 0)),
+      by_country: agg('country').slice(0, 8),
+      by_language: agg('language').slice(0, 8),
+      by_plan:    agg('plan')
+    });
+  } catch (err) {
+    console.error('[stats/charts]', err);
+    res.status(500).json({ error: 'Charts fetch failed' });
+  }
+});
+
 module.exports = router;
 
 
