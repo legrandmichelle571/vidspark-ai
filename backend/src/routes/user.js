@@ -332,6 +332,74 @@ router.get('/history', requireAuth, async (req, res) => {
   }
 });
 
+/* ── Coach IA : score de chaîne + plan d'action priorisé (data-driven) ── */
+router.get('/coach', requireAuth, async (req, res) => {
+  try {
+    const supabase = req.app.locals.supabase;
+    const { data: rows } = await supabase
+      .from('analysis_history')
+      .select('video_id,title,score_seo,score_viral,score_global,created_at')
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: false })
+      .limit(12);
+
+    const n = (x) => { const v = Number(x); return Number.isFinite(v) ? Math.round(v) : 0; };
+    const vids = (rows || []).map(r => {
+      const seo = n(r.score_seo), viral = n(r.score_viral);
+      const score = r.score_global != null ? n(r.score_global) : Math.round((seo + viral) / 2);
+      return { video_id: r.video_id, title: r.title || '', seo, viral, score, created_at: r.created_at };
+    });
+
+    if (!vids.length) {
+      return res.json({
+        has_data: false, score: 0, potential: 0, points: 0, main_problem: 'new', videos: [],
+        actions: [
+          { key: 'analyze', icon: '🎬', gain: 22, priority: 'red',    goto: 'analyze' },
+          { key: 'thumb',   icon: '🎨', gain: 14, priority: 'amber',  goto: 'thumbnail' },
+          { key: 'ideas',   icon: '💡', gain: 8,  priority: 'yellow', goto: 'ideas' }
+        ]
+      });
+    }
+
+    const now = Date.now();
+    let wsum = 0, swsum = 0, seoSum = 0, viralSum = 0;
+    vids.forEach(v => {
+      const weeks = Math.max(0, (now - new Date(v.created_at).getTime()) / (7 * 864e5));
+      const w = 1 / (1 + weeks);
+      wsum += w; swsum += v.score * w; seoSum += v.seo; viralSum += v.viral;
+    });
+    const score = Math.round(swsum / (wsum || 1));
+    const avgSeo = Math.round(seoSum / vids.length);
+    const avgViral = Math.round(viralSum / vids.length);
+    let cadenceDays = null;
+    if (vids.length >= 2) cadenceDays = Math.round((new Date(vids[0].created_at) - new Date(vids[1].created_at)) / 864e5);
+
+    const A = [];
+    if (avgSeo < 78)   A.push({ key: 'seo',     icon: '✍️', gain: Math.max(4, Math.round((90 - avgSeo) * 0.45)), goto: 'analyze' });
+    if (score < 85)    A.push({ key: 'thumb',   icon: '🎨', gain: 12, goto: 'thumbnail' });
+    if (avgViral < 78) A.push({ key: 'viral',   icon: '📱', gain: Math.max(4, Math.round((90 - avgViral) * 0.25)), goto: 'shorts' });
+    if (cadenceDays != null && cadenceDays > 10) A.push({ key: 'cadence', icon: '📅', gain: 8, goto: 'ideas' });
+    if (!A.length) A.push({ key: 'grow', icon: '🚀', gain: 6, goto: 'trending', opportunity: true });
+
+    A.sort((a, b) => b.gain - a.gain);
+    A.forEach(a => { a.priority = a.opportunity ? 'green' : a.gain >= 15 ? 'red' : a.gain >= 8 ? 'amber' : 'yellow'; });
+
+    const points = A.reduce((s, a) => s + a.gain, 0);
+    const potential = Math.min(95, score + points);
+    const top = A[0] ? A[0].key : 'grow';
+    const main_problem = top === 'seo' ? 'seo' : top === 'thumb' ? 'ctr' : top === 'cadence' ? 'cadence' : top === 'grow' ? 'healthy' : 'viral';
+
+    res.json({
+      has_data: true, score, potential, points,
+      avg_seo: avgSeo, avg_viral: avgViral, cadence_days: cadenceDays,
+      main_problem, videos: vids.slice(0, 5), actions: A.slice(0, 4)
+    });
+  } catch (err) {
+    console.error('[USER/COACH]', err.message);
+    res.status(500).json({ error: 'Coach unavailable' });
+  }
+});
+
 /* ── Supprimer une analyse ── */
 router.delete('/history/:id', requireAuth, async (req, res) => {
   try {
