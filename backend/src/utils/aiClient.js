@@ -844,4 +844,33 @@ async function generateThumbnailImage(prompt) {
   return { base64: buf.toString('base64'), mime: r.headers.get('content-type') || 'image/jpeg' };
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends };
+/* Génère 3 CONCEPTS de miniature (brief texte structuré, pas une image) */
+async function thumbnailIdeas(title, niche = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const nicheLine = niche ? `Niche/thématique : ${niche}.` : '';
+  const prompt = `Tu es directeur artistique de miniatures YouTube à très fort taux de clic (CTR).
+Pour une vidéo intitulée : "${title}". ${nicheLine}
+Génère 3 CONCEPTS de miniature DISTINCTS, chacun ciblant une émotion différente (ex : curiosité, choc, désir).
+Chaque concept est un BRIEF actionnable qu'un créateur peut exécuter (Canva, Photoshop, designer), PAS une image.
+
+Réponds UNIQUEMENT en JSON valide :
+{
+  "concepts": [
+    {
+      "emotion": "<émotion ciblée>",
+      "text": "<texte à mettre sur la miniature, 2 à 4 mots MAX, percutant>",
+      "palette": ["#RRGGBB", "#RRGGBB", "#RRGGBB"],
+      "focal_point": "<élément visuel central, ex : visage choqué à droite>",
+      "face": { "expression": "<expression du visage>", "placement": "<gauche|droite|centre>" },
+      "style": "<style visuel, ex : contraste élevé, flèche rouge, gros plan>",
+      "background": "<idée de fond>",
+      "image_prompt": "<prompt EN ANGLAIS pour générer le fond via une IA d'image, 16:9>",
+      "justification": "<pourquoi ce concept maximise le CTR, 1 phrase>"
+    }
+  ]
+}
+Le texte de la miniature doit rester lisible sur mobile en petit. 3 concepts variés et concrets. Tout (sauf les codes couleur et image_prompt) en ${langName}. Sois CONCIS pour garder un JSON complet et valide.`;
+  return geminiJson(prompt, 1600);
+}
+
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends };

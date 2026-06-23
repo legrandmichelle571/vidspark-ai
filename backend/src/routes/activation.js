@@ -340,7 +340,7 @@ router.post('/ai/competitor', async (req, res) => {
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
 const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments, getChannelVideos, getTrendingVideos } = require('../utils/youtube');
-const { analyzeThumbnail, generateThumbnailImage, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends } = require('../utils/aiClient');
+const { analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends } = require('../utils/aiClient');
 const { getThumbnailLimit } = require('../config/thumbnailLimits');
 
 router.post('/youtube/video', async (req, res) => {
@@ -486,6 +486,33 @@ router.post('/ai/thumbnail-generate', async (req, res) => {
   } catch (err) {
     console.error('[AI/THUMB-GEN]', err.message);
     res.status(500).json({ error: 'Génération de miniature indisponible', details: err.message });
+  }
+});
+
+/* ── Concepts de miniature IA — brief texte (Pro/Business ; Free = 1 aperçu) ── */
+router.post('/ai/thumbnail-ideas', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, title, niche = '', language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
+    if (!title) return res.status(400).json({ error: 'Titre requis' });
+
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+
+    const result = await thumbnailIdeas(title, niche, language);
+
+    // FREE = aperçu : 1 concept visible, les autres verrouillés (hook de conversion)
+    if (!requirePaidPlan(ctx.plan)) {
+      const all = result.concepts || [];
+      return res.json({ concepts: all.slice(0, 1), preview: true, locked: Math.max(0, all.length - 1) });
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/THUMB-IDEAS]', err.message);
+    res.status(500).json({ error: 'Génération des concepts de miniature indisponible', details: err.message });
   }
 });
 
