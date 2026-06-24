@@ -389,9 +389,44 @@ router.get('/coach', requireAuth, async (req, res) => {
     const top = A[0] ? A[0].key : 'grow';
     const main_problem = top === 'seo' ? 'seo' : top === 'thumb' ? 'ctr' : top === 'cadence' ? 'cadence' : top === 'grow' ? 'healthy' : 'viral';
 
+    /* Progression immédiate : vidéos récentes vs précédentes (sans DB) */
+    let trend = null;
+    if (vids.length >= 4) {
+      const half = Math.min(5, Math.floor(vids.length / 2));
+      const recent = vids.slice(0, half), older = vids.slice(half, half * 2);
+      if (older.length) {
+        const avgR = recent.reduce((s, v) => s + v.score, 0) / recent.length;
+        const avgO = older.reduce((s, v) => s + v.score, 0) / older.length;
+        trend = Math.round(avgR - avgO);
+      }
+    }
+
+    /* Historique persistant (optionnel : table coach_score_history — sinon ignoré) */
+    let history = [], weekly_delta = null;
+    try {
+      const { data: last } = await supabase
+        .from('coach_score_history').select('score,created_at')
+        .eq('user_id', req.user.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
+      const stale = !last || (Date.now() - new Date(last.created_at).getTime()) > 20 * 3600 * 1000;
+      if (stale) await supabase.from('coach_score_history').insert({ user_id: req.user.id, score, potential });
+
+      const d30 = new Date(Date.now() - 30 * 864e5).toISOString();
+      const { data: hist } = await supabase
+        .from('coach_score_history').select('score,created_at')
+        .eq('user_id', req.user.id).gte('created_at', d30).order('created_at', { ascending: true });
+      history = (hist || []).map(h => ({ date: h.created_at, score: n(h.score) }));
+      if (history.length >= 2) {
+        const target = Date.now() - 7 * 864e5;
+        let ref = history[0];
+        for (const h of history) { if (new Date(h.date).getTime() <= target) ref = h; }
+        weekly_delta = score - ref.score;
+      }
+    } catch (e) { /* table absente → le trend prend le relais */ }
+
     res.json({
       has_data: true, score, potential, points,
       avg_seo: avgSeo, avg_viral: avgViral, cadence_days: cadenceDays,
+      trend, weekly_delta, history,
       main_problem, videos: vids.slice(0, 5), actions: A.slice(0, 4)
     });
   } catch (err) {
