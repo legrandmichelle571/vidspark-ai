@@ -139,6 +139,16 @@ async function geminiJson(prompt, maxTokens) {
   throw lastErr;
 }
 
+/* Texte IA brut (JSON string) : Cloudflare Workers AI d'abord (gratuit), Gemini en secours.
+   Même préférence de fournisseur que geminiJson, mais renvoie le TEXTE (l'appelant parse). */
+async function callTextAI(prompt, maxTokens = 1200) {
+  if (process.env.CF_ACCOUNT_ID && process.env.CF_AI_TOKEN) {
+    try { return await callCloudflareText(prompt, maxTokens); }
+    catch (e) { /* on bascule sur Gemini */ }
+  }
+  return await callGemini(prompt, maxTokens);
+}
+
 const LANG_NAMES = {
   fr:'français', en:'english', ar:'arabe', es:'espagnol',
   de:'allemand', ru:'russe', ja:'japonais', ko:'coréen', zh:'chinois',
@@ -902,4 +912,4 @@ Réponds UNIQUEMENT en JSON valide :
   return geminiJson(prompt, 1000);
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime };
+module.exports = { callGemini, callTextAI, callCloudflareText, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime };

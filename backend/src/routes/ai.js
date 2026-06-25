@@ -10,7 +10,7 @@
 const router = require('express').Router();
 const { requireAuth, requirePro, checkQuota, checkTitlesQuota } = require('../middleware/auth');
 const rateLimit = require('express-rate-limit');
-const { callGemini } = require('../utils/aiClient');
+const { callTextAI } = require('../utils/aiClient');
 
 /* Rate limit global : 10 appels IA / minute */
 const aiRateLimit = rateLimit({
@@ -20,11 +20,11 @@ const aiRateLimit = rateLimit({
 });
 
 /* ── Helper: appel IA ──
-   Le projet est standardisé sur Gemini (aiClient / GEMINI_API_KEY, utilisé par
-   l'extension). On délègue ici aussi pour éviter une dépendance Anthropic non
-   configurée sur Railway. Prompts et formats JSON inchangés → frontend identique. */
+   Même chaîne que le reste du projet : Cloudflare Workers AI d'abord (gratuit),
+   Gemini en secours. Renvoie du TEXTE (JSON) que les routes parsent ensuite.
+   Évite la dépendance Anthropic (non configurée sur Railway). */
 async function callAnthropic(prompt, maxTokens = 1000) {
-  return callGemini(prompt, maxTokens);
+  return callTextAI(prompt, maxTokens);
 }
 
 /* ── Rapport SEO IA ──────────────────────────────────────────────
