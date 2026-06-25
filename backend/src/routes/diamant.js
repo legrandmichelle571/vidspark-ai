@@ -353,4 +353,35 @@ router.post('/best-time', requireAuth, requireTier('pro'), async (req, res, next
   } catch (err) { console.error('[DIAMANT/BESTTIME]', err.message); next(err); }
 });
 
+/* Résout une URL/@handle/ID en stats de chaîne (audit YouTube) */
+async function auditFrom(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return null;
+  const uc = s.match(/(UC[A-Za-z0-9_-]{22})/);
+  const id = uc ? uc[1] : (await resolveChannelId(s))?.id;
+  return id ? await getChannelAudit(id) : null;
+}
+
+/* ── Extracteur de chaîne (Pro) ── */
+router.post('/channel-extract', requireAuth, requireTier('pro'), async (req, res, next) => {
+  try {
+    const raw = req.body.channelUrl || req.body.channelId || '';
+    if (!String(raw).trim()) return res.status(400).json({ error: 'URL ou ID de chaîne requis' });
+    const audit = await auditFrom(raw);
+    if (!audit) return res.status(404).json({ error: 'Chaîne introuvable. Vérifie le @handle, l\'URL ou l\'ID (UC...).' });
+    res.json(audit);
+  } catch (err) { console.error('[DIAMANT/EXTRACT]', err.message); next(err); }
+});
+
+/* ── Comparer deux chaînes (Pro) ── */
+router.post('/channel-compare', requireAuth, requireTier('pro'), async (req, res, next) => {
+  try {
+    const a = req.body.channelA || '', b = req.body.channelB || '';
+    if (!String(a).trim() || !String(b).trim()) return res.status(400).json({ error: 'Deux chaînes requises' });
+    const [ra, rb] = await Promise.all([auditFrom(a), auditFrom(b)]);
+    if (!ra || !rb) return res.status(404).json({ error: 'Une des deux chaînes est introuvable.' });
+    res.json({ a: ra, b: rb });
+  } catch (err) { console.error('[DIAMANT/COMPARE]', err.message); next(err); }
+});
+
 module.exports = router;
