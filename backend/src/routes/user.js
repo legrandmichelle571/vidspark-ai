@@ -46,6 +46,9 @@ async function resolveChannelId(input) {
   if (!/^https?:\/\//.test(url)) {
     url = 'https://www.youtube.com/' + url.replace(/^\//, '');
   }
+  // Normaliser : encode proprement les handles non-ASCII (arabe, etc.) dans le chemin
+  // → youtube.com/@شاهد… devient youtube.com/@%D8%B4… avant le fetch
+  try { url = new URL(url).href; } catch (e) {}
   try {
     const resp = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
     const html = await resp.text();
