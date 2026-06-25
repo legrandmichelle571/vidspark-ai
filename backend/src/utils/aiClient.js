@@ -873,4 +873,33 @@ Le texte de la miniature doit rester lisible sur mobile en petit. 3 concepts var
   return geminiJson(prompt, 1600);
 }
 
-module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends };
+/* Hashtags YouTube classés (larges / niche / tendance) */
+async function generateHashtags(title, language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const prompt = `Génère des hashtags YouTube optimisés pour la vidéo "${title}" en ${langName}.
+Réponds UNIQUEMENT en JSON valide :
+{
+  "broad": ["#hashtag", "..."],
+  "niche": ["#hashtag", "..."],
+  "trending": ["#hashtag", "..."]
+}
+5 hashtags par catégorie. "broad" = larges/populaires, "niche" = spécifiques au sujet, "trending" = tendance actuelle. Chaque hashtag commence par #, sans espace.`;
+  return geminiJson(prompt, 700);
+}
+
+/* Meilleurs créneaux de publication (heuristique IA selon niche/audience) */
+async function bestPublishTime(niche = '', region = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const prompt = `Tu es un analyste d'audience YouTube. Pour une chaîne dans la niche "${niche || 'généraliste'}" visant "${region || 'audience mondiale'}", recommande les meilleurs moments de publication.
+Réponds UNIQUEMENT en JSON valide :
+{
+  "summary": "<conseil global en ${langName}, 1-2 phrases>",
+  "slots": [
+    {"day": "<jour>", "time": "<heure locale, ex 19:00>", "why": "<raison courte en ${langName}>"}
+  ]
+}
+4 à 5 créneaux (meilleurs jours/heures, du plus au moins fort). Tout en ${langName}.`;
+  return geminiJson(prompt, 1000);
+}
+
+module.exports = { callGemini, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime };

@@ -12,7 +12,7 @@
 const express = require('express');
 const { requireAuth, requirePro } = require('../middleware/auth');
 const { getChannelAudit, searchVideos, getVideoStats, getKeywordIdeas, getTrendingVideos, getVideoComments, resolveChannelId } = require('../utils/youtube');
-const { analyzeComments, titleDoctor, generateTags, generateCompetitorInsights, generateTitles, generateDescription, compareTitles, generateVideoIdeas, translateMetadata, generateScript, generateContentPlan } = require('../utils/aiClient');
+const { analyzeComments, titleDoctor, generateTags, generateCompetitorInsights, generateTitles, generateDescription, compareTitles, generateVideoIdeas, translateMetadata, generateScript, generateContentPlan, generateHashtags, bestPublishTime } = require('../utils/aiClient');
 
 /* Extrait l'ID d'une vidéo depuis une URL YouTube ou renvoie la valeur telle quelle */
 function extractVideoId(v){
@@ -334,6 +334,23 @@ router.post('/competitor', requireAuth, requireTier('pro'), async (req, res, nex
     if (!title) return res.status(400).json({ error: 'title requis' });
     res.json(await generateCompetitorInsights(title, language));
   } catch (err) { console.error('[DIAMANT/COMPETITOR]', err.message); next(err); }
+});
+
+/* ── Générateur de hashtags (Pro) ── */
+router.post('/hashtags', requireAuth, requireTier('pro'), async (req, res, next) => {
+  try {
+    const { title = '', language = 'fr' } = req.body;
+    if (!title) return res.status(400).json({ error: 'title requis' });
+    res.json(await generateHashtags(title, language));
+  } catch (err) { console.error('[DIAMANT/HASHTAGS]', err.message); next(err); }
+});
+
+/* ── Meilleur moment de publication (Pro) ── */
+router.post('/best-time', requireAuth, requireTier('pro'), async (req, res, next) => {
+  try {
+    const { niche = '', region = '', language = 'fr' } = req.body;
+    res.json(await bestPublishTime(niche, region, language));
+  } catch (err) { console.error('[DIAMANT/BESTTIME]', err.message); next(err); }
 });
 
 module.exports = router;
