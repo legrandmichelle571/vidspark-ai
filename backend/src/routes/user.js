@@ -171,7 +171,7 @@ router.get('/me', requireAuth, async (req, res) => {
 
     res.json({
       id, email, name, avatar, plan, status, role,
-      quota_used, quota_limit, language, created_at,
+      quota_used, quota_limit: getLimits(plan).quota_limit, language, created_at,
       activation_id: codes[0]?.activation_id,
       activation_secret: codes[0]?.activation_secret,
       subscription_expiry: codes[0]?.subscription_expiry,
@@ -232,7 +232,7 @@ router.get('/plan', requireAuth, async (req, res) => {
   res.json({
     plan,
     quota_used:  req.user.quota_used,
-    quota_limit: req.user.quota_limit,
+    quota_limit: getLimits(plan).quota_limit,
     features: getFeaturesForPlan(plan)
   });
 });
@@ -303,7 +303,7 @@ router.post('/quota/increment', requireAuth, async (req, res) => {
     /* Relire la valeur réelle après l'incrément atomique */
     const { data: updated } = await supabase
       .from('users').select('quota_used').eq('id', req.user.id).single();
-    res.json({ quota_used: updated?.quota_used ?? req.user.quota_used + 1, quota_limit: req.user.quota_limit });
+    res.json({ quota_used: updated?.quota_used ?? req.user.quota_used + 1, quota_limit: getLimits(req.user.plan).quota_limit });
   } catch (err) {
     res.status(500).json({ error: 'Quota update failed' });
   }
