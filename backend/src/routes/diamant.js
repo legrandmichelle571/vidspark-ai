@@ -12,7 +12,7 @@
 const express = require('express');
 const { requireAuth, requirePro } = require('../middleware/auth');
 const { getChannelAudit, searchVideos, getVideoStats, getKeywordIdeas, getTrendingVideos, getVideoComments, resolveChannelId } = require('../utils/youtube');
-const { analyzeComments, titleDoctor, generateTags, generateCompetitorInsights, generateTitles, generateDescription, compareTitles, generateVideoIdeas, translateMetadata } = require('../utils/aiClient');
+const { analyzeComments, titleDoctor, generateTags, generateCompetitorInsights, generateTitles, generateDescription, compareTitles, generateVideoIdeas, translateMetadata, generateScript, generateContentPlan } = require('../utils/aiClient');
 
 /* Extrait l'ID d'une vidéo depuis une URL YouTube ou renvoie la valeur telle quelle */
 function extractVideoId(v){
@@ -308,6 +308,32 @@ router.post('/translate', requireAuth, requireTier('business'), async (req, res,
     if (!title) return res.status(400).json({ error: 'title requis' });
     res.json(await translateMetadata(title, description, targetLang, language));
   } catch (err) { console.error('[DIAMANT/TRANSLATE]', err.message); next(err); }
+});
+
+/* ── Générateur de script (Pro) ── */
+router.post('/script', requireAuth, requireTier('pro'), async (req, res, next) => {
+  try {
+    const { topic = '', niche = '', duration = '', language = 'fr' } = req.body;
+    if (!topic) return res.status(400).json({ error: 'topic requis' });
+    res.json(await generateScript(topic, niche, duration, language));
+  } catch (err) { console.error('[DIAMANT/SCRIPT]', err.message); next(err); }
+});
+
+/* ── Planificateur de contenu / 7 jours (Pro) ── */
+router.post('/planner', requireAuth, requireTier('pro'), async (req, res, next) => {
+  try {
+    const { niche = '', region = '', frequency = '', language = 'fr' } = req.body;
+    res.json(await generateContentPlan(niche, region, frequency, language));
+  } catch (err) { console.error('[DIAMANT/PLANNER]', err.message); next(err); }
+});
+
+/* ── Analyse concurrentielle (Pro) ── */
+router.post('/competitor', requireAuth, requireTier('pro'), async (req, res, next) => {
+  try {
+    const { title = '', language = 'fr' } = req.body;
+    if (!title) return res.status(400).json({ error: 'title requis' });
+    res.json(await generateCompetitorInsights(title, language));
+  } catch (err) { console.error('[DIAMANT/COMPETITOR]', err.message); next(err); }
 });
 
 module.exports = router;
