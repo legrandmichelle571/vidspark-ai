@@ -10,6 +10,7 @@
 const router = require('express').Router();
 const { requireAuth, requirePro, checkQuota, checkTitlesQuota } = require('../middleware/auth');
 const rateLimit = require('express-rate-limit');
+const { callGemini } = require('../utils/aiClient');
 
 /* Rate limit global : 10 appels IA / minute */
 const aiRateLimit = rateLimit({
@@ -18,29 +19,12 @@ const aiRateLimit = rateLimit({
   message: { error: 'Too many AI requests. Please wait a moment.' }
 });
 
-/* ── Helper: appel Anthropic ── */
+/* ── Helper: appel IA ──
+   Le projet est standardisé sur Gemini (aiClient / GEMINI_API_KEY, utilisé par
+   l'extension). On délègue ici aussi pour éviter une dépendance Anthropic non
+   configurée sur Railway. Prompts et formats JSON inchangés → frontend identique. */
 async function callAnthropic(prompt, maxTokens = 1000) {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method:  'POST',
-    headers: {
-      'Content-Type':      'application/json',
-      'x-api-key':         process.env.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify({
-      model:      'claude-sonnet-4-20250514',
-      max_tokens: maxTokens,
-      messages:   [{ role: 'user', content: prompt }]
-    })
-  });
-
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.error?.message || `Anthropic API error ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data.content?.[0]?.text || '';
+  return callGemini(prompt, maxTokens);
 }
 
 /* ── Rapport SEO IA ──────────────────────────────────────────────
