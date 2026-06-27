@@ -150,21 +150,19 @@ router.post('/google', async (req, res) => {
       return res.status(400).json({ error: 'access_token ou id_token requis' });
     }
 
-    /* Décoder le JWT pour extraire l'auth_id */
-    let decoded;
+    /* Vérifier le token auprès de Supabase (signature + expiration) — ne JAMAIS
+       faire confiance à un JWT non vérifié fourni par le client. */
+    let auth_id;
     try {
-      // Décoder sans vérifier la signature (on fait confiance au token du frontend)
-      decoded = jwt.decode(token);
-      if (!decoded || !decoded.sub) {
+      const { data: { user }, error: tokErr } = await supabaseAnon().auth.getUser(token);
+      if (tokErr || !user) {
         return res.status(401).json({ error: 'Token invalide ou expiré' });
       }
+      auth_id = user.id;
     } catch (err) {
-      console.error('[POST /auth/google] JWT decode error:', err.message);
+      console.error('[POST /auth/google] Token verification error:', err.message);
       return res.status(401).json({ error: 'Token invalide' });
     }
-
-    const auth_id = decoded.sub; // 'sub' contient l'user ID
-    console.log('🔥🔥🔥 [POST /auth/google] LOGIN STARTED - auth_id:', auth_id);
 
     /* Le trigger on_auth_user_created a créé le profil lors du 1er login */
     const supabase = req.app.locals.supabase;

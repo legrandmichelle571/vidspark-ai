@@ -78,7 +78,7 @@ Réponds UNIQUEMENT en JSON valide (pas de backticks, pas de commentaires) :
     }
 
     await supabase.rpc('increment_user_quota', {
-  user_uuid: req.user.id
+  p_user_id: req.user.id
 });
 
     res.json(result);
@@ -121,7 +121,7 @@ Langue: ${language}. Titres entre 55-70 caractères idéalement.`;
 
     /* Incrémenter titles_used — tous les plans avec accès (Pro/Business) */
     await req.app.locals.supabase.rpc('increment_titles_quota', {
-  user_uuid: req.user.id
+  p_user_id: req.user.id
 });
 
     res.json(result);
@@ -156,7 +156,7 @@ Langue: ${language}.`;
 
     /* Incrémenter quota_used — tous les plans */
     await req.app.locals.supabase.rpc('increment_user_quota', {
-  user_uuid: req.user.id
+  p_user_id: req.user.id
 });
 
     res.json(result);
@@ -190,7 +190,7 @@ Langue: ${language}. Tags: 2-5 mots max chacun.`;
 
     /* Incrémenter quota_used (analyses) — tous les plans */
     await req.app.locals.supabase.rpc('increment_user_quota', {
-  user_uuid: req.user.id
+  p_user_id: req.user.id
 });
 
     res.json(result);
