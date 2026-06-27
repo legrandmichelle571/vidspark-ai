@@ -27,6 +27,13 @@ async function callAnthropic(prompt, maxTokens = 1000) {
   return callTextAI(prompt, maxTokens);
 }
 
+/* Incrémente un quota côté DB et logue (sans throw) si l'appel RPC échoue.
+   Garde-fou contre les échecs silencieux (cf. bug param p_user_id/user_uuid). */
+async function bumpQuota(supabase, fn, userId, tag) {
+  const { error } = await supabase.rpc(fn, { p_user_id: userId });
+  if (error) console.error(`[${tag}] RPC ${fn} a échoué:`, error.message);
+}
+
 /* ── Rapport SEO IA ──────────────────────────────────────────────
    checkQuota : appliqué à Free, Pro ET Business
    quota_used incrémenté pour TOUS les plans après succès
@@ -77,9 +84,7 @@ Réponds UNIQUEMENT en JSON valide (pas de backticks, pas de commentaires) :
       }, { onConflict: 'user_id,video_id' });
     }
 
-    await supabase.rpc('increment_user_quota', {
-  p_user_id: req.user.id
-});
+    await bumpQuota(supabase, 'increment_user_quota', req.user.id, 'AI/SEO');
 
     res.json(result);
   } catch (err) {
@@ -120,9 +125,7 @@ Langue: ${language}. Titres entre 55-70 caractères idéalement.`;
     const result = JSON.parse(text.replace(/```json|```/g, '').trim());
 
     /* Incrémenter titles_used — tous les plans avec accès (Pro/Business) */
-    await req.app.locals.supabase.rpc('increment_titles_quota', {
-  p_user_id: req.user.id
-});
+    await bumpQuota(req.app.locals.supabase, 'increment_titles_quota', req.user.id, 'AI/TITLES');
 
     res.json(result);
   } catch (err) {
@@ -155,9 +158,7 @@ Langue: ${language}.`;
     const result = JSON.parse(text.replace(/```json|```/g, '').trim());
 
     /* Incrémenter quota_used — tous les plans */
-    await req.app.locals.supabase.rpc('increment_user_quota', {
-  p_user_id: req.user.id
-});
+    await bumpQuota(req.app.locals.supabase, 'increment_user_quota', req.user.id, 'AI/DESC');
 
     res.json(result);
   } catch (err) {
@@ -189,9 +190,7 @@ Langue: ${language}. Tags: 2-5 mots max chacun.`;
     const result = JSON.parse(text.replace(/```json|```/g, '').trim());
 
     /* Incrémenter quota_used (analyses) — tous les plans */
-    await req.app.locals.supabase.rpc('increment_user_quota', {
-  p_user_id: req.user.id
-});
+    await bumpQuota(req.app.locals.supabase, 'increment_user_quota', req.user.id, 'AI/TAGS');
 
     res.json(result);
   } catch (err) {
