@@ -10,7 +10,6 @@
  */
 const router  = require('express').Router();
 const Joi     = require('joi');
-const jwt     = require('jsonwebtoken');
 const { createClient } = require('@supabase/supabase-js');
 const { requireAuth } = require('../middleware/auth');
 
