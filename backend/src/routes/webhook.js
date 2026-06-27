@@ -375,14 +375,11 @@ router.post('/cryptomus', async (req, res) => {
       .eq('id', userId);
 
     // Créer l'entrée subscription
-    const now = new Date();
-    const nextMonth = new Date(now);
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
-
     const interval = metadata.interval || 'month';
-    const endDate = interval === 'year'
-      ? new Date(now.setFullYear(now.getFullYear() + 1))
-      : nextMonth;
+    const periodStart = new Date();
+    const endDate = new Date(periodStart);
+    if (interval === 'year') endDate.setFullYear(endDate.getFullYear() + 1);
+    else endDate.setMonth(endDate.getMonth() + 1);
 
     await supabase.from('subscriptions').upsert({
       user_id: userId,
@@ -393,7 +390,7 @@ router.post('/cryptomus', async (req, res) => {
       amount: parseFloat(data.amount) || 0,
       currency: data.currency || 'USD',
       interval,
-      current_period_start: now.toISOString(),
+      current_period_start: periodStart.toISOString(),
       current_period_end: endDate.toISOString()
     }, { onConflict: 'provider_sub_id' });
 
