@@ -283,9 +283,13 @@ router.delete('/users/:id', async (req, res) => {
     }
 
     /* 2) Supprimer les lignes liées puis la ligne users (fiable, sans dépendre d'une cascade) */
-    for (const t of ['activation_devices', 'subscriptions', 'analysis_history', 'payments']) {
+    for (const t of ['activation_devices', 'activation_codes', 'activation_channels',
+                     'user_channels', 'thumbnail_usage', 'ab_tests', 'quota_logs',
+                     'coach_score_history', 'subscriptions', 'analysis_history', 'payments']) {
       try { await supabase.from(t).delete().eq('user_id', id); } catch (_) {}
     }
+    /* Logs admin référençant ce compte (sinon la contrainte bloque la suppression) */
+    try { await supabase.from('admin_logs').delete().eq('target_user_id', id); } catch (_) {}
     const { error: delErr } = await supabase.from('users').delete().eq('id', id);
     if (delErr) return res.status(400).json({ error: 'DB delete: ' + delErr.message });
 
