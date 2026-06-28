@@ -438,6 +438,75 @@ router.get('/coach', requireAuth, async (req, res) => {
   }
 });
 
+/* ── Tendances de la niche : mots-clés réels + vidéos qui montent (dashboard, tous plans) ──
+   Niche déduite des titres analysés par l'utilisateur. Caché 6 h/user pour limiter le quota
+   YouTube. Ne renvoie jamais d'erreur HTTP (le dashboard retombe sur un état neutre). */
+const _trendCache = new Map();          // user_id → { at, data }
+const _TREND_TTL  = 6 * 3600 * 1000;    // 6 h
+const _TREND_STOP = new Set(('le la les un une des de du et a au aux en pour par sur avec sans ou ce cette mon ma mes ton ta tes son sa ses dans que qui quoi comment pourquoi the and for you your with how why what best top new video vidéo youtube short shorts vlog tuto tutorial ep partie part').split(/\s+/));
+function pickNiche(titles){
+  const freq = new Map();
+  titles.forEach(t => String(t).toLowerCase().replace(/[^\p{L}\p{N}\s]/gu,' ').split(/\s+/).forEach(w => {
+    if (w.length < 4 || _TREND_STOP.has(w) || /^\d+$/.test(w)) return;
+    freq.set(w, (freq.get(w)||0)+1);
+  }));
+  let best = null, bn = 0;
+  freq.forEach((n,w) => { if (n > bn) { bn = n; best = w; } });
+  return best;
+}
+
+router.get('/trending', requireAuth, async (req, res) => {
+  try {
+    const uid = req.user.id;
+    const hit = _trendCache.get(uid);
+    if (hit && Date.now() - hit.at < _TREND_TTL) return res.json(hit.data);
+
+    const supabase = req.app.locals.supabase;
+    const { data: rows } = await supabase
+      .from('analysis_history').select('title')
+      .eq('user_id', uid).order('created_at', { ascending: false }).limit(10);
+    const titles = (rows || []).map(r => r.title || '').filter(Boolean);
+    const seed = pickNiche(titles);
+
+    if (!seed) {
+      const empty = { has_data: false, seed: null, keywords: [], videos: [] };
+      _trendCache.set(uid, { at: Date.now(), data: empty });
+      return res.json(empty);
+    }
+
+    const { getKeywordIdeas, getTrendingVideos } = require('../utils/youtube');
+    const [ideas, vids] = await Promise.all([
+      getKeywordIdeas(seed).catch(() => null),
+      getTrendingVideos(seed, 6).catch(() => [])
+    ]);
+
+    const keywords = [], seen = new Set();
+    if (ideas) {
+      (ideas.related || []).forEach(r => {
+        const term = (r.keyword || '').trim(); const lc = term.toLowerCase();
+        if (!term || seen.has(lc)) return; seen.add(lc);
+        keywords.push({ term, score: r.difficulty ? r.difficulty.score : null, label: r.difficulty ? r.difficulty.label : '', color: r.difficulty ? r.difficulty.color : '#888' });
+      });
+      (ideas.suggestions || []).forEach(s => {
+        const term = String(s).trim(); const lc = term.toLowerCase();
+        if (!term || seen.has(lc) || keywords.length >= 8) return; seen.add(lc);
+        keywords.push({ term, score: null, label: '', color: '#888' });
+      });
+    }
+
+    const videos = (vids || []).slice(0, 5).map(v => ({
+      videoId: v.videoId, title: v.title, channel: v.channel, views: v.views, vph: v.views_per_hour
+    }));
+
+    const data = { has_data: true, seed, keywords: keywords.slice(0, 8), videos };
+    _trendCache.set(uid, { at: Date.now(), data });
+    res.json(data);
+  } catch (err) {
+    console.error('[USER/TRENDING]', err.message);
+    res.json({ has_data: false, keywords: [], videos: [], error: true });
+  }
+});
+
 /* ── Supprimer une analyse ── */
 router.delete('/history/:id', requireAuth, async (req, res) => {
   try {
