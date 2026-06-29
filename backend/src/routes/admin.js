@@ -89,27 +89,37 @@ router.get('/users', async (req, res) => {
 
     /* Enrichir avec fin de forfait + mode (mensuel/annuel) */
     const ids = (data || []).map(u => u.id);
-    let subsByUser = {}, expByUser = {};
+    let subsByUser = {}, expByUser = {}, devCount = {}, chanCount = {}, activeByUser = {};
     if (ids.length) {
-      const [{ data: subs }, { data: codes }] = await Promise.all([
+      const [{ data: subs }, { data: codes }, { data: devs }, { data: chans }] = await Promise.all([
         supabase.from('subscriptions')
           .select('user_id, interval, current_period_end, status, created_at')
           .in('user_id', ids).eq('status', 'active'),
         supabase.from('activation_codes')
-          .select('user_id, subscription_expiry').in('user_id', ids)
+          .select('user_id, subscription_expiry').in('user_id', ids),
+        supabase.from('activation_devices').select('user_id').in('user_id', ids),
+        supabase.from('activation_channels').select('user_id').in('user_id', ids)
       ]);
       (subs || []).forEach(s => {
         const cur = subsByUser[s.user_id];
         if (!cur || new Date(s.created_at) > new Date(cur.created_at)) subsByUser[s.user_id] = s;
       });
       (codes || []).forEach(c => { if (c.subscription_expiry) expByUser[c.user_id] = c.subscription_expiry; });
+      (devs  || []).forEach(d => { devCount[d.user_id]  = (devCount[d.user_id]  || 0) + 1; });
+      (chans || []).forEach(c => { chanCount[c.user_id] = (chanCount[c.user_id] || 0) + 1; });
+      /* last_active (résilient : la colonne peut ne pas exister avant la migration 015) */
+      const { data: act } = await supabase.from('users').select('id, last_active').in('id', ids);
+      (act || []).forEach(a => { if (a.last_active) activeByUser[a.id] = a.last_active; });
     }
     const users = (data || []).map(u => {
       const s = subsByUser[u.id];
       return {
         ...u,
         subscription_end:      s?.current_period_end || expByUser[u.id] || null,
-        subscription_interval: s?.interval || null
+        subscription_interval: s?.interval || null,
+        devices_count:  devCount[u.id]  || 0,
+        channels_count: chanCount[u.id] || 0,
+        last_active:    activeByUser[u.id] || null
       };
     });
 

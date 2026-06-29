@@ -34,6 +34,19 @@ async function captureGeo(supabase, userId, req) {
   } catch (e) { _geoChecked.delete(userId); /* réessaiera au prochain appel */ }
 }
 
+/* ── Heartbeat "dernière activité" (throttlé 60s/user, non bloquant) ──
+   Sert au suivi "en ligne" du tableau admin. Nécessite users.last_active
+   (migration 015) ; sans la colonne, l'update échoue en silence. */
+const _lastTouch = new Map();
+function touchActive(supabase, userId) {
+  if (!userId) return;
+  const now = Date.now();
+  if (now - (_lastTouch.get(userId) || 0) < 60000) return;   // max 1 écriture/min/user
+  _lastTouch.set(userId, now);
+  supabase.from('users').update({ last_active: new Date(now).toISOString() }).eq('id', userId)
+    .then(() => {}, () => {});
+}
+
 /* ── Mes chaînes YouTube autorisées (gérées depuis le dashboard) ── */
 
 /* Liste des chaînes + limite du plan */
@@ -159,6 +172,7 @@ router.get('/me', requireAuth, async (req, res) => {
   try {
     const supabase = req.app.locals.supabase;
     captureGeo(supabase, req.user.id, req);   // pays via IP (non bloquant)
+    touchActive(supabase, req.user.id);       // heartbeat "en ligne"
     const { id, email, name, avatar, plan, status, role,
             quota_used, quota_limit, language, created_at } = req.user;
 
@@ -233,6 +247,7 @@ router.put('/me', requireAuth, async (req, res) => {
 router.get('/plan', requireAuth, async (req, res) => {
   const supabase = req.app.locals.supabase;
   captureGeo(supabase, req.user.id, req);   // pays via IP (non bloquant)
+  touchActive(supabase, req.user.id);       // heartbeat "en ligne"
 
   /* Vérifier si l'abonnement Pro est encore actif */
   const { data: sub } = await supabase

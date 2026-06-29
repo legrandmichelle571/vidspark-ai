@@ -216,6 +216,8 @@ router.get('/remaining/:activation_id', async (req, res) => {
 const { generateTitles, generateReport, generateCompetitorInsights } = require('../utils/aiClient');
 
 /* Valide le code + récupère le plan de l'utilisateur. Renvoie {code,user} ou null. */
+/* heartbeat "en ligne" extension (throttlé 60s/user, non bloquant ; users.last_active = migration 015) */
+const _actTouch = new Map();
 async function getCodeUser(supabase, activation_id, activation_secret) {
   const code = await findValidCode(supabase, activation_id, activation_secret);
   if (!code) return null;
@@ -224,6 +226,11 @@ async function getCodeUser(supabase, activation_id, activation_secret) {
     .from('users').select('id, plan, status').eq('id', code.user_id).maybeSingle();
   // Compte supprimé ou suspendu → on verrouille (même traitement que "expiré")
   if (!user || user.status === 'suspended') return { expired: true, suspended: true };
+  const now = Date.now();
+  if (now - (_actTouch.get(user.id) || 0) > 60000) {
+    _actTouch.set(user.id, now);
+    supabase.from('users').update({ last_active: new Date(now).toISOString() }).eq('id', user.id).then(() => {}, () => {});
+  }
   return { code, user, plan: (user.plan || 'free') };
 }
 
