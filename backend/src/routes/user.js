@@ -252,6 +252,13 @@ router.get('/plan', requireAuth, async (req, res) => {
     await supabase.from('users').update({ plan: 'free' }).eq('id', req.user.id);
   }
 
+  /* Aussi : expiration via users.subscription_expiry (plans attribués à la main par
+     l'admin ou via code d'activation — sans ligne dans `subscriptions`). */
+  if (plan !== 'free' && req.user.subscription_expiry && new Date(req.user.subscription_expiry) < new Date()) {
+    plan = 'free';
+    await supabase.from('users').update({ plan: 'free' }).eq('id', req.user.id);
+  }
+
   res.json({
     plan,
     quota_used:  req.user.quota_used,

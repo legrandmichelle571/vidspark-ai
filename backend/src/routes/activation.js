@@ -44,9 +44,14 @@ router.post('/activate', async (req, res) => {
 
     const { data: user } = await supabase
       .from('users')
-      .select('id, email, name, plan')
+      .select('id, email, name, plan, status')
       .eq('id', code.user_id)
       .maybeSingle();
+
+    // Compte supprimé ou suspendu par l'admin → activation refusée
+    if (!user || user.status === 'suspended') {
+      return res.status(403).json({ error: 'Compte suspendu — contacte le support.', suspended: true });
+    }
 
     // 🔒 Verrouillage par appareil — 1 code marche sur N PC selon le plan
     //    (Free/Pro = 1 · Business = 5 · Diamant = 10). Table activation_devices.
@@ -216,8 +221,10 @@ async function getCodeUser(supabase, activation_id, activation_secret) {
   if (!code) return null;
   if (new Date(code.subscription_expiry) < new Date()) return { expired: true };
   const { data: user } = await supabase
-    .from('users').select('id, plan').eq('id', code.user_id).maybeSingle();
-  return { code, user, plan: (user?.plan || 'free') };
+    .from('users').select('id, plan, status').eq('id', code.user_id).maybeSingle();
+  // Compte supprimé ou suspendu → on verrouille (même traitement que "expiré")
+  if (!user || user.status === 'suspended') return { expired: true, suspended: true };
+  return { code, user, plan: (user.plan || 'free') };
 }
 
 /* Middleware-like : exige un plan payant (pro/business/diamant) */
