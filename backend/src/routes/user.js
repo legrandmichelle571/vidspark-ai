@@ -13,6 +13,27 @@ const { requireAuth }  = require('../middleware/auth');
 const { getLimits }    = require('../config/plans');
 const { getChannelLimit } = require('../config/channelLimits');
 
+/* ── Géolocalisation pays (non bloquant, 1×/user par run serveur) ──
+   Alimente le tableau admin "Utilisateurs par pays". Déduit le pays de l'IP via
+   ipwho.is (HTTPS, gratuit, sans clé). N'écrit que si le pays est encore vide. */
+const _geoChecked = new Set();
+async function captureGeo(supabase, userId, req) {
+  if (!userId || _geoChecked.has(userId)) return;
+  _geoChecked.add(userId);
+  try {
+    const { data: u } = await supabase.from('users').select('country').eq('id', userId).single();
+    if (u && u.country) return;                       // déjà connu
+    const xff = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+    const ip  = xff || (req.socket && req.socket.remoteAddress) || '';
+    if (!ip || /^(127\.|::1|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(ip)) return;  // local/privé
+    const r = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}?fields=success,country,country_code`);
+    const j = await r.json();
+    if (j && j.success && j.country) {
+      await supabase.from('users').update({ country: j.country }).eq('id', userId);
+    }
+  } catch (e) { _geoChecked.delete(userId); /* réessaiera au prochain appel */ }
+}
+
 /* ── Mes chaînes YouTube autorisées (gérées depuis le dashboard) ── */
 
 /* Liste des chaînes + limite du plan */
@@ -137,6 +158,7 @@ router.delete('/channels/:channel_id', requireAuth, async (req, res) => {
 router.get('/me', requireAuth, async (req, res) => {
   try {
     const supabase = req.app.locals.supabase;
+    captureGeo(supabase, req.user.id, req);   // pays via IP (non bloquant)
     const { id, email, name, avatar, plan, status, role,
             quota_used, quota_limit, language, created_at } = req.user;
 
@@ -210,6 +232,7 @@ router.put('/me', requireAuth, async (req, res) => {
 /* ── Vérification plan (utilisée par l'extension à chaque ouverture) ── */
 router.get('/plan', requireAuth, async (req, res) => {
   const supabase = req.app.locals.supabase;
+  captureGeo(supabase, req.user.id, req);   // pays via IP (non bloquant)
 
   /* Vérifier si l'abonnement Pro est encore actif */
   const { data: sub } = await supabase
