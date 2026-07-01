@@ -141,12 +141,13 @@ router.get('/users', async (req, res) => {
 router.get('/users/:id', async (req, res) => {
   try {
     const supabase = req.app.locals.supabase;
-    const [userRes, subRes, histRes, codesRes, devRes] = await Promise.all([
+    const [userRes, subRes, histRes, codesRes, devRes, chanRes] = await Promise.all([
       supabase.from('users').select('*').eq('id', req.params.id).single(),
       supabase.from('subscriptions').select('*').eq('user_id', req.params.id).order('created_at', { ascending: false }),
       supabase.from('analysis_history').select('id,title,score_seo,score_global,created_at').eq('user_id', req.params.id).limit(10).order('created_at', { ascending: false }),
       supabase.from('activation_codes').select('activation_id, activation_secret, subscription_expiry').eq('user_id', req.params.id),
-      supabase.from('activation_devices').select('device_id, bound_at').eq('user_id', req.params.id)
+      supabase.from('activation_devices').select('device_id, bound_at').eq('user_id', req.params.id),
+      supabase.from('activation_channels').select('channel_id, channel_name, created_at').eq('user_id', req.params.id).order('created_at', { ascending: true })
     ]);
 
     if (userRes.error) return res.status(404).json({ error: 'User not found' });
@@ -156,7 +157,8 @@ router.get('/users/:id', async (req, res) => {
       subscriptions: subRes.data  || [],
       recent_analyses: histRes.data || [],
       codes:         codesRes.data || [],
-      devices:       devRes.data || []
+      devices:       devRes.data || [],
+      channels:      chanRes.data || []
     });
   } catch (err) {
     res.status(500).json({ error: 'Fetch failed' });
