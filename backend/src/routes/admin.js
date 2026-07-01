@@ -89,7 +89,7 @@ router.get('/users', async (req, res) => {
 
     /* Enrichir avec fin de forfait + mode (mensuel/annuel) */
     const ids = (data || []).map(u => u.id);
-    let subsByUser = {}, expByUser = {}, devCount = {}, chanCount = {}, activeByUser = {};
+    let subsByUser = {}, expByUser = {}, devCount = {}, chanCount = {}, activeByUser = {}, srcByUser = {};
     if (ids.length) {
       const [{ data: subs }, { data: codes }, { data: devs }, { data: chans }] = await Promise.all([
         supabase.from('subscriptions')
@@ -110,6 +110,10 @@ router.get('/users', async (req, res) => {
       /* last_active (résilient : la colonne peut ne pas exister avant la migration 015) */
       const { data: act } = await supabase.from('users').select('id, last_active').in('id', ids);
       (act || []).forEach(a => { if (a.last_active) activeByUser[a.id] = a.last_active; });
+      /* last_active_src = source de la dernière activité (site|ext). Requête séparée :
+         résiliente si la colonne n'existe pas encore (migration 018). */
+      const { data: actSrc } = await supabase.from('users').select('id, last_active_src').in('id', ids);
+      (actSrc || []).forEach(a => { if (a.last_active_src) srcByUser[a.id] = a.last_active_src; });
     }
     const users = (data || []).map(u => {
       const s = subsByUser[u.id];
@@ -119,7 +123,8 @@ router.get('/users', async (req, res) => {
         subscription_interval: s?.interval || null,
         devices_count:  devCount[u.id]  || 0,
         channels_count: chanCount[u.id] || 0,
-        last_active:    activeByUser[u.id] || null
+        last_active:    activeByUser[u.id] || null,
+        last_active_src: srcByUser[u.id] || null
       };
     });
 

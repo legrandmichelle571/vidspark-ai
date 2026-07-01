@@ -43,7 +43,12 @@ function touchActive(supabase, userId) {
   const now = Date.now();
   if (now - (_lastTouch.get(userId) || 0) < 60000) return;   // max 1 écriture/min/user
   _lastTouch.set(userId, now);
-  supabase.from('users').update({ last_active: new Date(now).toISOString() }).eq('id', userId)
+  const ts = new Date(now).toISOString();
+  supabase.from('users').update({ last_active: ts }).eq('id', userId)
+    .then(() => {}, () => {});
+  /* Source de connexion = site web (update séparé : résilient si la colonne
+     last_active_src n'existe pas encore, cf. migration 018). */
+  supabase.from('users').update({ last_active_src: 'site' }).eq('id', userId)
     .then(() => {}, () => {});
 }
 

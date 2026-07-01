@@ -229,7 +229,11 @@ async function getCodeUser(supabase, activation_id, activation_secret) {
   const now = Date.now();
   if (now - (_actTouch.get(user.id) || 0) > 60000) {
     _actTouch.set(user.id, now);
-    supabase.from('users').update({ last_active: new Date(now).toISOString() }).eq('id', user.id).then(() => {}, () => {});
+    const ts = new Date(now).toISOString();
+    supabase.from('users').update({ last_active: ts }).eq('id', user.id).then(() => {}, () => {});
+    /* Source de connexion = extension (update séparé : résilient si la colonne
+       last_active_src n'existe pas encore, cf. migration 018). */
+    supabase.from('users').update({ last_active_src: 'ext' }).eq('id', user.id).then(() => {}, () => {});
   }
   return { code, user, plan: (user.plan || 'free') };
 }
