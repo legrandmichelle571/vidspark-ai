@@ -9,6 +9,7 @@
  * GET  /api/auth/verify-email
  */
 const router  = require('express').Router();
+const crypto  = require('crypto');
 const Joi     = require('joi');
 const { createClient } = require('@supabase/supabase-js');
 const { requireAuth } = require('../middleware/auth');
@@ -130,12 +131,15 @@ router.post('/logout', requireAuth, async (req, res) => {
   }
 });
 
-/* ── Générer ID + Secret uniques ── */
+/* ── Générer ID + Secret uniques (aléa cryptographique) ──
+   Anciennement Math.random() (PRNG prévisible → secrets forgeable).
+   crypto.randomBytes = imprévisible. Format hex MAJUSCULE conservé
+   (compatible casse/copier-coller ; n'affecte que les nouveaux codes). */
 function generateActivationId() {
-  return 'VID' + Math.random().toString(36).substring(2, 11).toUpperCase() + Date.now().toString(36).toUpperCase();
+  return 'VID' + Date.now().toString(36).toUpperCase() + crypto.randomBytes(5).toString('hex').toUpperCase();
 }
 function generateActivationSecret() {
-  return Math.random().toString(36).substring(2, 18).toUpperCase() + Math.random().toString(36).substring(2, 18).toUpperCase();
+  return crypto.randomBytes(16).toString('hex').toUpperCase(); // 128 bits
 }
 
 /* ── Google OAuth via access_token Supabase → Création codes activation ── */
