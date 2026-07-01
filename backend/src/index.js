@@ -57,8 +57,12 @@ app.use(cors({
     if (/^https?:\/\/([a-z0-9-]+\.)?youtube\.com$/.test(origin)) return callback(null, true);
     /* Vérifier si origin est dans la liste */
     if (_allowedOrigins.includes(origin)) return callback(null, true);
-    /* Autoriser en développement sans liste spécifiée */
-    if (process.env.NODE_ENV !== 'production') {
+    /* Autoriser tout UNIQUEMENT en dev explicite (NODE_ENV=development).
+       En prod OU si NODE_ENV est absent → strict : seules les origines de
+       _defaultOrigins / ALLOWED_ORIGINS (qui incluent déjà les domaines du
+       site + localhost) sont acceptées. Évite un CORS grand ouvert si
+       NODE_ENV n'est pas positionné sur l'hôte. */
+    if (process.env.NODE_ENV === 'development') {
       return callback(null, true);
     }
     callback(new Error('CORS: origine non autorisée — ' + origin));
