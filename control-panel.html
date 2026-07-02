@@ -100,6 +100,7 @@
       <button data-page="users" onclick="nav('users')">👥 Utilisateurs</button>
       <button data-page="payments" onclick="nav('payments')">💳 Paiements</button>
       <button data-page="promos" onclick="nav('promos')">🏷️ Codes promo</button>
+      <button data-page="connections" onclick="nav('connections')">🌐 Connexions</button>
       <button data-page="logs" onclick="nav('logs')">📜 Journal</button>
       <button onclick="loadAll()">🔄 Actualiser</button>
     </div>
@@ -154,6 +155,7 @@ function nav(p){
   else if(p==='users')loadUsers();
   else if(p==='payments')loadPayments();
   else if(p==='promos')loadPromos();
+  else if(p==='connections')loadConnections();
   else if(p==='logs')loadLogs();
 }
 function loadAll(){nav(curPage);}
@@ -234,6 +236,64 @@ async function renderUsers(){
 async function changePlan(id,plan){try{await api(`/users/${id}/plan`,{method:'PUT',body:JSON.stringify({plan})});toast('✅ Plan → '+plan);}catch(e){toast('❌ '+e.message);renderUsers();}}
 async function setStatus(id,status){try{await api(`/users/${id}/status`,{method:'PUT',body:JSON.stringify({status})});toast('✅ Statut → '+status);renderUsers();}catch(e){toast('❌ '+e.message);}}
 async function delUser(id,email){if(!confirm('Supprimer définitivement '+email+' ?'))return;try{await api(`/users/${id}`,{method:'DELETE'});toast('🗑️ Supprimé');renderUsers();}catch(e){toast('❌ '+e.message);}}
+
+function srcBadge(s){
+  if(s==='ext') return '<span class="pill" style="background:rgba(59,130,246,.18);color:var(--blue)">🧩 Extension</span>';
+  if(s==='site')return '<span class="pill" style="background:rgba(34,197,94,.15);color:var(--green)">🌐 Site</span>';
+  return '<span class="muted">—</span>';
+}
+async function loadConnections(){
+  const m=document.getElementById('main');
+  m.innerHTML=`
+    <div class="page-title">🌐 Connexions (site + extension)</div>
+    <div class="toolbar">
+      <select id="cSource" onchange="renderConnections()">
+        <option value="">Toutes les sources</option>
+        <option value="site">🌐 Site web</option>
+        <option value="ext">🧩 Extension</option>
+      </select>
+      <select id="cLimit" onchange="renderConnections()">
+        <option value="100">100 dernières</option>
+        <option value="250">250 dernières</option>
+        <option value="500">500 dernières</option>
+      </select>
+      <button class="btn btn-sm" onclick="renderConnections()">🔄 Rafraîchir</button>
+      <button class="btn btn-sm btn-green" onclick="exportConnCSV()">⬇ CSV</button>
+    </div>
+    <div id="connTable"></div>`;
+  renderConnections();
+}
+let lastConns=[];
+async function renderConnections(){
+  const el=document.getElementById('connTable');
+  el.innerHTML='<div class="muted">Chargement…</div>';
+  const source=document.getElementById('cSource')?.value||'';
+  const limit=document.getElementById('cLimit')?.value||'100';
+  try{
+    const d=await api(`/connections?limit=${limit}&source=${source}`);
+    const conns=d.connections||[];
+    lastConns=conns;
+    if(!conns.length){el.innerHTML='<div class="empty">Aucune connexion enregistrée pour le moment</div>';return;}
+    el.innerHTML=`<table><thead><tr><th>Utilisateur</th><th>Source</th><th>IP</th><th>Pays</th><th>Appareil / navigateur</th><th>Date</th></tr></thead><tbody>
+      ${conns.map(c=>`
+        <tr>
+          <td><div style="color:var(--purple-l)">${c.email||'<span class="muted">inconnu</span>'}</div><div class="muted">${c.name||''} ${c.plan?'· '+c.plan.toUpperCase():''}</div></td>
+          <td>${srcBadge(c.source)}</td>
+          <td style="font-family:monospace;font-size:12px">${c.ip||'<span class="muted">—</span>'}</td>
+          <td class="muted">${c.country||'—'}</td>
+          <td class="muted" style="font-size:11px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(c.user_agent||'').replace(/"/g,'&quot;')}">${c.user_agent||'—'}</td>
+          <td class="muted">${c.created_at?new Date(c.created_at).toLocaleString('fr-FR'):'—'}</td>
+        </tr>`).join('')}
+    </tbody></table><div class="muted" style="margin-top:8px">${d.pagination?.total||conns.length} connexion(s) au total</div>`;
+  }catch(e){el.innerHTML='<div class="empty">❌ '+e.message+'</div>';}
+}
+function exportConnCSV(){
+  if(!lastConns.length){toast('Rien à exporter');return;}
+  const head=['email','name','plan','source','ip','country','user_agent','date'];
+  const rows=lastConns.map(c=>[c.email,c.name,c.plan,c.source,c.ip,c.country,c.user_agent,c.created_at].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(','));
+  const csv=head.join(',')+'\n'+rows.join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='vidspark-connexions.csv';a.click();
+}
 
 async function loadLogs(){
   const m=document.getElementById('main');

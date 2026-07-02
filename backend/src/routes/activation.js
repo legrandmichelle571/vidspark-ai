@@ -214,11 +214,13 @@ router.get('/remaining/:activation_id', async (req, res) => {
    Gating par plan : Titres IA / Rapport IA / Concurrence = Pro & Business.
    ════════════════════════════════════════════════════════════════ */
 const { generateTitles, generateReport, generateCompetitorInsights } = require('../utils/aiClient');
+const { logConnection } = require('../utils/connectionLog');
 
 /* Valide le code + récupère le plan de l'utilisateur. Renvoie {code,user} ou null. */
-/* heartbeat "en ligne" extension (throttlé 60s/user, non bloquant ; users.last_active = migration 015) */
-const _actTouch = new Map();
-async function getCodeUser(supabase, activation_id, activation_secret) {
+/* heartbeat "en ligne" + stats connexion IP (extension). Throttlé et non bloquant
+   dans connectionLog.js ; écrit last_active/last_active_src/last_ip + connection_logs
+   (résilient si migration 019 pas encore exécutée). */
+async function getCodeUser(supabase, activation_id, activation_secret, req) {
   const code = await findValidCode(supabase, activation_id, activation_secret);
   if (!code) return null;
   if (new Date(code.subscription_expiry) < new Date()) return { expired: true };
@@ -226,15 +228,7 @@ async function getCodeUser(supabase, activation_id, activation_secret) {
     .from('users').select('id, plan, status').eq('id', code.user_id).maybeSingle();
   // Compte supprimé ou suspendu → on verrouille (même traitement que "expiré")
   if (!user || user.status === 'suspended') return { expired: true, suspended: true };
-  const now = Date.now();
-  if (now - (_actTouch.get(user.id) || 0) > 60000) {
-    _actTouch.set(user.id, now);
-    const ts = new Date(now).toISOString();
-    supabase.from('users').update({ last_active: ts }).eq('id', user.id).then(() => {}, () => {});
-    /* Source de connexion = extension (update séparé : résilient si la colonne
-       last_active_src n'existe pas encore, cf. migration 018). */
-    supabase.from('users').update({ last_active_src: 'ext' }).eq('id', user.id).then(() => {}, () => {});
-  }
+  if (req) logConnection(supabase, user.id, 'ext', req);
   return { code, user, plan: (user.plan || 'free') };
 }
 
@@ -251,7 +245,7 @@ router.post('/ai/titles', async (req, res) => {
     if (!title) return res.status(400).json({ error: 'Titre requis' });
 
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)         return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired)  return res.status(403).json({ error: 'Abonnement expiré', expired: true });
     const result = await generateTitles(title, language);
@@ -277,7 +271,7 @@ router.post('/ai/report', async (req, res) => {
     if (!title) return res.status(400).json({ error: 'Titre requis' });
 
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
     const result = await generateReport(title, description, language);
@@ -307,7 +301,7 @@ router.post('/ai/description', async (req, res) => {
     const { activation_id, activation_secret, title, language = 'fr' } = req.body;
     if (!activation_id || !activation_secret || !title) return res.status(400).json({ error: 'Paramètres requis' });
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Description IA réservée aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
     res.json(await generateDescription(title, language));
@@ -323,7 +317,7 @@ router.post('/ai/tags', async (req, res) => {
     const { activation_id, activation_secret, title, language = 'fr' } = req.body;
     if (!activation_id || !activation_secret || !title) return res.status(400).json({ error: 'Paramètres requis' });
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Tags IA réservés aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
     res.json(await generateTags(title, language));
@@ -341,7 +335,7 @@ router.post('/ai/competitor', async (req, res) => {
     if (!title) return res.status(400).json({ error: 'Titre requis' });
 
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
     if (!requirePaidPlan(ctx.plan)) {
@@ -366,7 +360,7 @@ router.post('/youtube/video', async (req, res) => {
     const { activation_id, activation_secret, videoId } = req.body;
     if (!activation_id || !activation_secret || !videoId) return res.status(400).json({ error: 'Paramètres requis' });
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
     if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Données YouTube réelles réservées aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
@@ -385,7 +379,7 @@ router.post('/youtube/competitors', async (req, res) => {
     const { activation_id, activation_secret, query } = req.body;
     if (!activation_id || !activation_secret || !query) return res.status(400).json({ error: 'Paramètres requis' });
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Analyse concurrents réelle réservée aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
 
@@ -403,7 +397,7 @@ router.post('/youtube/channel-audit', async (req, res) => {
     const { activation_id, activation_secret, channelId } = req.body;
     if (!activation_id || !activation_secret || !channelId) return res.status(400).json({ error: 'Paramètres requis' });
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Audit de chaîne réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
     const audit = await getChannelAudit(channelId);
@@ -421,7 +415,7 @@ router.post('/youtube/keywords', async (req, res) => {
     const { activation_id, activation_secret, query } = req.body;
     if (!activation_id || !activation_secret || !query) return res.status(400).json({ error: 'Paramètres requis' });
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Recherche de mots-clés réservée aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
     const { language = 'fr', opportunity: wantOpp } = req.body;
@@ -445,7 +439,7 @@ router.post('/ai/thumbnail', async (req, res) => {
     const { activation_id, activation_secret, videoId, title = '', language = 'fr' } = req.body;
     if (!activation_id || !activation_secret || !videoId) return res.status(400).json({ error: 'Paramètres requis' });
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Analyse de miniature réservée aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
 
@@ -473,7 +467,7 @@ router.post('/ai/thumbnail-generate', async (req, res) => {
     const { activation_id, activation_secret, title = '', prompt = '', no_text = false } = req.body;
     if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
 
@@ -518,7 +512,7 @@ router.post('/ai/thumbnail-ideas', async (req, res) => {
     if (!title) return res.status(400).json({ error: 'Titre requis' });
 
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
 
@@ -545,7 +539,7 @@ router.post('/ai/ab-test', async (req, res) => {
     if (!titleA || !titleB) return res.status(400).json({ error: 'Deux titres requis (titleA et titleB)' });
 
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
     if (!requirePaidPlan(ctx.plan)) {
@@ -580,7 +574,7 @@ router.post('/ai/ab-test/history', async (req, res) => {
     const { activation_id, activation_secret } = req.body;
     if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
 
@@ -605,7 +599,7 @@ router.post('/ai/shorts', async (req, res) => {
     if (!title) return res.status(400).json({ error: 'Titre requis' });
 
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
 
@@ -678,7 +672,7 @@ router.post('/ai/thumbnail-ab', async (req, res) => {
     if (!imageA || !imageB) return res.status(400).json({ error: 'Deux images requises (imageA et imageB en base64)' });
 
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
     if (!requirePaidPlan(ctx.plan)) {
@@ -703,7 +697,7 @@ router.post('/ai/hook', async (req, res) => {
     if (!script || script.trim().length < 10) return res.status(400).json({ error: 'Script d\'intro requis (10 caractères min)' });
 
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
     if (!requirePaidPlan(ctx.plan)) {
@@ -725,7 +719,7 @@ router.post('/ai/audience', async (req, res) => {
     if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
 
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
     if (!requirePaidPlan(ctx.plan)) {
@@ -748,7 +742,7 @@ router.post('/ai/video-package', async (req, res) => {
     if (!title) return res.status(400).json({ error: 'Titre requis' });
 
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
     if (!requirePaidPlan(ctx.plan)) {
@@ -770,7 +764,7 @@ router.post('/ai/revenue', async (req, res) => {
     if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
 
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
     if (!requirePaidPlan(ctx.plan)) {
@@ -792,7 +786,7 @@ router.post('/ai/channel-report', async (req, res) => {
     if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
 
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
     if (!requirePaidPlan(ctx.plan)) {
@@ -814,7 +808,7 @@ router.post('/ai/comments', async (req, res) => {
     if (!activation_id || !activation_secret || !videoId) return res.status(400).json({ error: 'Paramètres requis' });
 
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
     if (!requirePaidPlan(ctx.plan)) {
@@ -840,7 +834,7 @@ router.post('/ai/chapters', async (req, res) => {
     if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
 
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
     if (!requirePaidPlan(ctx.plan)) {
@@ -877,7 +871,7 @@ router.post('/ai/ideas', async (req, res) => {
     if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
 
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
     if (!requirePaidPlan(ctx.plan)) {
@@ -900,7 +894,7 @@ router.post('/ai/title-doctor', async (req, res) => {
     if (!title || title.trim().length < 3) return res.status(400).json({ error: 'Titre requis' });
 
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
     if (!requirePaidPlan(ctx.plan)) {
@@ -922,7 +916,7 @@ router.post('/ai/sponsor', async (req, res) => {
     if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
 
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
     if (!requirePaidPlan(ctx.plan)) {
@@ -943,7 +937,7 @@ router.post('/ai/plan', async (req, res) => {
     const { activation_id, activation_secret, niche = '', region = '', frequency = '', language = 'fr' } = req.body;
     if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Planificateur réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
     res.json(await generateContentPlan(niche, region, frequency, language));
@@ -959,7 +953,7 @@ router.post('/ai/translate', async (req, res) => {
     const { activation_id, activation_secret, title, description = '', target_lang = 'en', language = 'fr' } = req.body;
     if (!activation_id || !activation_secret || !title) return res.status(400).json({ error: 'Titre requis' });
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Traduction réservée aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
     res.json(await translateMetadata(title, description, target_lang, language));
@@ -975,7 +969,7 @@ router.post('/ai/community', async (req, res) => {
     const { activation_id, activation_secret, niche = '', topic = '', language = 'fr' } = req.body;
     if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Posts communautaires réservés aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
     res.json(await generateCommunityPosts(niche, topic, language));
@@ -991,7 +985,7 @@ router.post('/ai/script', async (req, res) => {
     const { activation_id, activation_secret, topic, niche = '', duration = '', language = 'fr' } = req.body;
     if (!activation_id || !activation_secret || !topic) return res.status(400).json({ error: 'Sujet requis' });
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Générateur de script réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
     res.json(await generateScript(topic, niche, duration, language));
@@ -1007,7 +1001,7 @@ router.post('/ai/pair-check', async (req, res) => {
     const { activation_id, activation_secret, videoId, title = '', language = 'fr' } = req.body;
     if (!activation_id || !activation_secret || !videoId) return res.status(400).json({ error: 'Paramètres requis' });
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Vérif Titre+Miniature réservée aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
 
@@ -1029,7 +1023,7 @@ router.post('/ai/playlists', async (req, res) => {
     const { activation_id, activation_secret, channelId, language = 'fr' } = req.body;
     if (!activation_id || !activation_secret || !channelId) return res.status(400).json({ error: 'channelId requis' });
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Optimiseur de playlists réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
     const videos = await getChannelVideos(channelId, 30);
@@ -1047,7 +1041,7 @@ router.post('/ai/trends', async (req, res) => {
     const { activation_id, activation_secret, niche = '', region = '', language = 'fr' } = req.body;
     if (!activation_id || !activation_secret || !niche) return res.status(400).json({ error: 'Niche requise' });
     const supabase = req.app.locals.supabase;
-    const ctx = await getCodeUser(supabase, activation_id, activation_secret);
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
     if (!ctx)                       return res.status(401).json({ error: 'ID ou Secret invalide' });
     if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Détecteur de tendances réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
 

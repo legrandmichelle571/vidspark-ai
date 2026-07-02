@@ -16,6 +16,47 @@ const { getLimits }    = require('../config/plans');
 /* Toutes les routes admin requièrent le rôle admin */
 router.use(requireAdmin);
 
+/* ── Statistiques de connexion (site + extension) avec IP ──
+   Historique détaillé depuis connection_logs, joint à l'email utilisateur. */
+router.get('/connections', async (req, res) => {
+  try {
+    const supabase = req.app.locals.supabase;
+    const page   = parseInt(req.query.page)  || 1;
+    const limit  = Math.min(parseInt(req.query.limit) || 100, 500);
+    const source = req.query.source || '';        // 'site' | 'ext' | ''
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from('connection_logs')
+      .select('id,ip,source,user_agent,country,created_at,users(email,name,plan)', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+    if (source) query = query.eq('source', source);
+
+    const { data, error, count } = await query;
+    if (error) return res.status(400).json({ error: error.message });
+
+    const connections = (data || []).map(c => ({
+      id:         c.id,
+      ip:         c.ip,
+      source:     c.source,
+      user_agent: c.user_agent,
+      country:    c.country,
+      created_at: c.created_at,
+      email:      c.users?.email || null,
+      name:       c.users?.name  || null,
+      plan:       c.users?.plan  || null
+    }));
+
+    res.json({
+      connections,
+      pagination: { page, limit, total: count || 0, pages: Math.ceil((count || 0) / limit) }
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Connections fetch failed' });
+  }
+});
+
 /* ── Statistiques globales ── */
 router.get('/stats', async (req, res) => {
   try {

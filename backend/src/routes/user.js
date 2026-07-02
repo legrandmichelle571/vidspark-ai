@@ -12,6 +12,7 @@ const router = require('express').Router();
 const { requireAuth }  = require('../middleware/auth');
 const { getLimits }    = require('../config/plans');
 const { getChannelLimit } = require('../config/channelLimits');
+const { logConnection } = require('../utils/connectionLog');
 
 /* ── Géolocalisation pays (non bloquant, 1×/user par run serveur) ──
    Alimente le tableau admin "Utilisateurs par pays". Déduit le pays de l'IP via
@@ -37,19 +38,9 @@ async function captureGeo(supabase, userId, req) {
 /* ── Heartbeat "dernière activité" (throttlé 60s/user, non bloquant) ──
    Sert au suivi "en ligne" du tableau admin. Nécessite users.last_active
    (migration 015) ; sans la colonne, l'update échoue en silence. */
-const _lastTouch = new Map();
-function touchActive(supabase, userId) {
-  if (!userId) return;
-  const now = Date.now();
-  if (now - (_lastTouch.get(userId) || 0) < 60000) return;   // max 1 écriture/min/user
-  _lastTouch.set(userId, now);
-  const ts = new Date(now).toISOString();
-  supabase.from('users').update({ last_active: ts }).eq('id', userId)
-    .then(() => {}, () => {});
-  /* Source de connexion = site web (update séparé : résilient si la colonne
-     last_active_src n'existe pas encore, cf. migration 018). */
-  supabase.from('users').update({ last_active_src: 'site' }).eq('id', userId)
-    .then(() => {}, () => {});
+function touchActive(supabase, userId, req) {
+  // last_active/last_active_src/last_ip + historique connection_logs (throttle interne, non bloquant)
+  logConnection(supabase, userId, 'site', req);
 }
 
 /* ── Mes chaînes YouTube autorisées (gérées depuis le dashboard) ── */
@@ -177,7 +168,7 @@ router.get('/me', requireAuth, async (req, res) => {
   try {
     const supabase = req.app.locals.supabase;
     captureGeo(supabase, req.user.id, req);   // pays via IP (non bloquant)
-    touchActive(supabase, req.user.id);       // heartbeat "en ligne"
+    touchActive(supabase, req.user.id, req);  // heartbeat "en ligne" + IP
     const { id, email, name, avatar, plan, status, role,
             quota_used, quota_limit, language, created_at } = req.user;
 
@@ -252,7 +243,7 @@ router.put('/me', requireAuth, async (req, res) => {
 router.get('/plan', requireAuth, async (req, res) => {
   const supabase = req.app.locals.supabase;
   captureGeo(supabase, req.user.id, req);   // pays via IP (non bloquant)
-  touchActive(supabase, req.user.id);       // heartbeat "en ligne"
+  touchActive(supabase, req.user.id, req);  // heartbeat "en ligne" + IP
 
   /* Vérifier si l'abonnement Pro est encore actif */
   const { data: sub } = await supabase
