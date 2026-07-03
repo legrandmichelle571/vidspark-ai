@@ -10,7 +10,7 @@
 const router = require('express').Router();
 const { requireAuth, requirePro, checkQuota, checkTitlesQuota } = require('../middleware/auth');
 const rateLimit = require('express-rate-limit');
-const { callTextAI } = require('../utils/aiClient');
+const { callTextAI, generateTikTokSEO } = require('../utils/aiClient');
 
 /* Rate limit global : 10 appels IA / minute */
 const aiRateLimit = rateLimit({
@@ -196,6 +196,25 @@ Langue: ${language}. Tags: 2-5 mots max chacun.`;
   } catch (err) {
     console.error('[AI/TAGS]', err.message);
     res.status(500).json({ error: 'Tags generation failed' });
+  }
+});
+
+/* ── SEO TikTok : suite complète (légende, hooks, hashtags, script, mots-clés…)
+   Accessible à tous les plans connectés, compté dans le quota journalier. ── */
+router.post('/tiktok-seo', requireAuth, checkQuota, aiRateLimit, async (req, res) => {
+  try {
+    const { topic, niche = '', description = '', language = 'fr' } = req.body;
+    if (!topic || topic.trim().length < 2) return res.status(400).json({ error: 'Sujet requis' });
+
+    const result = await generateTikTokSEO(topic, niche, description, language);
+
+    /* Incrémenter quota_used — tous les plans */
+    await bumpQuota(req.app.locals.supabase, 'increment_user_quota', req.user.id, 'AI/TIKTOK');
+
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/TIKTOK-SEO]', err.message);
+    res.status(500).json({ error: 'TikTok SEO generation failed' });
   }
 });
 

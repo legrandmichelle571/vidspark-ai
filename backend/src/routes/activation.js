@@ -352,7 +352,7 @@ router.post('/ai/competitor', async (req, res) => {
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
 const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments, getChannelVideos, getTrendingVideos } = require('../utils/youtube');
-const { analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends } = require('../utils/aiClient');
+const { analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateTikTokSEO } = require('../utils/aiClient');
 const { getThumbnailLimit } = require('../config/thumbnailLimits');
 
 router.post('/youtube/video', async (req, res) => {
@@ -754,6 +754,29 @@ router.post('/ai/video-package', async (req, res) => {
   } catch (err) {
     console.error('[AI/VIDEO-PACKAGE]', err.message);
     res.status(500).json({ error: 'Génération de la description indisponible', details: err.message });
+  }
+});
+
+/* ── SEO TikTok : suite complète (légende, hooks, hashtags, script…) (Pro/Business) ── */
+router.post('/ai/tiktok-seo', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, topic, niche = '', description = '', language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
+    if (!topic || topic.trim().length < 2) return res.status(400).json({ error: 'Sujet requis' });
+
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
+    if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+    if (!requirePaidPlan(ctx.plan)) {
+      return res.status(403).json({ error: 'SEO TikTok réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    }
+
+    const result = await generateTikTokSEO(topic, niche, description, language);
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/TIKTOK-SEO]', err.message);
+    res.status(500).json({ error: 'Génération SEO TikTok indisponible', details: err.message });
   }
 });
 

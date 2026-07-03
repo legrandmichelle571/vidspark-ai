@@ -912,4 +912,42 @@ Réponds UNIQUEMENT en JSON valide :
   return geminiJson(prompt, 1000);
 }
 
-module.exports = { callGemini, callTextAI, callCloudflareText, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime };
+/* ════════════════════════════════════════════════════════════════
+   SEO TikTok — suite complète (légende, hooks, hashtags, script,
+   mots-clés, sons, conseils). 100% IA, sans API TikTok.
+   ════════════════════════════════════════════════════════════════ */
+async function generateTikTokSEO(topic, niche = '', description = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const ctx = [
+    niche && `Niche/style : ${niche}`,
+    description && `Contexte de la vidéo : ${description}`
+  ].filter(Boolean).join('. ');
+  const prompt = `Tu es un expert SEO TikTok et créateur viral. Optimise à fond la découvrabilité d'une vidéo TikTok.
+Sujet : "${topic}".${ctx ? ' ' + ctx + '.' : ''}
+Écris TOUT le contenu en ${langName} (sauf les hashtags qui peuvent rester tels quels).
+Adapte-toi au format TikTok : vidéos courtes verticales, rythme rapide, les 3 premières secondes sont décisives.
+
+Réponds UNIQUEMENT en JSON valide, sans texte autour :
+{
+  "caption": "<légende TikTok optimisée : accroche + mots-clés naturels + appel à l'action, 1 à 3 phrases, avec 2-3 emojis pertinents>",
+  "hooks": ["<accroche des 3 premières secondes, très percutante>", "<hook 2>", "<hook 3>", "<hook 4>", "<hook 5>"],
+  "hashtags": {
+    "broad": ["#...", "#...", "#...", "#...", "#..."],
+    "niche": ["#...", "#...", "#...", "#...", "#..."],
+    "trending": ["#...", "#...", "#...", "#...", "#..."]
+  },
+  "keywords": ["<mot-clé que les gens tapent dans la recherche TikTok>", "<...6 à 8 mots-clés>"],
+  "script": [
+    {"part": "Hook (0-3s)", "content": "<ce qui doit être dit/montré>"},
+    {"part": "Corps", "content": "<développement rythmé>"},
+    {"part": "Chute / CTA", "content": "<fin + appel à suivre/commenter>"}
+  ],
+  "sound_advice": "<quel type de son/musique tendance utiliser pour ce sujet et pourquoi>",
+  "posting_tips": ["<conseil de publication : durée idéale, format, moment>", "<...3 à 4 conseils>"],
+  "discoverability_tips": ["<astuce concrète pour être mieux référencé sur TikTok>", "<...3 à 4 astuces>"]
+}
+Contraintes : 5 hooks VARIÉS, 5 hashtags par catégorie (broad = larges/populaires, niche = spécifiques au sujet, trending = tendance générique), 6-8 mots-clés, 3-4 éléments par liste de conseils. Chaque hashtag commence par # sans espace. Reste CONCIS pour garantir un JSON complet et valide.`;
+  return geminiJson(prompt, 2000);
+}
+
+module.exports = { callGemini, callTextAI, callCloudflareText, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime, generateTikTokSEO };
