@@ -378,4 +378,22 @@ async function resolveChannelId(input) {
   return null;
 }
 
-module.exports = { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments, getChannelVideos, getTrendingVideos, resolveChannelId };
+/* Extrait l'ID vidéo (11 car.) d'un lien YouTube (watch, youtu.be, shorts, embed) ou d'un ID brut */
+function extractVideoId(url = '') {
+  const s = String(url).trim();
+  const m = s.match(/(?:v=|\/shorts\/|youtu\.be\/|\/embed\/)([\w-]{11})/);
+  if (m) return m[1];
+  if (/^[\w-]{11}$/.test(s)) return s;
+  return null;
+}
+
+/* Construit une transcription horodatée compacte "[m:ss] texte …" (downsample si trop longue) */
+function buildTimedTranscript(segments = [], maxChars = 6000) {
+  const lines = segments.map(s => `[${secToTimestamp(s.start)}] ${s.text}`);
+  let joined = lines.join(' ');
+  if (joined.length <= maxChars) return joined;
+  const step = Math.ceil(joined.length / maxChars);
+  return lines.filter((_, i) => i % step === 0).join(' ').slice(0, maxChars);
+}
+
+module.exports = { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments, getChannelVideos, getTrendingVideos, resolveChannelId, extractVideoId, buildTimedTranscript };

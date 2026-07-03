@@ -1025,4 +1025,30 @@ Exactement 7 jours, variés (éducatif/divertissant/engageant). Reste concis.`;
   return geminiJson(prompt, 1800);
 }
 
-module.exports = { callGemini, callTextAI, callCloudflareText, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar };
+/* ── TikTok : découpage HORODATÉ d'une vidéo YouTube (à partir de sa transcription) ── */
+async function tiktokRepurposeTimed(title = '', duration = '', timedTranscript = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const prompt = `Tu es monteur expert de contenu viral. On te donne la TRANSCRIPTION HORODATÉE d'une vidéo YouTube. Identifie les 3 à 5 MEILLEURS moments à découper en clips TikTok verticaux (15-60s), en donnant les TIMECODES exacts (début → fin) tirés des horodatages fournis.
+Titre : "${title}".${duration ? ' Durée : ' + duration + '.' : ''}
+
+Transcription horodatée :
+${timedTranscript}
+
+Écris en ${langName}. Réponds UNIQUEMENT en JSON valide :
+{
+  "clips": [
+    {
+      "start": "<timecode de début, ex 1:26>",
+      "end": "<timecode de fin, ex 1:50>",
+      "angle": "<pourquoi ce moment est fort/viral>",
+      "hook": "<accroche des 3 premières secondes>",
+      "caption": "<légende TikTok optimisée avec emojis>",
+      "hashtags": ["#...", "#...", "#...", "#...", "#..."]
+    }
+  ]
+}
+3 à 5 clips. Les timecodes DOIVENT correspondre à des moments réels présents dans la transcription (utilise les [m:ss] fournis). Reste concis pour garantir un JSON valide.`;
+  return geminiJson(prompt, 2200);
+}
+
+module.exports = { callGemini, callTextAI, callCloudflareText, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar, tiktokRepurposeTimed };

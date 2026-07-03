@@ -351,8 +351,8 @@ router.post('/ai/competitor', async (req, res) => {
 });
 
 /* ── Vraies données YouTube (API v3) — Pro/Business ── */
-const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments, getChannelVideos, getTrendingVideos } = require('../utils/youtube');
-const { analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar } = require('../utils/aiClient');
+const { getVideoStats, searchVideos, getChannelAudit, getKeywordIdeas, getTranscript, iso8601ToSeconds, secToTimestamp, getVideoComments, getChannelVideos, getTrendingVideos, buildTimedTranscript } = require('../utils/youtube');
+const { analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, generateDescription, generateTags, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar, tiktokRepurposeTimed } = require('../utils/aiClient');
 const { getThumbnailLimit } = require('../config/thumbnailLimits');
 
 router.post('/youtube/video', async (req, res) => {
@@ -808,6 +808,38 @@ router.post('/ai/tiktok-tool', async (req, res) => {
   } catch (err) {
     console.error('[AI/TIKTOK-TOOL]', err.message);
     res.status(500).json({ error: 'Outil TikTok indisponible', details: err.message });
+  }
+});
+
+/* ── YouTube → TikTok HORODATÉ (extension : videoId courant) — Pro/Business ── */
+router.post('/ai/tiktok-repurpose', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, videoId, language = 'fr' } = req.body;
+    if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
+    if (!videoId) return res.status(400).json({ error: 'videoId requis' });
+
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
+    if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (ctx.expired) return res.status(403).json({ error: 'Abonnement expiré', expired: true });
+    if (!requirePaidPlan(ctx.plan)) {
+      return res.status(403).json({ error: 'Repurpose TikTok réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+    }
+
+    const [stats, tr] = await Promise.all([
+      getVideoStats(videoId).catch(() => null),
+      getTranscript(videoId).catch(() => ({ available: false, segments: [] }))
+    ]);
+    if (!tr.available || !tr.segments.length) {
+      return res.status(422).json({ error: "Cette vidéo n'a pas de sous-titres exploitables pour les timecodes.", code: 'NO_TRANSCRIPT' });
+    }
+    const timed = buildTimedTranscript(tr.segments);
+    const durStr = stats?.duration ? secToTimestamp(iso8601ToSeconds(stats.duration)) : '';
+    const result = await tiktokRepurposeTimed(stats?.title || '', durStr, timed, language);
+    res.json({ video: { id: videoId, title: stats?.title || '', duration: durStr }, ...result });
+  } catch (err) {
+    console.error('[AI/TIKTOK-REPURPOSE]', err.message);
+    res.status(500).json({ error: 'Repurpose TikTok indisponible', details: err.message });
   }
 });
 

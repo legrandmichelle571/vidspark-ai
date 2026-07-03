@@ -10,7 +10,8 @@
 const router = require('express').Router();
 const { requireAuth, requirePro, checkQuota, checkTitlesQuota } = require('../middleware/auth');
 const rateLimit = require('express-rate-limit');
-const { callTextAI, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar } = require('../utils/aiClient');
+const { callTextAI, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar, tiktokRepurposeTimed } = require('../utils/aiClient');
+const { getVideoStats, getTranscript, secToTimestamp, iso8601ToSeconds, extractVideoId, buildTimedTranscript } = require('../utils/youtube');
 
 /* Dispatch des outils TikTok avancés (repurpose / ideas / hooks / calendar) */
 async function runTikTokTool(tool, p = {}) {
@@ -241,6 +242,34 @@ router.post('/tiktok-tool', requireAuth, checkQuota, aiRateLimit, async (req, re
   } catch (err) {
     console.error('[AI/TIKTOK-TOOL]', err.message);
     res.status(500).json({ error: 'TikTok tool generation failed' });
+  }
+});
+
+/* ── YouTube → TikTok HORODATÉ : lien YouTube → clips avec timecodes (début→fin)
+   Récupère la transcription horodatée de la vidéo puis l'IA propose les découpes. ── */
+router.post('/tiktok-repurpose', requireAuth, checkQuota, aiRateLimit, async (req, res) => {
+  try {
+    const { url = '', language = 'fr' } = req.body;
+    const videoId = extractVideoId(url);
+    if (!videoId) return res.status(400).json({ error: 'Lien YouTube invalide' });
+
+    const [stats, tr] = await Promise.all([
+      getVideoStats(videoId).catch(() => null),
+      getTranscript(videoId).catch(() => ({ available: false, segments: [] }))
+    ]);
+    if (!tr.available || !tr.segments.length) {
+      return res.status(422).json({ error: "Cette vidéo n'a pas de sous-titres exploitables — impossible de générer des timecodes fiables.", code: 'NO_TRANSCRIPT' });
+    }
+
+    const timed = buildTimedTranscript(tr.segments);
+    const durStr = stats?.duration ? secToTimestamp(iso8601ToSeconds(stats.duration)) : '';
+    const result = await tiktokRepurposeTimed(stats?.title || '', durStr, timed, language);
+
+    await bumpQuota(req.app.locals.supabase, 'increment_user_quota', req.user.id, 'AI/TIKTOK-REPURPOSE');
+    res.json({ video: { id: videoId, title: stats?.title || '', duration: durStr }, ...result });
+  } catch (err) {
+    console.error('[AI/TIKTOK-REPURPOSE]', err.message);
+    res.status(500).json({ error: 'Repurpose TikTok indisponible' });
   }
 });
 
