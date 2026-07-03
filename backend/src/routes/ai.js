@@ -10,7 +10,18 @@
 const router = require('express').Router();
 const { requireAuth, requirePro, checkQuota, checkTitlesQuota } = require('../middleware/auth');
 const rateLimit = require('express-rate-limit');
-const { callTextAI, generateTikTokSEO } = require('../utils/aiClient');
+const { callTextAI, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar } = require('../utils/aiClient');
+
+/* Dispatch des outils TikTok avancés (repurpose / ideas / hooks / calendar) */
+async function runTikTokTool(tool, p = {}) {
+  switch (tool) {
+    case 'repurpose': return tiktokRepurpose(p.title, p.description, p.transcript, p.niche, p.language);
+    case 'ideas':     return tiktokViralIdeas(p.niche, p.topic, p.language);
+    case 'hooks':     return tiktokHooks(p.topic, p.niche, p.language);
+    case 'calendar':  return tiktokCalendar(p.niche, p.frequency, p.language);
+    default: throw new Error('Outil TikTok inconnu');
+  }
+}
 
 /* Rate limit global : 10 appels IA / minute */
 const aiRateLimit = rateLimit({
@@ -215,6 +226,21 @@ router.post('/tiktok-seo', requireAuth, checkQuota, aiRateLimit, async (req, res
   } catch (err) {
     console.error('[AI/TIKTOK-SEO]', err.message);
     res.status(500).json({ error: 'TikTok SEO generation failed' });
+  }
+});
+
+/* ── Outils TikTok avancés : repurpose YouTube→TikTok, idées virales, hooks, calendrier
+   Accessible à tous les plans connectés, compté dans le quota. ── */
+router.post('/tiktok-tool', requireAuth, checkQuota, aiRateLimit, async (req, res) => {
+  try {
+    const { tool } = req.body;
+    if (!tool) return res.status(400).json({ error: 'Outil requis' });
+    const result = await runTikTokTool(tool, req.body);
+    await bumpQuota(req.app.locals.supabase, 'increment_user_quota', req.user.id, 'AI/TIKTOK-TOOL');
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/TIKTOK-TOOL]', err.message);
+    res.status(500).json({ error: 'TikTok tool generation failed' });
   }
 });
 

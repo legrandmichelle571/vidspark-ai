@@ -950,4 +950,79 @@ Contraintes : 5 hooks VARIÉS, 5 hashtags par catégorie (broad = larges/populai
   return geminiJson(prompt, 2000);
 }
 
-module.exports = { callGemini, callTextAI, callCloudflareText, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime, generateTikTokSEO };
+/* ── TikTok : transformer une vidéo YouTube longue en 3 scripts TikTok courts ── */
+async function tiktokRepurpose(title = '', description = '', transcript = '', niche = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const src = [
+    title && `Titre : ${title}`,
+    niche && `Niche : ${niche}`,
+    description && `Description : ${description.slice(0, 400)}`,
+    transcript && `Transcription (extrait) : ${transcript.slice(0, 1500)}`
+  ].filter(Boolean).join('\n');
+  const prompt = `Tu es expert du repurposing de contenu. Transforme cette vidéo YouTube longue en 3 vidéos TikTok courtes et percutantes (verticales, 15-45s).
+${src}
+
+Écris en ${langName}. Réponds UNIQUEMENT en JSON valide :
+{
+  "clips": [
+    {
+      "angle": "<le moment fort/angle à extraire>",
+      "hook": "<accroche des 3 premières secondes>",
+      "script": "<mini-script parlé de 15-45s>",
+      "caption": "<légende TikTok optimisée avec emojis>",
+      "hashtags": ["#...", "#...", "#...", "#...", "#..."]
+    }
+  ]
+}
+Exactement 3 clips VARIÉS. Reste concis pour garantir un JSON valide.`;
+  return geminiJson(prompt, 2000);
+}
+
+/* ── TikTok : 10 idées de vidéos virales par niche ── */
+async function tiktokViralIdeas(niche = '', topic = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const ctx = [niche && `Niche : ${niche}`, topic && `Sujet/angle : ${topic}`].filter(Boolean).join('. ');
+  const prompt = `Tu es stratège TikTok viral. Propose 10 idées de vidéos TikTok à fort potentiel.${ctx ? ' ' + ctx + '.' : ''}
+Varie les formats (POV, tuto, storytime, challenge, avant/après, listicle, réaction, coulisses…). Écris en ${langName}.
+Réponds UNIQUEMENT en JSON valide :
+{
+  "ideas": [
+    {"title": "<idée accrocheuse>", "format": "<format>", "hook": "<accroche 3s>", "why": "<pourquoi ça peut percer>", "viral_score": <0-100>}
+  ]
+}
+Exactement 10 idées. Reste concis.`;
+  return geminiJson(prompt, 2000);
+}
+
+/* ── TikTok : optimiseur de hooks (8 variantes notées) ── */
+async function tiktokHooks(topic = '', niche = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const ctx = niche ? ` Niche : ${niche}.` : '';
+  const prompt = `Tu es expert en rétention TikTok (les 3 premières secondes décident de tout). Pour une vidéo sur : "${topic}".${ctx}
+Génère 8 accroches VARIÉES (question, choc, promesse, curiosité, statistique, controverse, storytime, négatif). Note chacune sur 100 selon son pouvoir d'arrêt du scroll. Écris en ${langName}.
+Réponds UNIQUEMENT en JSON valide :
+{
+  "hooks": [{"text": "<accroche>", "type": "<type>", "score": <0-100>}],
+  "best_index": <index 0-based du meilleur>,
+  "tip": "<1 conseil pour renforcer un hook>"
+}
+Exactement 8 hooks. Reste concis.`;
+  return geminiJson(prompt, 1400);
+}
+
+/* ── TikTok : calendrier de contenu sur 7 jours ── */
+async function tiktokCalendar(niche = '', frequency = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const freq = frequency || '1 vidéo/jour';
+  const prompt = `Tu es coach de croissance TikTok. Établis un calendrier de contenu sur 7 jours pour la niche "${niche || 'généraliste'}", rythme : ${freq}. Écris en ${langName}.
+Réponds UNIQUEMENT en JSON valide :
+{
+  "schedule": [
+    {"day": "<Jour 1>", "idea": "<idée de vidéo précise>", "format": "<format>", "hook": "<accroche courte>", "best_time": "<meilleur créneau>"}
+  ]
+}
+Exactement 7 jours, variés (éducatif/divertissant/engageant). Reste concis.`;
+  return geminiJson(prompt, 1800);
+}
+
+module.exports = { callGemini, callTextAI, callCloudflareText, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar };
