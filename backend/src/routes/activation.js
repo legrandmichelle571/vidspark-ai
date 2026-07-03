@@ -814,9 +814,9 @@ router.post('/ai/tiktok-tool', async (req, res) => {
 /* ── YouTube → TikTok HORODATÉ (extension : videoId courant) — Pro/Business ── */
 router.post('/ai/tiktok-repurpose', async (req, res) => {
   try {
-    const { activation_id, activation_secret, videoId, language = 'fr' } = req.body;
+    const { activation_id, activation_secret, videoId, transcript = '', title = '', language = 'fr' } = req.body;
     if (!activation_id || !activation_secret) return res.status(400).json({ error: 'ID et Secret requis' });
-    if (!videoId) return res.status(400).json({ error: 'videoId requis' });
+    if (!videoId && !transcript) return res.status(400).json({ error: 'videoId ou transcription requis' });
 
     const supabase = req.app.locals.supabase;
     const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
@@ -826,17 +826,25 @@ router.post('/ai/tiktok-repurpose', async (req, res) => {
       return res.status(403).json({ error: 'Repurpose TikTok réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
     }
 
-    const [stats, tr] = await Promise.all([
-      getVideoStats(videoId).catch(() => null),
-      getTranscript(videoId).catch(() => ({ available: false, segments: [] }))
-    ]);
-    if (!tr.available || !tr.segments.length) {
-      return res.status(422).json({ error: "Cette vidéo n'a pas de sous-titres exploitables pour les timecodes.", code: 'NO_TRANSCRIPT' });
+    // Priorité à la transcription fournie par l'extension (lue côté navigateur = fiable) ;
+    // sinon on tente une récupération serveur (souvent bloquée par YouTube).
+    let timed = '', vidTitle = title || '', durStr = '';
+    if (transcript && transcript.trim().length > 20) {
+      timed = transcript.slice(0, 6000);
+    } else {
+      const [stats, tr] = await Promise.all([
+        getVideoStats(videoId).catch(() => null),
+        getTranscript(videoId).catch(() => ({ available: false, segments: [] }))
+      ]);
+      if (!tr.available || !tr.segments.length) {
+        return res.status(422).json({ error: "Aucune transcription trouvée pour cette vidéo.", code: 'NO_TRANSCRIPT' });
+      }
+      timed = buildTimedTranscript(tr.segments);
+      vidTitle = title || stats?.title || '';
+      durStr = stats?.duration ? secToTimestamp(iso8601ToSeconds(stats.duration)) : '';
     }
-    const timed = buildTimedTranscript(tr.segments);
-    const durStr = stats?.duration ? secToTimestamp(iso8601ToSeconds(stats.duration)) : '';
-    const result = await tiktokRepurposeTimed(stats?.title || '', durStr, timed, language);
-    res.json({ video: { id: videoId, title: stats?.title || '', duration: durStr }, ...result });
+    const result = await tiktokRepurposeTimed(vidTitle, durStr, timed, language);
+    res.json({ video: { id: videoId, title: vidTitle, duration: durStr }, ...result });
   } catch (err) {
     console.error('[AI/TIKTOK-REPURPOSE]', err.message);
     res.status(500).json({ error: 'Repurpose TikTok indisponible', details: err.message });
