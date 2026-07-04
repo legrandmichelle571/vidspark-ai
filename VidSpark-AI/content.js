@@ -20,11 +20,101 @@ const LANG_LIST = [
   {code:"it",label:"Italiano"},{code:"nl",label:"Nederlands"}
 ];
 
+/* Listes pour les menus déroulants (niche + région/pays) */
+const NICHE_OPTIONS=["Gaming","Cuisine","Tech / High-tech","Vlog / Lifestyle","Beauté / Mode","Sport / Foot","Éducation / Tuto","Musique","Finance / Business","Crypto","Voyage","Comédie / Humour","Actualités / News","Religion","Enfants / Famille","Santé / Fitness","Automobile","Science","Cinéma / Critique","DIY / Bricolage"];
+
+/* Cibles d'audience groupées (groupes + continents + pays arabes + pays) */
+const REGION_GROUPS={
+  "🌍 Général":["Mondial","Monde arabe","Pays francophones","Pays anglophones","Pays hispanophones","Pays lusophones"],
+  "🗺️ Continents / régions":["Afrique","Maghreb","Afrique subsaharienne","Moyen-Orient / Golfe (MENA)","Europe","Amérique du Nord","Amérique latine","Asie","Asie du Sud-Est","Océanie"],
+  "🕌 Pays arabes":["Algérie","Maroc","Tunisie","Libye","Égypte","Mauritanie","Soudan","Arabie Saoudite","Émirats (EAU)","Qatar","Koweït","Bahreïn","Oman","Yémen","Jordanie","Liban","Syrie","Irak","Palestine"],
+  "🇪🇺 Europe":["France","Belgique","Suisse","Royaume-Uni","Allemagne","Espagne","Italie","Portugal","Pays-Bas","Russie"],
+  "🌎 Amériques":["USA","Canada","Brésil","Mexique","Argentine"],
+  "🌏 Asie & autres":["Inde","Turquie","Indonésie","Pakistan","Japon","Corée du Sud","Chine","Nigéria"]
+};
+
+/* Traductions des labels (valeur = FR canonique envoyée à l'IA ; label affiché traduit) */
+const LABEL_I18N={
+  "Gaming":{en:"Gaming",ar:"ألعاب",ja:"ゲーム"},"Cuisine":{en:"Cooking",ar:"طبخ",ja:"料理"},"Tech / High-tech":{en:"Tech",ar:"تقنية",ja:"テック"},"Vlog / Lifestyle":{en:"Vlog / Lifestyle",ar:"فلوق / نمط حياة",ja:"Vlog / ライフ"},"Beauté / Mode":{en:"Beauty / Fashion",ar:"جمال وموضة",ja:"美容 / ファッション"},"Sport / Foot":{en:"Sports / Football",ar:"رياضة / كرة قدم",ja:"スポーツ / サッカー"},"Éducation / Tuto":{en:"Education / Tutorial",ar:"تعليم / شرح",ja:"教育 / チュートリアル"},"Musique":{en:"Music",ar:"موسيقى",ja:"音楽"},"Finance / Business":{en:"Finance / Business",ar:"مال وأعمال",ja:"金融 / ビジネス"},"Crypto":{en:"Crypto",ar:"كريبتو",ja:"暗号資産"},"Voyage":{en:"Travel",ar:"سفر",ja:"旅行"},"Comédie / Humour":{en:"Comedy",ar:"كوميديا",ja:"コメディ"},"Actualités / News":{en:"News",ar:"أخبار",ja:"ニュース"},"Religion":{en:"Religion",ar:"دين",ja:"宗教"},"Enfants / Famille":{en:"Kids / Family",ar:"أطفال / عائلة",ja:"子供 / 家族"},"Santé / Fitness":{en:"Health / Fitness",ar:"صحة / لياقة",ja:"健康 / フィットネス"},"Automobile":{en:"Automotive",ar:"سيارات",ja:"車"},"Science":{en:"Science",ar:"علوم",ja:"科学"},"Cinéma / Critique":{en:"Film / Review",ar:"سينما / نقد",ja:"映画 / レビュー"},"DIY / Bricolage":{en:"DIY",ar:"أعمال يدوية",ja:"DIY"},
+  "🌍 Général":{en:"🌍 General",ar:"🌍 عام",ja:"🌍 一般"},"🗺️ Continents / régions":{en:"🗺️ Continents / regions",ar:"🗺️ القارات / المناطق",ja:"🗺️ 大陸・地域"},"🕌 Pays arabes":{en:"🕌 Arab countries",ar:"🕌 الدول العربية",ja:"🕌 アラブ諸国"},"🇪🇺 Europe":{en:"🇪🇺 Europe",ar:"🇪🇺 أوروبا",ja:"🇪🇺 ヨーロッパ"},"🌎 Amériques":{en:"🌎 Americas",ar:"🌎 الأمريكتان",ja:"🌎 南北アメリカ"},"🌏 Asie & autres":{en:"🌏 Asia & others",ar:"🌏 آسيا وأخرى",ja:"🌏 アジア・その他"},
+  "Mondial":{en:"Worldwide",ar:"عالمي",ja:"世界"},"Monde arabe":{en:"Arab world",ar:"العالم العربي",ja:"アラブ世界"},"Pays francophones":{en:"Francophone",ar:"الدول الفرنكوفونية",ja:"フランス語圏"},"Pays anglophones":{en:"English-speaking",ar:"الدول الأنجلوفونية",ja:"英語圏"},"Pays hispanophones":{en:"Spanish-speaking",ar:"الدول الناطقة بالإسبانية",ja:"スペイン語圏"},"Pays lusophones":{en:"Portuguese-speaking",ar:"الدول الناطقة بالبرتغالية",ja:"ポルトガル語圏"},
+  "Afrique":{en:"Africa",ar:"أفريقيا",ja:"アフリカ"},"Maghreb":{en:"Maghreb",ar:"المغرب العربي",ja:"マグレブ"},"Afrique subsaharienne":{en:"Sub-Saharan Africa",ar:"أفريقيا جنوب الصحراء",ja:"サブサハラ"},"Moyen-Orient / Golfe (MENA)":{en:"Middle East / Gulf (MENA)",ar:"الشرق الأوسط / الخليج",ja:"中東 / 湾岸"},"Europe":{en:"Europe",ar:"أوروبا",ja:"ヨーロッパ"},"Amérique du Nord":{en:"North America",ar:"أمريكا الشمالية",ja:"北米"},"Amérique latine":{en:"Latin America",ar:"أمريكا اللاتينية",ja:"ラテンアメリカ"},"Asie":{en:"Asia",ar:"آسيا",ja:"アジア"},"Asie du Sud-Est":{en:"Southeast Asia",ar:"جنوب شرق آسيا",ja:"東南アジア"},"Océanie":{en:"Oceania",ar:"أوقيانوسيا",ja:"オセアニア"},
+  "Algérie":{en:"Algeria",ar:"الجزائر",ja:"アルジェリア"},"Maroc":{en:"Morocco",ar:"المغرب",ja:"モロッコ"},"Tunisie":{en:"Tunisia",ar:"تونس",ja:"チュニジア"},"Libye":{en:"Libya",ar:"ليبيا",ja:"リビア"},"Égypte":{en:"Egypt",ar:"مصر",ja:"エジプト"},"Mauritanie":{en:"Mauritania",ar:"موريتانيا",ja:"モーリタニア"},"Soudan":{en:"Sudan",ar:"السودان",ja:"スーダン"},"Arabie Saoudite":{en:"Saudi Arabia",ar:"السعودية",ja:"サウジアラビア"},"Émirats (EAU)":{en:"UAE",ar:"الإمارات",ja:"UAE"},"Qatar":{en:"Qatar",ar:"قطر",ja:"カタール"},"Koweït":{en:"Kuwait",ar:"الكويت",ja:"クウェート"},"Bahreïn":{en:"Bahrain",ar:"البحرين",ja:"バーレーン"},"Oman":{en:"Oman",ar:"عُمان",ja:"オマーン"},"Yémen":{en:"Yemen",ar:"اليمن",ja:"イエメン"},"Jordanie":{en:"Jordan",ar:"الأردن",ja:"ヨルダン"},"Liban":{en:"Lebanon",ar:"لبنان",ja:"レバノン"},"Syrie":{en:"Syria",ar:"سوريا",ja:"シリア"},"Irak":{en:"Iraq",ar:"العراق",ja:"イラク"},"Palestine":{en:"Palestine",ar:"فلسطين",ja:"パレスチナ"},
+  "France":{en:"France",ar:"فرنسا",ja:"フランス"},"Belgique":{en:"Belgium",ar:"بلجيكا",ja:"ベルギー"},"Suisse":{en:"Switzerland",ar:"سويسرا",ja:"スイス"},"Royaume-Uni":{en:"United Kingdom",ar:"المملكة المتحدة",ja:"イギリス"},"Allemagne":{en:"Germany",ar:"ألمانيا",ja:"ドイツ"},"Espagne":{en:"Spain",ar:"إسبانيا",ja:"スペイン"},"Italie":{en:"Italy",ar:"إيطاليا",ja:"イタリア"},"Portugal":{en:"Portugal",ar:"البرتغال",ja:"ポルトガル"},"Pays-Bas":{en:"Netherlands",ar:"هولندا",ja:"オランダ"},"Russie":{en:"Russia",ar:"روسيا",ja:"ロシア"},
+  "USA":{en:"USA",ar:"الولايات المتحدة",ja:"アメリカ"},"Canada":{en:"Canada",ar:"كندا",ja:"カナダ"},"Brésil":{en:"Brazil",ar:"البرازيل",ja:"ブラジル"},"Mexique":{en:"Mexico",ar:"المكسيك",ja:"メキシコ"},"Argentine":{en:"Argentina",ar:"الأرجنتين",ja:"アルゼンチン"},
+  "Inde":{en:"India",ar:"الهند",ja:"インド"},"Turquie":{en:"Turkey",ar:"تركيا",ja:"トルコ"},"Indonésie":{en:"Indonesia",ar:"إندونيسيا",ja:"インドネシア"},"Pakistan":{en:"Pakistan",ar:"باكستان",ja:"パキスタン"},"Japon":{en:"Japan",ar:"اليابان",ja:"日本"},"Corée du Sud":{en:"South Korea",ar:"كوريا الجنوبية",ja:"韓国"},"Chine":{en:"China",ar:"الصين",ja:"中国"},"Nigéria":{en:"Nigeria",ar:"نيجيريا",ja:"ナイジェリア"},
+  "3 vidéos/semaine":{en:"3 videos/week",ar:"3 فيديوهات/أسبوع",ja:"週3本"},"1 vidéo/jour":{en:"1 video/day",ar:"فيديو/يوم",ja:"1日1本"},"2 Shorts/jour":{en:"2 Shorts/day",ar:"Shorts×2/يوم",ja:"Shorts 2本/日"},"Vidéo + Shorts":{en:"Video + Shorts",ar:"فيديو + Shorts",ja:"動画 + Shorts"}
+};
+/* Label affiché selon la langue (la valeur reste FR canonique) */
+function optLabel(v){ if(currentLanguage==="fr") return v; const m=LABEL_I18N[v]; return m?(m[currentLanguage]||m.en||v):v; }
+
+/* Construit un <select> stylé (liste simple) */
+function selectHTML(id,list,ph,style){
+  return `<select id="${id}" style="${style}"><option value="">${ph}</option>${list.map(o=>`<option value="${esc(o)}">${esc(optLabel(o))}</option>`).join("")}</select>`;
+}
+/* Construit un <select> de régions avec sous-groupes (optgroups) */
+function regionSelectHTML(id,ph,style){
+  const groups=Object.entries(REGION_GROUPS).map(([g,opts])=>`<optgroup label="${esc(optLabel(g))}">${opts.map(o=>`<option value="${esc(o)}">${esc(optLabel(o))}</option>`).join("")}</optgroup>`).join("");
+  return `<select id="${id}" style="${style}"><option value="">${ph}</option>${groups}</select>`;
+}
+
+/* Score CTR instantané d'un titre (côté navigateur, sans IA) — progressif */
+function computeTitleScore(t){
+  t=(t||"").trim(); const lower=t.toLowerCase(); const len=t.length;
+  const words=t.split(/\s+/).filter(Boolean).length;
+  const power=["incroyable","secret","gratuit","meilleur","facile","rapide","jamais","choquant","astuce","ultime","best","free","easy","ultimate","amazing","top","viral","new","سر","مجان","أفضل","سهل","نصيحة","صدمة","حصري","خطير"];
+  const okLen=len>=40&&len<=70;
+  const okNum=/\d/.test(t);
+  const okEmo=power.some(w=>lower.includes(w));
+  const okHook=/^(comment|pourquoi|how|why|what|top|كيف|لماذا|ما|أفضل)/i.test(t)||/\d/.test(t.slice(0,4))||/[?؟]/.test(t);
+  const okPunct=/[?!؟]/.test(t);
+  // Score progressif (crédit partiel pour la longueur, base pour un titre correct)
+  const cLen = okLen?25:(len>=25&&len<=85?16:(len>=12?8:0));
+  const cWords = words>=4?12:(words>=2?6:0);
+  const cBase = len>=8?8:0;
+  let score=cLen+cWords+cBase+(okNum?15:0)+(okEmo?15:0)+(okHook?15:0)+(okPunct?10:0);
+  score=Math.max(0,Math.min(100,score));
+  const checks=[
+    {label:T("td_len"),ok:cLen>=16,tip:T("tdh_len")},
+    {label:T("td_num"),ok:okNum,tip:T("tdh_num")},
+    {label:T("td_emotion"),ok:okEmo,tip:T("tdh_emotion")},
+    {label:T("td_hook"),ok:okHook,tip:T("tdh_hook")},
+    {label:T("td_punct"),ok:okPunct,tip:T("tdh_punct")}
+  ];
+  return {score, checks};
+}
+
+/* Petite icône "?" d'aide avec explication au survol */
+function help(txt){ return `<span class="echo-help" title="${esc(txt)}">?</span>`; }
+
+/* Convertit "6m" → 6000000, "14k" → 14000, "5 000" → 5000 */
+function parseSubs(str){
+  if(!str) return 0;
+  let s=(""+str).toLowerCase().replace(/[\s,]/g,"").trim();
+  const m=s.match(/^([\d.]+)([km])?$/);
+  if(!m) return parseInt(s.replace(/[^\d]/g,""),10)||0;
+  let n=parseFloat(m[1])||0;
+  if(m[2]==="m") n*=1e6; else if(m[2]==="k") n*=1e3;
+  return Math.round(n);
+}
+
 const I18N = {
   fr:{
     /* navigation */
+    nav_coach:"🧠 Coach", coach_potential:"Potentiel de la vidéo", coach_actions:"actions", coach_fix:"Corriger", coach_grow:"Trouver une idée virale", coach_a_title:"Corrige ton titre", coach_w_title_kw:"Titre à optimiser pour le SEO", coach_w_title_long:"Titre trop long (plus de 70 caractères)", coach_a_thumb:"Améliore ta miniature", coach_w_thumb:"Forte marge d'amélioration sur la miniature", coach_a_short:"Publie un Short sur ce sujet", coach_w_short:"Booste ton potentiel viral avec un Short", coach_ok_title:"Titre OK", coach_ok_thumb:"Miniature OK", coach_ok_viral:"Potentiel viral OK", coach_all_good:"Ta vidéo est déjà bien optimisée !", sec_coach:"Coach", sec_analyser:"Analyser", sec_creer:"Créer", sec_studio:"Studio", sec_croissance:"Croissance",
     nav_overview:"Aperçu", nav_seo:"SEO", nav_thumbnail:"Miniature",
-    nav_viral:"Viral", nav_competitor:"Concurrence", nav_titles:"Titres IA", nav_actions:"Actions",
+    nav_viral:"Viral", nav_competitor:"Concurrence", nav_titles:"Titres IA", nav_actions:"Actions", nav_abtest:"A/B Test",
+    abtest_intro:"Compare deux titres : l'IA prédit lequel aura le meilleur taux de clics.",
+    abtest_a:"Titre A", abtest_b:"Titre B", abtest_run:"⚔️ Comparer les titres",
+    abtest_winner:"Gagnant", abtest_verdict:"Verdict de l'IA", abtest_improved:"💡 Titre suggéré (encore meilleur)",
+    abtest_ctr:"CTR estimé", abtest_confidence:"Confiance", abtest_use:"Utiliser ce titre",
+    thumbab_title:"A/B Miniatures", thumbab_intro:"Compare 2 miniatures : l'IA Vision dit laquelle aura le meilleur CTR et pourquoi.",
+    thumbab_a:"Miniature A", thumbab_b:"Miniature B", thumbab_run:"📸 Comparer les miniatures", thumbab_tips:"💡 Pour améliorer la gagnante", thumbab_need2:"Choisis 2 images d'abord",
+    thumbab_prompt_label:"🎨 Prompt détaillé pour créer la miniature améliorée :", thumbab_prompt_copy:"Copier le prompt", thumbab_prompt_hint:"Colle ce prompt dans une IA d'image (Midjourney, DALL·E, ChatGPT, Leonardo…) pour générer ta miniature.",
+    nav_shorts:"Shorts", shorts_intro:"Transforme cette vidéo en idées de Shorts viraux (titre, hook, script, hashtags).",
+    shorts_generate:"🎬 Générer des Shorts", shorts_hook:"Hook (3 premières sec)", shorts_script:"Script",
+    shorts_duration:"Durée", shorts_copy:"Copier le script",
+    shorts_summary:"Résumé", shorts_clips:"✂️ Passages à couper", shorts_estimated:"estimé", shorts_real:"basé sur les sous-titres",
     /* scores */
     score_seo:"Score SEO", score_viral:"Score Viral",
     score_thumb:"Score Miniature", score_competition:"Concurrence",
@@ -57,6 +147,12 @@ const I18N = {
     thumb_face:"Visage détecté", thumb_no_face:"Pas de visage",
     thumb_contrast:"Contraste", thumb_text:"Lisibilité texte",
     thumb_colors:"Couleurs", thumb_elements:"Éléments",
+    download:"Télécharger", regenerate:"Régénérer", share:"Partager", export:"Exporter",
+    tk_ready:"Contenu prêt à publier", tk_hooks:"Hooks",
+    tkr_ready:"Clips prêts à découper", tk_clips:"clips",
+    tki_ready:"Idées prêtes", tk_ideas:"idées",
+    tkh_ready:"Hooks prêts",
+    tkc_ready:"Calendrier prêt", tk_days:"jours",
     /* viral tab */
     viral_score:"Score Viral", viral_probability:"Probabilité virale",
     viral_low:"Faible", viral_medium:"Moyenne", viral_high:"Élevée",
@@ -182,8 +278,20 @@ const I18N = {
     comp_opp_label:"Créneaux sous-exploités dans votre niche"
   },
   en:{
+    nav_coach:"🧠 Coach", coach_potential:"Video potential", coach_actions:"actions", coach_fix:"Fix it", coach_grow:"Find a viral idea", coach_a_title:"Fix your title", coach_w_title_kw:"Title needs SEO optimization", coach_w_title_long:"Title too long (over 70 characters)", coach_a_thumb:"Improve your thumbnail", coach_w_thumb:"Big room to improve the thumbnail", coach_a_short:"Post a Short on this topic", coach_w_short:"Boost your viral potential with a Short", coach_ok_title:"Title OK", coach_ok_thumb:"Thumbnail OK", coach_ok_viral:"Viral potential OK", coach_all_good:"Your video is already well optimized!", sec_coach:"Coach", sec_analyser:"Analyze", sec_creer:"Create", sec_studio:"Studio", sec_croissance:"Growth",
     nav_overview:"Overview", nav_seo:"SEO", nav_thumbnail:"Thumbnail",
-    nav_viral:"Viral", nav_competitor:"Competitors", nav_titles:"AI Titles", nav_actions:"Actions",
+    nav_viral:"Viral", nav_competitor:"Competitors", nav_titles:"AI Titles", nav_actions:"Actions", nav_abtest:"A/B Test",
+    abtest_intro:"Compare two titles: AI predicts which one gets the higher click-through rate.",
+    abtest_a:"Title A", abtest_b:"Title B", abtest_run:"⚔️ Compare titles",
+    abtest_winner:"Winner", abtest_verdict:"AI Verdict", abtest_improved:"💡 Suggested title (even better)",
+    abtest_ctr:"Est. CTR", abtest_confidence:"Confidence", abtest_use:"Use this title",
+    thumbab_title:"Thumbnail A/B", thumbab_intro:"Compare 2 thumbnails: Vision AI tells which gets the higher CTR and why.",
+    thumbab_a:"Thumbnail A", thumbab_b:"Thumbnail B", thumbab_run:"📸 Compare thumbnails", thumbab_tips:"💡 To improve the winner", thumbab_need2:"Pick 2 images first",
+    thumbab_prompt_label:"🎨 Detailed prompt to create the improved thumbnail:", thumbab_prompt_copy:"Copy prompt", thumbab_prompt_hint:"Paste this prompt into an image AI (Midjourney, DALL·E, ChatGPT, Leonardo…) to generate your thumbnail.",
+    nav_shorts:"Shorts", shorts_intro:"Turn this video into viral Shorts ideas (title, hook, script, hashtags).",
+    shorts_generate:"🎬 Generate Shorts", shorts_hook:"Hook (first 3 sec)", shorts_script:"Script",
+    shorts_duration:"Duration", shorts_copy:"Copy script",
+    shorts_summary:"Summary", shorts_clips:"✂️ Clips to cut", shorts_estimated:"estimated", shorts_real:"based on captions",
     score_seo:"SEO Score", score_viral:"Viral Score",
     score_thumb:"Thumbnail Score", score_competition:"Competition",
     score_global:"Global Score",
@@ -208,6 +316,12 @@ const I18N = {
     thumb_emotions:"Emotional analysis", thumb_strengths:"Strengths",
     thumb_weaknesses:"Weaknesses", thumb_suggestions:"Suggestions",
     thumb_download:"Download HD", thumb_copy_url:"Copy URL",
+    download:"Download", regenerate:"Regenerate", share:"Share", export:"Export",
+    tk_ready:"Content ready to publish", tk_hooks:"Hooks",
+    tkr_ready:"Clips ready to cut", tk_clips:"clips",
+    tki_ready:"Ideas ready", tk_ideas:"ideas",
+    tkh_ready:"Hooks ready",
+    tkc_ready:"Calendar ready", tk_days:"days",
     thumb_face:"Face detected", thumb_no_face:"No face",
     thumb_contrast:"Contrast", thumb_text:"Text readability",
     thumb_colors:"Colors", thumb_elements:"Elements",
@@ -314,6 +428,7 @@ const I18N = {
     comp_opp_label:"Underexploited niches in your topic"
   },
   ar:{
+    nav_coach:"🧠 المدرّب", coach_potential:"إمكانات الفيديو", coach_actions:"إجراءات", coach_fix:"أصلح", coach_grow:"اعثر على فكرة فيروسية", coach_a_title:"أصلح عنوانك", coach_w_title_kw:"العنوان يحتاج تحسين SEO", coach_w_title_long:"العنوان طويل جدًا (أكثر من 70 حرفًا)", coach_a_thumb:"حسّن صورتك المصغّرة", coach_w_thumb:"مجال كبير لتحسين الصورة المصغّرة", coach_a_short:"انشر Short عن هذا الموضوع", coach_w_short:"عزّز انتشارك بفيديو Short", coach_ok_title:"العنوان جيد", coach_ok_thumb:"الصورة المصغّرة جيدة", coach_ok_viral:"إمكانات الانتشار جيدة", coach_all_good:"فيديوك محسّن جيدًا بالفعل!", sec_coach:"المدرّب", sec_analyser:"تحليل", sec_creer:"إنشاء", sec_studio:"استوديو", sec_croissance:"النمو",
     nav_overview:"نظرة عامة", nav_seo:"SEO", nav_thumbnail:"الصورة",
     nav_viral:"فيروسي", nav_competitor:"المنافسون", nav_titles:"عناوين AI", nav_actions:"إجراءات",
     score_seo:"نقاط SEO", score_viral:"النقاط الفيروسية",
@@ -446,6 +561,7 @@ const I18N = {
     comp_opp_label:"فرص غير مستغلة في موضوعك"
   },
   es:{
+    nav_coach:"🧠 Coach", coach_potential:"Potencial del vídeo", coach_actions:"acciones", coach_fix:"Corregir", coach_grow:"Encuentra una idea viral", coach_a_title:"Corrige tu título", coach_w_title_kw:"El título necesita optimización SEO", coach_w_title_long:"Título demasiado largo (más de 70 caracteres)", coach_a_thumb:"Mejora tu miniatura", coach_w_thumb:"Mucho margen para mejorar la miniatura", coach_a_short:"Publica un Short sobre este tema", coach_w_short:"Aumenta tu potencial viral con un Short", coach_ok_title:"Título OK", coach_ok_thumb:"Miniatura OK", coach_ok_viral:"Potencial viral OK", coach_all_good:"¡Tu vídeo ya está bien optimizado!", sec_coach:"Coach", sec_analyser:"Analizar", sec_creer:"Crear", sec_studio:"Estudio", sec_croissance:"Crecimiento",
     nav_overview:"Vista general", nav_seo:"SEO", nav_thumbnail:"Miniatura",
     nav_viral:"Viral", nav_competitor:"Competidores", nav_titles:"Títulos IA", nav_actions:"Acciones",
     score_seo:"Puntuación SEO", score_viral:"Puntuación Viral",
@@ -578,6 +694,7 @@ const I18N = {
     comp_opp_label:"Nichos sin explotar en tu tema"
   },
   de:{
+    nav_coach:"🧠 Coach", coach_potential:"Video-Potenzial", coach_actions:"Aktionen", coach_fix:"Beheben", coach_grow:"Finde eine virale Idee", coach_a_title:"Korrigiere deinen Titel", coach_w_title_kw:"Titel braucht SEO-Optimierung", coach_w_title_long:"Titel zu lang (über 70 Zeichen)", coach_a_thumb:"Verbessere dein Thumbnail", coach_w_thumb:"Viel Spielraum zur Verbesserung des Thumbnails", coach_a_short:"Poste einen Short zu diesem Thema", coach_w_short:"Steigere dein virales Potenzial mit einem Short", coach_ok_title:"Titel OK", coach_ok_thumb:"Thumbnail OK", coach_ok_viral:"Virales Potenzial OK", coach_all_good:"Dein Video ist bereits gut optimiert!", sec_coach:"Coach", sec_analyser:"Analysieren", sec_creer:"Erstellen", sec_studio:"Studio", sec_croissance:"Wachstum",
     nav_overview:"Übersicht", nav_seo:"SEO", nav_thumbnail:"Vorschaubild",
     nav_viral:"Viral", nav_competitor:"Konkurrenz", nav_titles:"KI-Titel", nav_actions:"Aktionen",
     score_seo:"SEO-Punktzahl", score_viral:"Viral-Score",
@@ -710,6 +827,7 @@ const I18N = {
     comp_opp_label:"Ungenutzte Nischen in Ihrem Thema"
   },
   pt:{
+    nav_coach:"🧠 Coach", coach_potential:"Potencial do vídeo", coach_actions:"ações", coach_fix:"Corrigir", coach_grow:"Encontre uma ideia viral", coach_a_title:"Corrija seu título", coach_w_title_kw:"O título precisa de otimização de SEO", coach_w_title_long:"Título muito longo (mais de 70 caracteres)", coach_a_thumb:"Melhore sua miniatura", coach_w_thumb:"Grande margem para melhorar a miniatura", coach_a_short:"Publique um Short sobre este tema", coach_w_short:"Aumente seu potencial viral com um Short", coach_ok_title:"Título OK", coach_ok_thumb:"Miniatura OK", coach_ok_viral:"Potencial viral OK", coach_all_good:"Seu vídeo já está bem otimizado!", sec_coach:"Coach", sec_analyser:"Analisar", sec_creer:"Criar", sec_studio:"Estúdio", sec_croissance:"Crescimento",
     nav_overview:"Visão geral", nav_seo:"SEO", nav_thumbnail:"Miniatura",
     nav_viral:"Viral", nav_competitor:"Concorrentes", nav_titles:"Títulos IA", nav_actions:"Ações",
     score_seo:"Pontuação SEO", score_viral:"Pontuação Viral",
@@ -842,6 +960,7 @@ const I18N = {
     comp_opp_label:"Nichos inexplorados em seu tema"
   },
   it:{
+    nav_coach:"🧠 Coach", coach_potential:"Potenziale del video", coach_actions:"azioni", coach_fix:"Correggi", coach_grow:"Trova idee virali", coach_a_title:"Correggi il tuo titolo", coach_w_title_kw:"Il titolo necessita di ottimizzazione SEO", coach_w_title_long:"Titolo troppo lungo (oltre 70 caratteri)", coach_a_thumb:"Migliora la tua miniatura", coach_w_thumb:"Ampio margine per migliorare la miniatura", coach_a_short:"Pubblica uno Short su questo argomento", coach_w_short:"Aumenta il tuo potenziale virale con uno Short", coach_ok_title:"Titolo OK", coach_ok_thumb:"Miniatura OK", coach_ok_viral:"Potenziale virale OK", coach_all_good:"Il tuo video è già ben ottimizzato!", sec_coach:"Coach", sec_analyser:"Analizza", sec_creer:"Crea", sec_studio:"Studio", sec_croissance:"Crescita",
     nav_overview:"Panoramica", nav_seo:"SEO", nav_thumbnail:"Miniatura",
     nav_viral:"Virale", nav_competitor:"Concorrenti", nav_titles:"Titoli IA", nav_actions:"Azioni",
     score_seo:"Punteggio SEO", score_viral:"Punteggio Virale",
@@ -977,7 +1096,8 @@ const I18N = {
 /* ══ TRADUCTIONS COMPLÈTES — 7 langues supplémentaires ══ */
 
 I18N.ru = {
-  nav_overview:"Обзор", nav_seo:"SEO", nav_thumbnail:"Превью",
+  nav_coach:"🧠 Коуч", coach_potential:"Потенциал видео", coach_actions:"действий", coach_fix:"Исправить", coach_grow:"Найди вирусную идею", coach_a_title:"Исправь заголовок", coach_w_title_kw:"Заголовок нужно оптимизировать под SEO", coach_w_title_long:"Заголовок слишком длинный (более 70 символов)", coach_a_thumb:"Улучши обложку", coach_w_thumb:"Много возможностей улучшить обложку", coach_a_short:"Опубликуй Short на эту тему", coach_w_short:"Повысь вирусный потенциал с помощью Short", coach_ok_title:"Заголовок ОК", coach_ok_thumb:"Обложка ОК", coach_ok_viral:"Вирусный потенциал ОК", coach_all_good:"Твоё видео уже хорошо оптимизировано!", sec_coach:"Коуч", sec_analyser:"Анализ", sec_creer:"Создать", sec_studio:"Студия", sec_croissance:"Рост",
+    nav_overview:"Обзор", nav_seo:"SEO", nav_thumbnail:"Превью",
   nav_viral:"Вирусный", nav_competitor:"Конкуренты", nav_titles:"ИИ Заголовки", nav_actions:"Действия",
   score_seo:"SEO Балл", score_viral:"Вирусный Балл", score_thumb:"Балл Превью",
   score_competition:"Конкуренция", score_global:"Общий Балл",
@@ -1112,7 +1232,8 @@ I18N.ru = {
 };
 
 I18N.ja = {
-  nav_overview:"概要", nav_seo:"SEO", nav_thumbnail:"サムネイル",
+  nav_coach:"🧠 コーチ", coach_potential:"動画のポテンシャル", coach_actions:"アクション", coach_fix:"修正する", coach_grow:"バズるアイデアを探す", coach_a_title:"タイトルを修正", coach_w_title_kw:"タイトルにSEO最適化が必要", coach_w_title_long:"タイトルが長すぎます（70文字以上）", coach_a_thumb:"サムネイルを改善", coach_w_thumb:"サムネイルに大きな改善余地", coach_a_short:"このテーマでShortを投稿", coach_w_short:"Shortでバズる可能性を高める", coach_ok_title:"タイトルOK", coach_ok_thumb:"サムネイルOK", coach_ok_viral:"バズる可能性OK", coach_all_good:"あなたの動画はすでに最適化されています！", sec_coach:"コーチ", sec_analyser:"分析", sec_creer:"作成", sec_studio:"スタジオ", sec_croissance:"成長",
+    nav_overview:"概要", nav_seo:"SEO", nav_thumbnail:"サムネイル",
   nav_viral:"バイラル", nav_competitor:"競合他社", nav_titles:"AIタイトル", nav_actions:"アクション",
   score_seo:"SEOスコア", score_viral:"バイラルスコア", score_thumb:"サムネイルスコア",
   score_competition:"競合", score_global:"総合スコア",
@@ -1245,7 +1366,8 @@ I18N.ja = {
 };
 
 I18N.ko = {
-  nav_overview:"개요", nav_seo:"SEO", nav_thumbnail:"썸네일",
+  nav_coach:"🧠 코치", coach_potential:"영상 잠재력", coach_actions:"개의 작업", coach_fix:"수정하기", coach_grow:"바이럴 아이디어 찾기", coach_a_title:"제목 수정하기", coach_w_title_kw:"제목에 SEO 최적화가 필요해요", coach_w_title_long:"제목이 너무 깁니다 (70자 초과)", coach_a_thumb:"썸네일 개선하기", coach_w_thumb:"썸네일 개선 여지가 큽니다", coach_a_short:"이 주제로 Short 올리기", coach_w_short:"Short로 바이럴 잠재력 높이기", coach_ok_title:"제목 OK", coach_ok_thumb:"썸네일 OK", coach_ok_viral:"바이럴 잠재력 OK", coach_all_good:"영상이 이미 잘 최적화되어 있어요!", sec_coach:"코치", sec_analyser:"분석", sec_creer:"제작", sec_studio:"스튜디오", sec_croissance:"성장",
+    nav_overview:"개요", nav_seo:"SEO", nav_thumbnail:"썸네일",
   nav_viral:"바이럴", nav_competitor:"경쟁자", nav_titles:"AI 제목", nav_actions:"작업",
   score_seo:"SEO 점수", score_viral:"바이럴 점수", score_thumb:"썸네일 점수",
   score_competition:"경쟁", score_global:"종합 점수",
@@ -1378,7 +1500,8 @@ I18N.ko = {
 };
 
 I18N.hi = {
-  nav_overview:"अवलोकन", nav_seo:"SEO", nav_thumbnail:"थंबनेल",
+  nav_coach:"🧠 कोच", coach_potential:"वीडियो की क्षमता", coach_actions:"क्रियाएँ", coach_fix:"ठीक करें", coach_grow:"वायरल आइडिया खोजें", coach_a_title:"अपना टाइटल ठीक करें", coach_w_title_kw:"टाइटल में SEO ऑप्टिमाइज़ेशन ज़रूरी है", coach_w_title_long:"टाइटल बहुत लंबा है (70 अक्षरों से अधिक)", coach_a_thumb:"अपना थंबनेल सुधारें", coach_w_thumb:"थंबनेल सुधारने की काफी गुंजाइश है", coach_a_short:"इस विषय पर एक Short पोस्ट करें", coach_w_short:"Short से अपनी वायरल क्षमता बढ़ाएँ", coach_ok_title:"टाइटल ठीक है", coach_ok_thumb:"थंबनेल ठीक है", coach_ok_viral:"वायरल क्षमता ठीक है", coach_all_good:"आपका वीडियो पहले से ही अच्छी तरह ऑप्टिमाइज़ है!", sec_coach:"कोच", sec_analyser:"विश्लेषण", sec_creer:"बनाएँ", sec_studio:"स्टूडियो", sec_croissance:"विकास",
+    nav_overview:"अवलोकन", nav_seo:"SEO", nav_thumbnail:"थंबनेल",
   nav_viral:"वायरल", nav_competitor:"प्रतिस्पर्धी", nav_titles:"AI शीर्षक", nav_actions:"क्रियाएं",
   score_seo:"SEO स्कोर", score_viral:"वायरल स्कोर", score_thumb:"थंबनेल स्कोर",
   score_competition:"प्रतिस्पर्धा", score_global:"कुल स्कोर",
@@ -1511,7 +1634,8 @@ I18N.hi = {
 };
 
 I18N.zh = {
-  nav_overview:"概览", nav_seo:"SEO", nav_thumbnail:"缩略图",
+  nav_coach:"🧠 教练", coach_potential:"视频潜力", coach_actions:"项操作", coach_fix:"修复", coach_grow:"寻找爆款灵感", coach_a_title:"优化你的标题", coach_w_title_kw:"标题需要SEO优化", coach_w_title_long:"标题太长（超过70个字符）", coach_a_thumb:"改进你的缩略图", coach_w_thumb:"缩略图有很大改进空间", coach_a_short:"发布关于此主题的Short", coach_w_short:"用Short提升你的爆款潜力", coach_ok_title:"标题OK", coach_ok_thumb:"缩略图OK", coach_ok_viral:"爆款潜力OK", coach_all_good:"你的视频已经优化得很好了！", sec_coach:"教练", sec_analyser:"分析", sec_creer:"创作", sec_studio:"工作室", sec_croissance:"增长",
+    nav_overview:"概览", nav_seo:"SEO", nav_thumbnail:"缩略图",
   nav_viral:"病毒性", nav_competitor:"竞争对手", nav_titles:"AI标题", nav_actions:"操作",
   score_seo:"SEO评分", score_viral:"病毒评分", score_thumb:"缩略图评分",
   score_competition:"竞争", score_global:"综合评分",
@@ -1644,7 +1768,8 @@ I18N.zh = {
 };
 
 I18N.tr = {
-  nav_overview:"Genel Bakış", nav_seo:"SEO", nav_thumbnail:"Küçük Resim",
+  nav_coach:"🧠 Koç", coach_potential:"Video potansiyeli", coach_actions:"işlem", coach_fix:"Düzelt", coach_grow:"Viral bir fikir bul", coach_a_title:"Başlığını düzelt", coach_w_title_kw:"Başlık SEO optimizasyonu gerektiriyor", coach_w_title_long:"Başlık çok uzun (70 karakterden fazla)", coach_a_thumb:"Küçük resmini iyileştir", coach_w_thumb:"Küçük resmi iyileştirmek için büyük alan var", coach_a_short:"Bu konuda bir Short paylaş", coach_w_short:"Bir Short ile viral potansiyelini artır", coach_ok_title:"Başlık OK", coach_ok_thumb:"Küçük resim OK", coach_ok_viral:"Viral potansiyel OK", coach_all_good:"Videon zaten iyi optimize edilmiş!", sec_coach:"Koç", sec_analyser:"Analiz", sec_creer:"Oluştur", sec_studio:"Stüdyo", sec_croissance:"Büyüme",
+    nav_overview:"Genel Bakış", nav_seo:"SEO", nav_thumbnail:"Küçük Resim",
   nav_viral:"Viral", nav_competitor:"Rakipler", nav_titles:"AI Başlıklar", nav_actions:"Eylemler",
   score_seo:"SEO Puanı", score_viral:"Viral Puan", score_thumb:"Küçük Resim Puanı",
   score_competition:"Rekabet", score_global:"Genel Puan",
@@ -1777,7 +1902,8 @@ I18N.tr = {
 };
 
 I18N.nl = {
-  nav_overview:"Overzicht", nav_seo:"SEO", nav_thumbnail:"Miniatuur",
+  nav_coach:"🧠 Coach", coach_potential:"Videopotentieel", coach_actions:"acties", coach_fix:"Herstellen", coach_grow:"Vind een viraal idee", coach_a_title:"Verbeter je titel", coach_w_title_kw:"Titel heeft SEO-optimalisatie nodig", coach_w_title_long:"Titel te lang (meer dan 70 tekens)", coach_a_thumb:"Verbeter je thumbnail", coach_w_thumb:"Veel ruimte om de thumbnail te verbeteren", coach_a_short:"Plaats een Short over dit onderwerp", coach_w_short:"Verhoog je virale potentieel met een Short", coach_ok_title:"Titel OK", coach_ok_thumb:"Thumbnail OK", coach_ok_viral:"Viraal potentieel OK", coach_all_good:"Je video is al goed geoptimaliseerd!", sec_coach:"Coach", sec_analyser:"Analyseren", sec_creer:"Maken", sec_studio:"Studio", sec_croissance:"Groei",
+    nav_overview:"Overzicht", nav_seo:"SEO", nav_thumbnail:"Miniatuur",
   nav_viral:"Viraal", nav_competitor:"Concurrenten", nav_titles:"AI Titels", nav_actions:"Acties",
   score_seo:"SEO Score", score_viral:"Virale Score", score_thumb:"Miniatuur Score",
   score_competition:"Concurrentie", score_global:"Totale Score",
@@ -1897,8 +2023,3277 @@ I18N.nl = {
   if (!I18N[c]) I18N[c] = Object.assign({}, I18N.en);
 });
 
-/* Traduction courante */
-let currentLanguage = "fr";
+/* Traductions complémentaires (clés converties + nouvelles features).
+   fr/en pour les clés nouvellement converties ; ar/ja complets.
+   Les autres langues retombent sur l'anglais via T(). */
+const EXTRA_I18N = {
+  fr: {
+    live_stats_title:"Stats réelles YouTube", live_stats_btn:"Charger les vraies données (vues/h, tags…)",
+    audit_title:"Audit de la chaîne", audit_btn:"Auditer cette chaîne",
+    thumb_ai_title:"Analyse miniature par IA", thumb_ai_btn:"Analyser ma miniature (IA)",
+    thumb_ideas_title:"Générer des concepts de miniature", thumb_ideas_intro:"3 concepts (texte, couleurs, layout, visage) basés sur ton titre, prêts à exécuter.", thumb_ideas_btn:"Générer 3 concepts", thumb_ideas_loading:"Génération des concepts…", thumb_ideas_concept:"Concept", thumb_ideas_emotion:"Émotion", thumb_ideas_text:"Texte", thumb_ideas_focal:"Point focal", thumb_ideas_face:"Visage", thumb_ideas_bg:"Fond", thumb_ideas_why:"Pourquoi", thumb_ideas_copy:"Copier le brief", thumb_ideas_locked_sub:"Passe à Pro pour débloquer les 3 concepts", thumb_ideas_niche_ph:"Niche (optionnel, ex : cuisine, gaming)", thumb_gen_btn:"🖼️ Générer le fond", thumb_gen_loading:"Génération du fond…", thumb_gen_overlay_note:"Fond généré par IA + ton texte superposé (l'IA ne sait pas écrire le texte, surtout en arabe).", thumb_gen_text_ph:"Texte du titre sur l'image…", thumb_gen_download:"Télécharger l'image", thumb_gen_downloaded:"Image téléchargée", thumb_gen_drag_note:"2 lignes : tape ton texte, glisse chaque ligne, choisis couleur/taille/police, puis télécharge.", thumb_gen_line:"Ligne", thumb_gen_color:"Couleur", thumb_gen_font:"Police", thumb_gen_size:"Taille",
+    real_comp_title:"Vrais concurrents", real_comp_btn:"Voir les vraies vidéos qui cartonnent",
+    keywords_title:"Recherche de mots-clés", keywords_ph:"Ex: recette poulet",
+    viral_potential_title:"Score viral potentiel", title_types:"Types de titres", result_label:"Résultat",
+    hook_title:"Hook Analyzer", hook_intro:"Colle le script de ton intro (15-30 premières secondes) : l'IA prédit la rétention et où les gens décrochent.",
+    hook_ph:"Colle ici le texte de ton intro…", hook_run:"Analyser la rétention", hook_need:"Colle au moins ton intro",
+    hook_retention:"Rétention estimée", hook_score_label:"Score du hook", hook_drops:"⚠️ Points de décrochage", hook_fixes:"✅ Corrections", hook_rewrite:"💡 Intro réécrite (meilleure)",
+    nav_region:"Région", audience_intro:"Choisis ta cible (mondial, région ou pays) et la langue : l'IA donne les meilleures heures, tendances, hashtags et sujets.",
+    audience_target:"Cible (pays / région / mondial)", audience_target_ph:"Ex: Algérie, Maghreb, France, Mondial…", audience_worldwide:"Mondial",
+    audience_niche:"Niche / style de la chaîne", audience_niche_ph:"Ex: Gaming, Cuisine, Tech, Foot…",
+    audience_lang:"Langue du contenu", audience_run:"Optimiser pour cette audience",
+    audience_times:"📅 Meilleures heures de publication", audience_trends:"📈 Tendances & formats", audience_hashtags:"🏷️ Hashtags localisés", audience_topics:"💡 Idées de sujets", audience_tips:"🎯 Conseils",
+    nav_titles:"Titre & Desc", titles_section:"Titres IA",
+    td_title:"Title Doctor", td_run:"Diagnostic IA approfondi", td_need:"Écris un titre d'abord",
+    td_len:"Longueur", td_num:"Chiffre", td_emotion:"Mot émotionnel", td_hook:"Hook", td_punct:"Ponctuation",
+    td_ai_score:"Score CTR", td_missing:"⚠️ Ce qui manque", td_improved:"💡 Titre amélioré", td_tips:"✅ Conseils",
+    tdh_len:"Idéal entre 40 et 70 caractères : assez descriptif sans être coupé par YouTube.",
+    tdh_num:"Un chiffre rend le titre concret (ex: 5 astuces, 2024) et attire l'œil.",
+    tdh_emotion:"Un mot fort (incroyable, secret, gratuit, choquant…) déclenche le clic.",
+    tdh_hook:"Une accroche au début (Comment, Pourquoi, une question…) crée la curiosité.",
+    tdh_punct:"Un ? ou ! ajoute de l'émotion et donne envie de cliquer.",
+    h_titledoctor:"Note ton titre en direct et propose une version optimisée pour plus de clics.",
+    h_titles:"Génère 5 variantes de titres optimisés (SEO, CTR, viral, Shorts, trending).",
+    h_desc:"Crée une description complète avec « abonne-toi », hashtags et 15 tags SEO.",
+    h_abtest:"Compare 2 titres : l'IA prédit lequel aura le meilleur taux de clics.",
+    h_thumbab:"Compare 2 miniatures : l'IA Vision dit laquelle attire le plus de clics et pourquoi.",
+    h_shorts:"Transforme la vidéo en 3 idées de Shorts avec les passages exacts à couper.",
+    h_hook:"Analyse ton intro et prédit la rétention + où les spectateurs décrochent.",
+    h_audience:"Meilleures heures, tendances, hashtags et sujets selon ta région et ta niche.",
+    h_revenue:"Estime les vues à 7 jours et les revenus AdSense de ta vidéo.",
+    h_channel:"Stats réelles de la chaîne + score de santé et recommandations IA.",
+    h_comments:"Résume le sentiment des commentaires, les demandes et suggère des réponses.",
+    h_ideas:"Propose 10 idées de vidéos à fort potentiel adaptées à ta niche.",
+    desc_section:"Description complète", desc_intro:"Titre + niche + région → description avec « abonne-toi », hashtags et tags.",
+    desc_title:"Titre de la vidéo", desc_title_ph:"Titre de ta vidéo…", desc_run:"Générer la description complète", desc_need:"Entre un titre d'abord",
+    desc_ready:"✅ Description prête à coller", desc_copy:"Copier la description", desc_tags:"🏷️ Tags SEO", desc_copy_tags:"Copier les tags",
+    chap_section:"Chapitres", chap_intro:"Génère des chapitres horodatés (depuis les sous-titres) à coller dans ta description.", chap_run:"Générer les chapitres", chap_copy:"Copier les chapitres", chap_none:"Sous-titres indisponibles pour cette vidéo.",
+    nav_revenue:"Revenus", rev_intro:"Estime les vues à 7 jours et les revenus AdSense selon ta niche, ton audience et tes abonnés.",
+    rev_subs:"Abonnés de ta chaîne", rev_subs_ph:"Ex: 6m, 14k, 5000", rev_run:"Estimer vues & revenus", rev_views:"Vues (J+7)", rev_income:"Revenus estimés",
+    rev_factors:"📊 Facteurs clés", rev_tips:"💡 Pour augmenter", rev_disclaimer:"Estimation indicative basée sur l'IA — les résultats réels peuvent varier.",
+    nav_sponsor:"Sponsor", h_sponsor:"Estime ton tarif sponso, génère un pitch aux marques, un media-kit et des idées d'affiliation.",
+    sp_intro:"Estime ta valeur sponso et génère un pitch + media-kit pour décrocher des partenariats.", sp_subs_ph:"Abonnés (ex: 6m, 14k)", sp_views_ph:"Vues moy./vidéo (ex: 50k)", sp_run:"Générer mon kit sponsor",
+    sp_rate:"Tarif sponso estimé (par vidéo)", sp_pitch:"✉️ Message de pitch aux marques", sp_copy_pitch:"Copier le pitch",
+    sp_mediakit:"📋 Media-kit (arguments)", sp_brands:"🏢 Marques qui iraient bien", sp_affiliate:"🔗 Idées d'affiliation", sp_disclaimer:"Estimation IA — négocie selon ton engagement réel.",
+    nav_trends:"Tendances", h_trends:"Détecte ce qui explose en ce moment dans ta niche (vraies vidéos récentes) + analyse IA.",
+    tre_intro:"Ce qui buzz MAINTENANT dans ta niche : vidéos qui explosent + tendances et mots-clés en hausse.", tre_run:"Détecter les tendances", tre_need:"Choisis une niche d'abord",
+    tre_trends:"🔥 Tendances actuelles", tre_keywords:"📈 Mots-clés en hausse", tre_advice:"💡 Conseils pour surfer", tre_hot:"🚀 Vidéos qui explosent (récentes)", tre_none:"Aucune tendance trouvée. Essaie une niche plus large.",
+    nav_planner:"Planning", h_planner:"Crée un calendrier de 7 jours adapté à ta niche pour publier régulièrement.",
+    plan_intro:"Génère un planning de 7 jours : quoi publier chaque jour + le meilleur créneau.", plan_freq:"Rythme (optionnel)", plan_run:"Générer mon planning 7 jours",
+    tr_section:"Localisation / Traduction", h_translate:"Traduit et adapte ton titre, description et tags vers une autre langue.",
+    tr_intro:"Traduit titre + description + tags vers une langue pour toucher une audience mondiale.", tr_run:"Traduire", tr_title:"Titre traduit", tr_desc:"Description traduite", tr_copy:"Copier la traduction",
+    cp_section:"Posts communautaires", h_community:"Génère des sondages, questions et teasers pour l'onglet Communauté.",
+    cp_intro:"Génère 5 posts (sondages, questions, teasers) pour engager ton audience entre 2 vidéos.", cp_run:"Générer 5 posts",
+    sc_section:"Script complet", h_script:"Écrit un script structuré (hook, sections, CTA) à partir d'un sujet.",
+    sc_intro:"Donne un sujet : l'IA écrit le script complet (hook, intro, sections, CTA, conclusion).", sc_topic_ph:"Sujet de la vidéo…", sc_dur:"Durée", sc_run:"Écrire le script", sc_need:"Entre un sujet d'abord", sc_hook:"Hook (5 premières sec)", sc_copy:"Copier le script",
+    pc_section:"Vérif Titre + Miniature", h_pair:"Vérifie que ton titre et ta miniature se complètent et sont lisibles sur TV et mobile.",
+    pc_intro:"L'IA vérifie que ton titre et ta miniature se complètent (sans répéter) et leur lisibilité.", pc_run:"Vérifier la paire", pc_complement:"Complémentaires", pc_issues:"⚠️ Problèmes", pc_tips:"✅ Conseils",
+    pl_section:"Optimiseur de playlists", h_playlists:"Regroupe tes vidéos en playlists optimisées pour le temps de session.",
+    pl_intro:"L'IA regroupe tes vidéos en playlists optimisées (plus de temps de visionnage).", pl_run:"Optimiser mes playlists",
+    au_section:"Audit complet 1-clic", h_audit:"Lance SEO + Miniature + Titre d'un coup et donne un plan d'action prioritaire.",
+    au_run:"Lancer l'audit complet", au_global:"Score global de la vidéo", au_plan:"🎯 Plan d'action prioritaire",
+    ob_title:"Bienvenue sur VidSpark AI !", ob_sub:"24 outils IA pour optimiser tes vidéos. Voici les essentiels :",
+    ob_audit:"un audit complet en 1 clic", ob_title2:"score CTR de ton titre en direct", ob_thumb:"compare 2 miniatures", ob_shorts:"idées de Shorts + passages à couper", ob_sponsor:"estime tes revenus sponso", ob_btn:"C'est parti 🚀",
+    nav_channel:"Chaîne", chan_intro:"Tableau de bord de la chaîne : stats réelles + score de santé et recommandations IA.", chan_run:"Analyser ma chaîne",
+    chan_subs:"Abonnés", chan_views:"Vues totales", chan_vids:"Vidéos", chan_avg:"Vues moy.", chan_eng:"Engagement", chan_freq:"Fréquence",
+    chan_ai_loading:"Diagnostic IA en cours…", chan_ai_fail:"Diagnostic IA indisponible", chan_health:"Score de santé", chan_strengths:"✅ Forces", chan_weak:"⚠️ Faiblesses", chan_reco:"💡 Recommandations",
+    nav_comments:"Commentaires", com_intro:"L'IA lit les commentaires : sentiment, demandes de l'audience, idées de vidéos et réponses suggérées.", com_run:"Analyser les commentaires", com_none:"Aucun commentaire trouvé sur cette vidéo.",
+    com_sentiment:"Sentiment global", com_pos:"Positif", com_neu:"Neutre", com_neg:"Négatif",
+    com_requests:"🙋 Demandes de l'audience", com_ideas:"💡 Idées de prochaines vidéos", com_replies:"✍️ Réponses suggérées", com_copy:"Copier",
+    nav_tiktok:"TikTok", tk_intro:"Donne ton sujet : l'IA génère légende, hooks, hashtags, mots-clés et script optimisés pour TikTok.", tk_topic_ph:"Sujet de ta vidéo TikTok…", tk_desc_ph:"Contexte / description (optionnel)…", tk_run:"Générer le SEO TikTok", tk_caption:"Légende optimisée", tk_keywords:"Mots-clés de recherche", tk_script:"Structure / script", tk_sound:"Conseil son / musique", tk_tips:"Conseils & découvrabilité", tk_need_topic:"Entre un sujet de vidéo.", tk_spin:"L'IA optimise ta vidéo TikTok…", tk_copy:"Copier", tkr_title:"YouTube → TikTok", tkr_intro:"Ouvre une vidéo YouTube : l'IA repère les meilleurs moments et donne les timecodes à couper pour TikTok.", tkr_novideo:"Ouvre d'abord une vidéo YouTube pour la découper.", tkr_run:"Convertir en TikTok", tkr_spin:"Découpage en clips TikTok…", tki_title:"Idées virales TikTok", tki_run:"Générer 10 idées", tki_spin:"Recherche d'idées virales…", tkh_title:"Optimiseur de hooks", tkh_run:"Générer 8 hooks", tkh_spin:"Génération des accroches…", tkc_title:"Calendrier de contenu", tkc_run:"Générer le calendrier 7 jours", tkc_spin:"Création du calendrier…", tkc_freq_ph:"Rythme (ex : 1 vidéo/jour)…",
+    nav_ideas:"Idées", idea_intro:"Choisis ta niche, ta région et un sujet (optionnel) : l'IA propose 10 idées de vidéos à fort potentiel.", idea_topic_ph:"Sujet ou mot-clé (optionnel)…", idea_run:"Générer 10 idées", idea_copy:"Copier le titre",
+    kw_opportunity:"Score d'opportunité", kw_difficulty:"Difficulté", kw_demand:"Demande", kw_trend:"Tendance", kw_best:"🎯 Mots-clés à viser", kw_competition:"Concurrence"
+  },
+  en: {
+    live_stats_title:"Real YouTube stats", live_stats_btn:"Load real data (views/h, tags…)",
+    audit_title:"Channel audit", audit_btn:"Audit this channel",
+    thumb_ai_title:"AI thumbnail analysis", thumb_ai_btn:"Analyze my thumbnail (AI)",
+    thumb_ideas_title:"Generate thumbnail concepts", thumb_ideas_intro:"3 concepts (text, colors, layout, face) based on your title, ready to execute.", thumb_ideas_btn:"Generate 3 concepts", thumb_ideas_loading:"Generating concepts…", thumb_ideas_concept:"Concept", thumb_ideas_emotion:"Emotion", thumb_ideas_text:"Text", thumb_ideas_focal:"Focal point", thumb_ideas_face:"Face", thumb_ideas_bg:"Background", thumb_ideas_why:"Why", thumb_ideas_copy:"Copy brief", thumb_ideas_locked_sub:"Upgrade to Pro to unlock all 3 concepts", thumb_ideas_niche_ph:"Niche (optional, e.g. cooking, gaming)", thumb_gen_btn:"🖼️ Generate background", thumb_gen_loading:"Generating background…", thumb_gen_overlay_note:"AI-generated background + your overlaid text (image AI can't render text, especially Arabic).", thumb_gen_text_ph:"Title text on the image…", thumb_gen_download:"Download image", thumb_gen_downloaded:"Image downloaded", thumb_gen_drag_note:"2 lines: type your text, drag each line, pick color/size/font, then download.", thumb_gen_line:"Line", thumb_gen_color:"Color", thumb_gen_font:"Font", thumb_gen_size:"Size",
+    real_comp_title:"Real competitors", real_comp_btn:"See the real videos crushing it",
+    keywords_title:"Keyword research", keywords_ph:"e.g. chicken recipe",
+    viral_potential_title:"Viral potential score", title_types:"Title types", result_label:"Result",
+    hook_title:"Hook Analyzer", hook_intro:"Paste your intro script (first 15-30 sec): AI predicts retention and where viewers drop off.",
+    hook_ph:"Paste your intro text here…", hook_run:"Analyze retention", hook_need:"Paste at least your intro",
+    hook_retention:"Est. retention", hook_score_label:"Hook score", hook_drops:"⚠️ Drop-off points", hook_fixes:"✅ Fixes", hook_rewrite:"💡 Rewritten intro (better)",
+    nav_region:"Region", audience_intro:"Pick your target (worldwide, region or country) and language: AI gives best times, trends, hashtags and topics.",
+    audience_target:"Target (country / region / worldwide)", audience_target_ph:"e.g. Algeria, MENA, France, Worldwide…", audience_worldwide:"Worldwide",
+    audience_niche:"Niche / channel style", audience_niche_ph:"e.g. Gaming, Cooking, Tech, Football…",
+    audience_lang:"Content language", audience_run:"Optimize for this audience",
+    audience_times:"📅 Best posting times", audience_trends:"📈 Trends & formats", audience_hashtags:"🏷️ Localized hashtags", audience_topics:"💡 Topic ideas", audience_tips:"🎯 Tips",
+    nav_titles:"Title & Desc", titles_section:"AI Titles",
+    td_title:"Title Doctor", td_run:"Deep AI diagnosis", td_need:"Type a title first",
+    td_len:"Length", td_num:"Number", td_emotion:"Power word", td_hook:"Hook", td_punct:"Punctuation",
+    td_ai_score:"CTR score", td_missing:"⚠️ What's missing", td_improved:"💡 Improved title", td_tips:"✅ Tips",
+    tdh_len:"Ideal 40-70 characters: descriptive enough without being cut off by YouTube.",
+    tdh_num:"A number makes the title concrete (e.g. 5 tips, 2024) and catches the eye.",
+    tdh_emotion:"A power word (amazing, secret, free, shocking…) triggers the click.",
+    tdh_hook:"A hook at the start (How, Why, a question…) creates curiosity.",
+    tdh_punct:"A ? or ! adds emotion and makes people want to click.",
+    h_titledoctor:"Scores your title live and suggests an optimized version for more clicks.",
+    h_titles:"Generates 5 optimized title variants (SEO, CTR, viral, Shorts, trending).",
+    h_desc:"Creates a full description with a subscribe CTA, hashtags and 15 SEO tags.",
+    h_abtest:"Compares 2 titles: AI predicts which gets the higher click-through rate.",
+    h_thumbab:"Compares 2 thumbnails: Vision AI tells which gets more clicks and why.",
+    h_shorts:"Turns the video into 3 Shorts ideas with the exact clips to cut.",
+    h_hook:"Analyzes your intro and predicts retention + where viewers drop off.",
+    h_audience:"Best times, trends, hashtags and topics for your region and niche.",
+    h_revenue:"Estimates 7-day views and AdSense revenue for your video.",
+    h_channel:"Real channel stats + health score and AI recommendations.",
+    h_comments:"Summarizes comment sentiment, requests and suggests replies.",
+    h_ideas:"Suggests 10 high-potential video ideas tailored to your niche.",
+    desc_section:"Full description", desc_intro:"Title + niche + region → description with a subscribe CTA, hashtags and tags.",
+    desc_title:"Video title", desc_title_ph:"Your video title…", desc_run:"Generate full description", desc_need:"Enter a title first",
+    desc_ready:"✅ Ready-to-paste description", desc_copy:"Copy description", desc_tags:"🏷️ SEO tags", desc_copy_tags:"Copy tags",
+    chap_section:"Chapters", chap_intro:"Generate timestamped chapters (from captions) to paste in your description.", chap_run:"Generate chapters", chap_copy:"Copy chapters", chap_none:"Captions unavailable for this video.",
+    nav_revenue:"Revenue", rev_intro:"Estimate 7-day views and AdSense revenue based on your niche, audience and subscribers.",
+    rev_subs:"Your channel subscribers", rev_subs_ph:"e.g. 6m, 14k, 5000", rev_run:"Estimate views & revenue", rev_views:"Views (D+7)", rev_income:"Est. revenue",
+    rev_factors:"📊 Key factors", rev_tips:"💡 To increase", rev_disclaimer:"AI-based estimate — actual results may vary.",
+    nav_sponsor:"Sponsor", h_sponsor:"Estimates your sponsorship rate, generates a brand pitch, a media kit and affiliate ideas.",
+    sp_intro:"Estimate your sponsorship value and generate a pitch + media kit to land deals.", sp_subs_ph:"Subscribers (e.g. 6m, 14k)", sp_views_ph:"Avg views/video (e.g. 50k)", sp_run:"Generate my sponsor kit",
+    sp_rate:"Estimated sponsorship rate (per video)", sp_pitch:"✉️ Brand pitch message", sp_copy_pitch:"Copy pitch",
+    sp_mediakit:"📋 Media kit (selling points)", sp_brands:"🏢 Brands that would fit", sp_affiliate:"🔗 Affiliate ideas", sp_disclaimer:"AI estimate — negotiate based on your real engagement.",
+    nav_trends:"Trends", h_trends:"Detects what's exploding right now in your niche (real recent videos) + AI analysis.",
+    tre_intro:"What's buzzing NOW in your niche: exploding videos + rising trends and keywords.", tre_run:"Detect trends", tre_need:"Pick a niche first",
+    tre_trends:"🔥 Current trends", tre_keywords:"📈 Rising keywords", tre_advice:"💡 How to ride them", tre_hot:"🚀 Exploding videos (recent)", tre_none:"No trends found. Try a broader niche.",
+    nav_planner:"Planner", h_planner:"Creates a 7-day calendar tailored to your niche to post consistently.",
+    plan_intro:"Generate a 7-day plan: what to post each day + the best time slot.", plan_freq:"Cadence (optional)", plan_run:"Generate my 7-day plan",
+    tr_section:"Localization / Translation", h_translate:"Translates and adapts your title, description and tags into another language.",
+    tr_intro:"Translate title + description + tags into a language to reach a global audience.", tr_run:"Translate", tr_title:"Translated title", tr_desc:"Translated description", tr_copy:"Copy translation",
+    cp_section:"Community posts", h_community:"Generates polls, questions and teasers for the Community tab.",
+    cp_intro:"Generate 5 posts (polls, questions, teasers) to engage your audience between videos.", cp_run:"Generate 5 posts",
+    sc_section:"Full script", h_script:"Writes a structured script (hook, sections, CTA) from a topic.",
+    sc_intro:"Give a topic: AI writes the full script (hook, intro, sections, CTA, outro).", sc_topic_ph:"Video topic…", sc_dur:"Duration", sc_run:"Write the script", sc_need:"Enter a topic first", sc_hook:"Hook (first 5 sec)", sc_copy:"Copy script",
+    pc_section:"Title + Thumbnail check", h_pair:"Checks that your title and thumbnail complement each other and are readable on TV and mobile.",
+    pc_intro:"AI checks that your title and thumbnail complement each other (no repeat) and their readability.", pc_run:"Check the pair", pc_complement:"Complementary", pc_issues:"⚠️ Issues", pc_tips:"✅ Tips",
+    pl_section:"Playlist optimizer", h_playlists:"Groups your videos into optimized playlists for session time.",
+    pl_intro:"AI groups your videos into optimized playlists (more watch time).", pl_run:"Optimize my playlists",
+    au_section:"1-click full audit", h_audit:"Runs SEO + Thumbnail + Title at once and gives a prioritized action plan.",
+    au_run:"Run full audit", au_global:"Overall video score", au_plan:"🎯 Priority action plan",
+    ob_title:"Welcome to VidSpark AI!", ob_sub:"24 AI tools to optimize your videos. Here are the essentials:",
+    ob_audit:"a 1-click full audit", ob_title2:"live CTR score for your title", ob_thumb:"compare 2 thumbnails", ob_shorts:"Shorts ideas + clips to cut", ob_sponsor:"estimate your sponsorship income", ob_btn:"Let's go 🚀",
+    nav_channel:"Channel", chan_intro:"Channel dashboard: real stats + health score and AI recommendations.", chan_run:"Analyze my channel",
+    chan_subs:"Subscribers", chan_views:"Total views", chan_vids:"Videos", chan_avg:"Avg views", chan_eng:"Engagement", chan_freq:"Frequency",
+    chan_ai_loading:"AI diagnosis in progress…", chan_ai_fail:"AI diagnosis unavailable", chan_health:"Health score", chan_strengths:"✅ Strengths", chan_weak:"⚠️ Weaknesses", chan_reco:"💡 Recommendations",
+    nav_comments:"Comments", com_intro:"AI reads the comments: sentiment, audience requests, video ideas and suggested replies.", com_run:"Analyze comments", com_none:"No comments found on this video.",
+    com_sentiment:"Overall sentiment", com_pos:"Positive", com_neu:"Neutral", com_neg:"Negative",
+    com_requests:"🙋 Audience requests", com_ideas:"💡 Next video ideas", com_replies:"✍️ Suggested replies", com_copy:"Copy",
+    nav_tiktok:"TikTok", tk_intro:"Enter your topic: AI generates a caption, hooks, hashtags, keywords and script optimized for TikTok.", tk_topic_ph:"Your TikTok video topic…", tk_desc_ph:"Context / description (optional)…", tk_run:"Generate TikTok SEO", tk_caption:"Optimized caption", tk_keywords:"Search keywords", tk_script:"Structure / script", tk_sound:"Sound / music tip", tk_tips:"Tips & discoverability", tk_need_topic:"Enter a video topic.", tk_spin:"AI is optimizing your TikTok video…", tk_copy:"Copy", tkr_title:"YouTube → TikTok", tkr_intro:"Open a YouTube video: AI finds the best moments and gives the timecodes to cut for TikTok.", tkr_novideo:"Open a YouTube video first to repurpose it.", tkr_run:"Convert to TikTok", tkr_spin:"Cutting into TikTok clips…", tki_title:"Viral TikTok ideas", tki_run:"Generate 10 ideas", tki_spin:"Finding viral ideas…", tkh_title:"Hook optimizer", tkh_run:"Generate 8 hooks", tkh_spin:"Generating hooks…", tkc_title:"Content calendar", tkc_run:"Generate 7-day calendar", tkc_spin:"Building calendar…", tkc_freq_ph:"Cadence (e.g. 1 video/day)…",
+    nav_ideas:"Ideas", idea_intro:"Pick your niche, region and an optional topic: AI suggests 10 high-potential video ideas.", idea_topic_ph:"Topic or keyword (optional)…", idea_run:"Generate 10 ideas", idea_copy:"Copy title",
+    kw_opportunity:"Opportunity score", kw_difficulty:"Difficulty", kw_demand:"Demand", kw_trend:"Trend", kw_best:"🎯 Keywords to target", kw_competition:"Competition"
+  },
+  ar: {
+    thumb_ideas_title:"توليد مفاهيم الصورة المصغّرة", thumb_ideas_intro:"3 مفاهيم (نص، ألوان، تخطيط، وجه) بناءً على عنوانك، جاهزة للتنفيذ.", thumb_ideas_btn:"توليد 3 مفاهيم", thumb_ideas_loading:"جارٍ توليد المفاهيم…", thumb_ideas_concept:"مفهوم", thumb_ideas_emotion:"العاطفة", thumb_ideas_text:"النص", thumb_ideas_focal:"نقطة التركيز", thumb_ideas_face:"الوجه", thumb_ideas_bg:"الخلفية", thumb_ideas_why:"لماذا", thumb_ideas_copy:"نسخ الملخّص", thumb_ideas_locked_sub:"ترقَّ إلى Pro لفتح المفاهيم الثلاثة", thumb_ideas_niche_ph:"المجال (اختياري، مثل: طبخ، ألعاب)",
+    thumb_gen_btn:"🖼️ توليد الخلفية", thumb_gen_loading:"جارٍ توليد الخلفية…", thumb_gen_overlay_note:"خلفية مولّدة بالذكاء الاصطناعي + نصّك المُراكَب (الذكاء الاصطناعي لا يجيد كتابة النص، خاصة بالعربية).", thumb_gen_text_ph:"نص العنوان على الصورة…", thumb_gen_download:"تنزيل الصورة", thumb_gen_downloaded:"تم تنزيل الصورة", thumb_gen_drag_note:"سطران: اكتب نصّك، اسحب كل سطر، اختر اللون/الحجم/الخط، ثم نزّل.", thumb_gen_line:"السطر", thumb_gen_color:"اللون", thumb_gen_font:"الخط", thumb_gen_size:"الحجم",
+    live_stats_title:"إحصائيات يوتيوب الحقيقية", live_stats_btn:"تحميل البيانات الحقيقية (مشاهدات/س، وسوم…)",
+    audit_title:"تدقيق القناة", audit_btn:"تدقيق هذه القناة",
+    thumb_ai_title:"تحليل الصورة المصغّرة بالذكاء الاصطناعي", thumb_ai_btn:"حلّل صورتي المصغّرة (ذكاء اصطناعي)",
+    real_comp_title:"منافسون حقيقيون", real_comp_btn:"شاهد الفيديوهات الحقيقية الناجحة",
+    keywords_title:"بحث الكلمات المفتاحية", keywords_ph:"مثال: وصفة دجاج",
+    viral_potential_title:"درجة الانتشار المحتملة", title_types:"أنواع العناوين", result_label:"النتيجة",
+    hook_title:"محلّل الجاذبية", hook_intro:"الصق نص مقدمتك (أول 15-30 ثانية): يتنبأ الذكاء الاصطناعي بنسبة البقاء وأين يغادر المشاهدون.",
+    hook_ph:"الصق نص المقدمة هنا…", hook_run:"تحليل البقاء", hook_need:"الصق مقدمتك على الأقل",
+    hook_retention:"البقاء المقدّر", hook_score_label:"درجة الجاذبية", hook_drops:"⚠️ نقاط المغادرة", hook_fixes:"✅ تصحيحات", hook_rewrite:"💡 مقدمة معاد كتابتها (أفضل)",
+    nav_region:"المنطقة", audience_intro:"اختر جمهورك المستهدف (عالمي، منطقة أو دولة) واللغة: يعطيك الذكاء الاصطناعي أفضل الأوقات والاتجاهات والوسوم والمواضيع.",
+    audience_target:"الهدف (دولة / منطقة / عالمي)", audience_target_ph:"مثال: الجزائر، المغرب العربي، فرنسا، عالمي…", audience_worldwide:"عالمي",
+    audience_niche:"المجال / أسلوب القناة", audience_niche_ph:"مثال: ألعاب، طبخ، تقنية، كرة قدم…",
+    audience_lang:"لغة المحتوى", audience_run:"تحسين لهذا الجمهور",
+    audience_times:"📅 أفضل أوقات النشر", audience_trends:"📈 الاتجاهات والصيغ", audience_hashtags:"🏷️ وسوم محلية", audience_topics:"💡 أفكار مواضيع", audience_tips:"🎯 نصائح",
+    nav_titles:"العنوان والوصف", titles_section:"عناوين AI",
+    td_title:"طبيب العنوان", td_run:"تشخيص معمّق بالذكاء الاصطناعي", td_need:"اكتب عنوانًا أولاً",
+    td_len:"الطول", td_num:"رقم", td_emotion:"كلمة عاطفية", td_hook:"خطّاف", td_punct:"علامة ترقيم",
+    td_ai_score:"درجة CTR", td_missing:"⚠️ ما الذي ينقص", td_improved:"💡 عنوان محسّن", td_tips:"✅ نصائح",
+    tdh_len:"الأفضل بين 40 و70 حرفًا: وصفي بما يكفي دون أن يقطعه يوتيوب.",
+    tdh_num:"الرقم يجعل العنوان ملموسًا (مثل: 5 نصائح، 2024) ويلفت الانتباه.",
+    tdh_emotion:"كلمة قوية (مذهل، سر، مجاني، صادم…) تحفّز النقر.",
+    tdh_hook:"خطّاف في البداية (كيف، لماذا، سؤال…) يثير الفضول.",
+    tdh_punct:"علامة ؟ أو ! تضيف العاطفة وتشجّع على النقر.",
+    h_titledoctor:"يقيّم عنوانك مباشرة ويقترح نسخة محسّنة لمزيد من النقرات.",
+    h_titles:"يولّد 5 صيغ عناوين محسّنة (SEO، CTR، فيروسي، Shorts، رائج).",
+    h_desc:"ينشئ وصفًا كاملًا مع « اشترك »، وسوم و15 تاغ SEO.",
+    h_abtest:"يقارن عنوانين: يتنبأ الذكاء الاصطناعي بأيهما يحقق نسبة نقر أعلى.",
+    h_thumbab:"يقارن صورتين مصغّرتين: يخبرك الذكاء الاصطناعي البصري أيّهما أفضل ولماذا.",
+    h_shorts:"يحوّل الفيديو إلى 3 أفكار Shorts مع المقاطع المراد قصّها.",
+    h_hook:"يحلّل مقدمتك ويتنبأ بنسبة البقاء وأين يغادر المشاهدون.",
+    h_audience:"أفضل الأوقات والاتجاهات والوسوم والمواضيع حسب منطقتك ومجالك.",
+    h_revenue:"يقدّر المشاهدات خلال 7 أيام وأرباح AdSense لفيديوك.",
+    h_channel:"إحصائيات حقيقية للقناة + درجة الصحة وتوصيات الذكاء الاصطناعي.",
+    h_comments:"يلخّص مشاعر التعليقات والطلبات ويقترح ردودًا.",
+    h_ideas:"يقترح 10 أفكار فيديو عالية الإمكانات مناسبة لمجالك.",
+    desc_section:"وصف كامل", desc_intro:"العنوان + المجال + المنطقة ← وصف مع « اشترك »، وسوم وتاغات.",
+    desc_title:"عنوان الفيديو", desc_title_ph:"عنوان فيديوك…", desc_run:"توليد الوصف الكامل", desc_need:"أدخل عنوانًا أولاً",
+    desc_ready:"✅ وصف جاهز للصق", desc_copy:"نسخ الوصف", desc_tags:"🏷️ وسوم SEO", desc_copy_tags:"نسخ التاغات",
+    chap_section:"الفصول", chap_intro:"أنشئ فصولًا موقّتة (من الترجمة) للصقها في وصف الفيديو.", chap_run:"إنشاء الفصول", chap_copy:"نسخ الفصول", chap_none:"الترجمة غير متاحة لهذا الفيديو.",
+    nav_revenue:"الأرباح", rev_intro:"قدّر المشاهدات خلال 7 أيام وأرباح AdSense حسب مجالك وجمهورك ومشتركيك.",
+    rev_subs:"عدد مشتركي قناتك", rev_subs_ph:"مثال: 6m، 14k، 5000", rev_run:"تقدير المشاهدات والأرباح", rev_views:"المشاهدات (7 أيام)", rev_income:"الأرباح المقدّرة",
+    rev_factors:"📊 العوامل الرئيسية", rev_tips:"💡 لزيادتها", rev_disclaimer:"تقدير تقريبي بالذكاء الاصطناعي — قد تختلف النتائج الفعلية.",
+    nav_sponsor:"الرعاية", h_sponsor:"يقدّر سعر رعايتك، ويولّد رسالة للعلامات التجارية وملفًا إعلاميًا وأفكار أفلييت.",
+    sp_intro:"قدّر قيمتك للرعاية وولّد رسالة + ملف إعلامي للحصول على شراكات.", sp_subs_ph:"المشتركون (مثل: 6m، 14k)", sp_views_ph:"متوسط المشاهدات/فيديو (مثل: 50k)", sp_run:"توليد ملف الرعاية",
+    sp_rate:"سعر الرعاية المقدّر (لكل فيديو)", sp_pitch:"✉️ رسالة للعلامات التجارية", sp_copy_pitch:"نسخ الرسالة",
+    sp_mediakit:"📋 الملف الإعلامي (نقاط القوة)", sp_brands:"🏢 علامات مناسبة", sp_affiliate:"🔗 أفكار أفلييت", sp_disclaimer:"تقدير بالذكاء الاصطناعي — تفاوض حسب تفاعلك الحقيقي.",
+    nav_trends:"الاتجاهات", h_trends:"يكتشف ما ينتشر الآن في مجالك (فيديوهات حقيقية حديثة) + تحليل بالذكاء الاصطناعي.",
+    tre_intro:"ما الذي ينتشر الآن في مجالك: فيديوهات تنفجر + اتجاهات وكلمات مفتاحية صاعدة.", tre_run:"اكتشاف الاتجاهات", tre_need:"اختر مجالًا أولاً",
+    tre_trends:"🔥 الاتجاهات الحالية", tre_keywords:"📈 كلمات مفتاحية صاعدة", tre_advice:"💡 كيف تستفيد منها", tre_hot:"🚀 فيديوهات تنفجر (حديثة)", tre_none:"لا توجد اتجاهات. جرّب مجالًا أوسع.",
+    nav_planner:"التخطيط", h_planner:"ينشئ تقويمًا لـ7 أيام مناسبًا لمجالك للنشر بانتظام.",
+    plan_intro:"يولّد خطة 7 أيام: ماذا تنشر كل يوم + أفضل وقت.", plan_freq:"الإيقاع (اختياري)", plan_run:"توليد خطة 7 أيام",
+    tr_section:"الترجمة والتوطين", h_translate:"يترجم ويكيّف عنوانك ووصفك ووسومك إلى لغة أخرى.",
+    tr_intro:"ترجم العنوان + الوصف + الوسوم إلى لغة للوصول إلى جمهور عالمي.", tr_run:"ترجمة", tr_title:"العنوان المترجم", tr_desc:"الوصف المترجم", tr_copy:"نسخ الترجمة",
+    cp_section:"منشورات المجتمع", h_community:"يولّد استطلاعات وأسئلة وإعلانات تشويقية لتبويب المجتمع.",
+    cp_intro:"يولّد 5 منشورات (استطلاعات، أسئلة، تشويق) لإشراك جمهورك بين الفيديوهات.", cp_run:"توليد 5 منشورات",
+    sc_section:"سكربت كامل", h_script:"يكتب سكربتًا منظّمًا (خطّاف، أقسام، CTA) من موضوع.",
+    sc_intro:"أعطِ موضوعًا: يكتب الذكاء الاصطناعي السكربت الكامل (خطّاف، مقدمة، أقسام، CTA، خاتمة).", sc_topic_ph:"موضوع الفيديو…", sc_dur:"المدة", sc_run:"كتابة السكربت", sc_need:"أدخل موضوعًا أولاً", sc_hook:"الخطّاف (أول 5 ثوانٍ)", sc_copy:"نسخ السكربت",
+    pc_section:"فحص العنوان + الصورة", h_pair:"يتحقق من تكامل عنوانك وصورتك المصغّرة ووضوحهما على التلفاز والجوال.",
+    pc_intro:"يتحقق الذكاء الاصطناعي من تكامل العنوان والصورة (دون تكرار) ومن وضوحهما.", pc_run:"فحص الزوج", pc_complement:"متكاملان", pc_issues:"⚠️ مشاكل", pc_tips:"✅ نصائح",
+    pl_section:"محسّن قوائم التشغيل", h_playlists:"يجمّع فيديوهاتك في قوائم تشغيل محسّنة لزمن الجلسة.",
+    pl_intro:"يجمّع الذكاء الاصطناعي فيديوهاتك في قوائم تشغيل محسّنة (وقت مشاهدة أطول).", pl_run:"تحسين قوائم التشغيل",
+    au_section:"تدقيق كامل بنقرة", h_audit:"يشغّل SEO + الصورة + العنوان دفعة واحدة ويعطي خطة عمل ذات أولوية.",
+    au_run:"تشغيل التدقيق الكامل", au_global:"الدرجة الإجمالية للفيديو", au_plan:"🎯 خطة عمل ذات أولوية",
+    ob_title:"مرحبًا بك في VidSpark AI!", ob_sub:"24 أداة ذكاء اصطناعي لتحسين فيديوهاتك. إليك الأساسيات:",
+    ob_audit:"تدقيق كامل بنقرة واحدة", ob_title2:"درجة CTR لعنوانك مباشرة", ob_thumb:"قارن صورتين مصغّرتين", ob_shorts:"أفكار Shorts + المقاطع للقص", ob_sponsor:"قدّر دخلك من الرعاية", ob_btn:"لننطلق 🚀",
+    nav_channel:"القناة", chan_intro:"لوحة القناة: إحصائيات حقيقية + درجة الصحة وتوصيات الذكاء الاصطناعي.", chan_run:"تحليل قناتي",
+    chan_subs:"المشتركون", chan_views:"إجمالي المشاهدات", chan_vids:"الفيديوهات", chan_avg:"متوسط المشاهدات", chan_eng:"التفاعل", chan_freq:"التكرار",
+    chan_ai_loading:"جاري التشخيص بالذكاء الاصطناعي…", chan_ai_fail:"التشخيص غير متاح", chan_health:"درجة الصحة", chan_strengths:"✅ نقاط القوة", chan_weak:"⚠️ نقاط الضعف", chan_reco:"💡 توصيات",
+    nav_comments:"التعليقات", com_intro:"يقرأ الذكاء الاصطناعي التعليقات: المشاعر، طلبات الجمهور، أفكار فيديوهات وردود مقترحة.", com_run:"تحليل التعليقات", com_none:"لا توجد تعليقات على هذا الفيديو.",
+    com_sentiment:"المشاعر العامة", com_pos:"إيجابي", com_neu:"محايد", com_neg:"سلبي",
+    com_requests:"🙋 طلبات الجمهور", com_ideas:"💡 أفكار للفيديوهات القادمة", com_replies:"✍️ ردود مقترحة", com_copy:"نسخ",
+    nav_tiktok:"تيك توك", tk_intro:"أدخل موضوعك: يولّد الذكاء الاصطناعي وصفًا وجُملًا افتتاحية ووسوماً وكلمات مفتاحية ونصًا مُحسّناً لتيك توك.", tk_topic_ph:"موضوع فيديو تيك توك الخاص بك…", tk_desc_ph:"السياق / الوصف (اختياري)…", tk_run:"توليد سيو تيك توك", tk_caption:"الوصف المُحسّن", tk_keywords:"كلمات البحث المفتاحية", tk_script:"الهيكل / النص", tk_sound:"نصيحة الصوت / الموسيقى", tk_tips:"نصائح والاكتشاف", tk_need_topic:"أدخل موضوع الفيديو.", tk_spin:"الذكاء الاصطناعي يُحسّن فيديو تيك توك…", tk_copy:"نسخ", tkr_title:"يوتيوب → تيك توك", tkr_intro:"افتح فيديو يوتيوب: يحدد الذكاء الاصطناعي أفضل اللحظات ويعطيك التوقيتات للقص من أجل تيك توك.", tkr_novideo:"افتح فيديو يوتيوب أولاً لإعادة استخدامه.", tkr_run:"تحويل إلى تيك توك", tkr_spin:"تقطيع إلى مقاطع تيك توك…", tki_title:"أفكار تيك توك رائجة", tki_run:"توليد 10 أفكار", tki_spin:"البحث عن أفكار رائجة…", tkh_title:"محسّن الجُمل الافتتاحية", tkh_run:"توليد 8 جُمل", tkh_spin:"توليد الجُمل الافتتاحية…", tkc_title:"تقويم المحتوى", tkc_run:"توليد تقويم 7 أيام", tkc_spin:"إنشاء التقويم…", tkc_freq_ph:"الوتيرة (مثال: فيديو واحد يوميًا)…",
+    nav_ideas:"أفكار", idea_intro:"اختر مجالك ومنطقتك وموضوعًا (اختياري): يقترح الذكاء الاصطناعي 10 أفكار فيديو عالية الإمكانات.", idea_topic_ph:"موضوع أو كلمة مفتاحية (اختياري)…", idea_run:"توليد 10 أفكار", idea_copy:"نسخ العنوان",
+    kw_opportunity:"درجة الفرصة", kw_difficulty:"الصعوبة", kw_demand:"الطلب", kw_trend:"الاتجاه", kw_best:"🎯 كلمات مفتاحية مستهدفة", kw_competition:"المنافسة",
+    nav_abtest:"اختبار A/B", nav_shorts:"Shorts",
+    abtest_intro:"قارن عنوانين: يتنبأ الذكاء الاصطناعي بأيهما يحقق نسبة نقر أعلى.", abtest_a:"العنوان A", abtest_b:"العنوان B",
+    abtest_run:"⚔️ قارن العناوين", abtest_winner:"الفائز", abtest_verdict:"حكم الذكاء الاصطناعي",
+    abtest_improved:"💡 عنوان مقترح (أفضل)", abtest_ctr:"نسبة النقر المقدّرة", abtest_confidence:"الثقة", abtest_use:"استخدم هذا العنوان",
+    shorts_intro:"حوّل هذا الفيديو إلى أفكار Shorts فيروسية (عنوان، خطاف، نص، وسوم).", shorts_generate:"🎬 توليد Shorts",
+    shorts_hook:"الخطاف (أول 3 ثوانٍ)", shorts_script:"النص", shorts_duration:"المدة", shorts_copy:"نسخ النص",
+    shorts_summary:"ملخّص", shorts_clips:"✂️ المقاطع المراد قصّها", shorts_estimated:"تقديري", shorts_real:"حسب الترجمة",
+    thumbab_title:"اختبار A/B للصور المصغّرة", thumbab_intro:"قارن صورتين مصغّرتين: يخبرك الذكاء الاصطناعي البصري أيّهما يحقق نسبة نقر أعلى ولماذا.",
+    thumbab_a:"الصورة A", thumbab_b:"الصورة B", thumbab_run:"📸 قارن الصور المصغّرة", thumbab_tips:"💡 لتحسين الفائزة", thumbab_need2:"اختر صورتين أولاً",
+    thumbab_prompt_label:"🎨 وصف مفصّل لإنشاء الصورة المصغّرة المحسّنة:", thumbab_prompt_copy:"نسخ الوصف",
+    thumbab_prompt_hint:"الصق هذا الوصف في ذكاء اصطناعي للصور (Midjourney، DALL·E، ChatGPT، Leonardo…) لتوليد صورتك."
+  },
+  ja: {
+    thumb_ideas_title:"サムネイルのコンセプトを生成", thumb_ideas_intro:"タイトルに基づく3つのコンセプト（テキスト、配色、レイアウト、顔）、すぐ実行可能。", thumb_ideas_btn:"3つのコンセプトを生成", thumb_ideas_loading:"コンセプトを生成中…", thumb_ideas_concept:"コンセプト", thumb_ideas_emotion:"感情", thumb_ideas_text:"テキスト", thumb_ideas_focal:"焦点", thumb_ideas_face:"顔", thumb_ideas_bg:"背景", thumb_ideas_why:"理由", thumb_ideas_copy:"ブリーフをコピー", thumb_ideas_locked_sub:"Proにアップグレードして3つのコンセプトをすべて解除", thumb_ideas_niche_ph:"ニッチ（任意、例：料理、ゲーム）",
+    thumb_gen_btn:"🖼️ 背景を生成", thumb_gen_loading:"背景を生成中…", thumb_gen_overlay_note:"AI生成の背景＋重ねたテキスト（画像AIは特にアラビア語のテキストをうまく書けません）。", thumb_gen_text_ph:"画像上のタイトルテキスト…", thumb_gen_download:"画像をダウンロード", thumb_gen_downloaded:"画像をダウンロードしました", thumb_gen_drag_note:"2行：テキストを入力し、各行をドラッグ、色/サイズ/フォントを選んでダウンロード。", thumb_gen_line:"行", thumb_gen_color:"色", thumb_gen_font:"フォント", thumb_gen_size:"サイズ",
+    live_stats_title:"実際のYouTube統計", live_stats_btn:"実データを読み込む（視聴/時、タグ…）",
+    audit_title:"チャンネル監査", audit_btn:"このチャンネルを監査",
+    thumb_ai_title:"AIサムネイル分析", thumb_ai_btn:"サムネイルをAI分析",
+    real_comp_title:"実際の競合", real_comp_btn:"伸びている実際の動画を見る",
+    keywords_title:"キーワード調査", keywords_ph:"例：チキンレシピ",
+    viral_potential_title:"バイラル潜在スコア", title_types:"タイトルの種類", result_label:"結果",
+    hook_title:"フック分析", hook_intro:"イントロの台本（最初の15〜30秒）を貼り付け：AIが視聴維持率と離脱箇所を予測します。",
+    hook_ph:"ここにイントロのテキストを貼り付け…", hook_run:"維持率を分析", hook_need:"少なくともイントロを貼り付けてください",
+    hook_retention:"推定維持率", hook_score_label:"フックスコア", hook_drops:"⚠️ 離脱ポイント", hook_fixes:"✅ 修正案", hook_rewrite:"💡 書き直したイントロ（改善版）",
+    nav_region:"地域", audience_intro:"ターゲット（世界・地域・国）と言語を選択：AIが最適な投稿時間、トレンド、ハッシュタグ、トピックを提案します。",
+    audience_target:"ターゲット（国／地域／世界）", audience_target_ph:"例：アルジェリア、中東、フランス、世界…", audience_worldwide:"世界",
+    audience_niche:"ニッチ／チャンネルのスタイル", audience_niche_ph:"例：ゲーム、料理、テック、サッカー…",
+    audience_lang:"コンテンツの言語", audience_run:"この層に最適化",
+    audience_times:"📅 最適な投稿時間", audience_trends:"📈 トレンドと形式", audience_hashtags:"🏷️ ローカルハッシュタグ", audience_topics:"💡 トピック案", audience_tips:"🎯 ヒント",
+    nav_titles:"タイトル＆説明", titles_section:"AIタイトル",
+    td_title:"タイトルドクター", td_run:"AIで詳しく診断", td_need:"先にタイトルを入力",
+    td_len:"長さ", td_num:"数字", td_emotion:"感情ワード", td_hook:"フック", td_punct:"句読点",
+    td_ai_score:"CTRスコア", td_missing:"⚠️ 不足している点", td_improved:"💡 改善タイトル", td_tips:"✅ ヒント",
+    tdh_len:"40〜70文字が理想：説明的で、YouTubeで切れない長さ。",
+    tdh_num:"数字（例：5つのコツ、2024）でタイトルが具体的になり目を引く。",
+    tdh_emotion:"強い言葉（驚き・秘密・無料・衝撃…）がクリックを促す。",
+    tdh_hook:"冒頭のフック（どうやって・なぜ・質問…）が好奇心を生む。",
+    tdh_punct:"？や！は感情を加えクリックしたくなる。",
+    h_titledoctor:"タイトルをリアルタイムで採点し、クリックを増やす改善案を提案。",
+    h_titles:"最適化タイトルを5案生成（SEO、CTR、バイラル、Shorts、トレンド）。",
+    h_desc:"登録CTA・ハッシュタグ・SEOタグ15個付きの完全な説明文を作成。",
+    h_abtest:"2つのタイトルを比較：AIがどちらのCTRが高いか予測。",
+    h_thumbab:"2つのサムネを比較：ビジョンAIがどちらが良いか理由とともに提示。",
+    h_shorts:"動画を3つのShortsアイデアに変換し、切り出す場面を提示。",
+    h_hook:"イントロを分析し、視聴維持率と離脱箇所を予測。",
+    h_audience:"地域とニッチに応じた最適時間・トレンド・ハッシュタグ・トピック。",
+    h_revenue:"動画の7日間再生数とAdSense収益を推定。",
+    h_channel:"チャンネルの実データ＋健全性スコアとAI提案。",
+    h_comments:"コメントの感情と要望を要約し、返信案を提案。",
+    h_ideas:"ニッチに合った有望な動画アイデアを10件提案。",
+    desc_section:"完全な説明", desc_intro:"タイトル＋ニッチ＋地域 → 「チャンネル登録」CTA・ハッシュタグ・タグ付きの説明。",
+    desc_title:"動画タイトル", desc_title_ph:"動画のタイトル…", desc_run:"完全な説明を生成", desc_need:"先にタイトルを入力",
+    desc_ready:"✅ 貼り付け可能な説明", desc_copy:"説明をコピー", desc_tags:"🏷️ SEOタグ", desc_copy_tags:"タグをコピー",
+    chap_section:"チャプター", chap_intro:"字幕からタイムスタンプ付きチャプターを生成し、説明欄に貼り付け。", chap_run:"チャプターを生成", chap_copy:"チャプターをコピー", chap_none:"この動画は字幕が利用できません。",
+    nav_revenue:"収益", rev_intro:"ニッチ・視聴者層・登録者数に基づいて7日間の再生数とAdSense収益を予測します。",
+    rev_subs:"チャンネル登録者数", rev_subs_ph:"例: 6m、14k、5000", rev_run:"再生数と収益を予測", rev_views:"再生数（7日）", rev_income:"推定収益",
+    rev_factors:"📊 主な要因", rev_tips:"💡 増やすには", rev_disclaimer:"AIによる概算 — 実際の結果は異なる場合があります。",
+    nav_sponsor:"スポンサー", h_sponsor:"スポンサー料金を見積もり、ブランド向けの売り込み文・メディアキット・アフィリエイト案を生成。",
+    sp_intro:"スポンサー価値を見積もり、契約獲得用の売り込み文＋メディアキットを生成。", sp_subs_ph:"登録者（例: 6m, 14k）", sp_views_ph:"平均再生数/動画（例: 50k）", sp_run:"スポンサーキットを生成",
+    sp_rate:"推定スポンサー料金（動画あたり）", sp_pitch:"✉️ ブランドへの売り込み文", sp_copy_pitch:"売り込み文をコピー",
+    sp_mediakit:"📋 メディアキット（訴求点）", sp_brands:"🏢 相性の良いブランド", sp_affiliate:"🔗 アフィリエイト案", sp_disclaimer:"AI概算 — 実際のエンゲージメントに応じて交渉を。",
+    nav_trends:"トレンド", h_trends:"あなたのニッチで今伸びているもの（実際の最近の動画）を検出＋AI分析。",
+    tre_intro:"あなたのニッチで今バズっているもの：急上昇動画＋トレンドと急上昇キーワード。", tre_run:"トレンドを検出", tre_need:"先にニッチを選択",
+    tre_trends:"🔥 現在のトレンド", tre_keywords:"📈 急上昇キーワード", tre_advice:"💡 活用のヒント", tre_hot:"🚀 急上昇動画（最近）", tre_none:"トレンドが見つかりません。より広いニッチをお試しください。",
+    nav_planner:"プランナー", h_planner:"ニッチに合わせた7日間のカレンダーを作成し、定期投稿を支援。",
+    plan_intro:"7日間の計画を生成：毎日何を投稿するか＋最適な時間帯。", plan_freq:"ペース（任意）", plan_run:"7日間の計画を生成",
+    tr_section:"ローカライズ／翻訳", h_translate:"タイトル・説明・タグを別の言語に翻訳・最適化。",
+    tr_intro:"タイトル＋説明＋タグを翻訳し、世界の視聴者にリーチ。", tr_run:"翻訳", tr_title:"翻訳タイトル", tr_desc:"翻訳した説明", tr_copy:"翻訳をコピー",
+    cp_section:"コミュニティ投稿", h_community:"コミュニティタブ用のアンケート・質問・予告を生成。",
+    cp_intro:"動画の合間に視聴者を引き込む5つの投稿（アンケート・質問・予告）を生成。", cp_run:"5投稿を生成",
+    sc_section:"完全な台本", h_script:"トピックから構成された台本（フック・セクション・CTA）を作成。",
+    sc_intro:"トピックを入力：AIが完全な台本（フック・導入・セクション・CTA・締め）を作成。", sc_topic_ph:"動画のトピック…", sc_dur:"長さ", sc_run:"台本を書く", sc_need:"先にトピックを入力", sc_hook:"フック（最初の5秒）", sc_copy:"台本をコピー",
+    pc_section:"タイトル＋サムネ確認", h_pair:"タイトルとサムネが補完し合い、TVとモバイルで読めるか確認。",
+    pc_intro:"AIがタイトルとサムネの補完性（重複なし）と可読性を確認。", pc_run:"ペアを確認", pc_complement:"補完的", pc_issues:"⚠️ 問題点", pc_tips:"✅ ヒント",
+    pl_section:"再生リスト最適化", h_playlists:"動画をセッション時間向けの最適な再生リストにグループ化。",
+    pl_intro:"AIが動画を最適な再生リストにグループ化（視聴時間アップ）。", pl_run:"再生リストを最適化",
+    au_section:"1クリック総合監査", h_audit:"SEO＋サムネ＋タイトルを一度に実行し、優先アクションプランを提示。",
+    au_run:"総合監査を実行", au_global:"動画の総合スコア", au_plan:"🎯 優先アクションプラン",
+    ob_title:"VidSpark AIへようこそ！", ob_sub:"動画最適化のための24のAIツール。主要なものはこちら：",
+    ob_audit:"1クリックの総合監査", ob_title2:"タイトルのCTRをリアルタイム採点", ob_thumb:"2つのサムネを比較", ob_shorts:"Shortsアイデア＋切り出し場面", ob_sponsor:"スポンサー収入を見積もり", ob_btn:"始めよう 🚀",
+    nav_channel:"チャンネル", chan_intro:"チャンネルダッシュボード：実データ＋健全性スコアとAI提案。", chan_run:"チャンネルを分析",
+    chan_subs:"登録者", chan_views:"総再生数", chan_vids:"動画数", chan_avg:"平均再生数", chan_eng:"エンゲージ", chan_freq:"頻度",
+    chan_ai_loading:"AI診断中…", chan_ai_fail:"AI診断は利用できません", chan_health:"健全性スコア", chan_strengths:"✅ 強み", chan_weak:"⚠️ 弱み", chan_reco:"💡 提案",
+    nav_comments:"コメント", com_intro:"AIがコメントを分析：感情、視聴者の要望、動画アイデア、返信案。", com_run:"コメントを分析", com_none:"この動画にコメントはありません。",
+    com_sentiment:"全体の感情", com_pos:"ポジティブ", com_neu:"中立", com_neg:"ネガティブ",
+    com_requests:"🙋 視聴者の要望", com_ideas:"💡 次の動画アイデア", com_replies:"✍️ 返信案", com_copy:"コピー",
+    nav_ideas:"アイデア", idea_intro:"ニッチ・地域・トピック（任意）を選択：AIが有望な動画アイデアを10件提案。", idea_topic_ph:"トピックまたはキーワード（任意）…", idea_run:"10案を生成", idea_copy:"タイトルをコピー",
+    kw_opportunity:"機会スコア", kw_difficulty:"難易度", kw_demand:"需要", kw_trend:"トレンド", kw_best:"🎯 狙うキーワード", kw_competition:"競合",
+    nav_abtest:"A/Bテスト", nav_shorts:"Shorts",
+    abtest_intro:"2つのタイトルを比較：AIがどちらのクリック率が高いか予測します。", abtest_a:"タイトルA", abtest_b:"タイトルB",
+    abtest_run:"⚔️ タイトルを比較", abtest_winner:"勝者", abtest_verdict:"AIの判定",
+    abtest_improved:"💡 提案タイトル（さらに良い）", abtest_ctr:"推定CTR", abtest_confidence:"信頼度", abtest_use:"このタイトルを使う",
+    shorts_intro:"この動画をバイラルなShortsのアイデアに変換（タイトル、フック、台本、ハッシュタグ）。", shorts_generate:"🎬 Shortsを生成",
+    shorts_hook:"フック（最初の3秒）", shorts_script:"台本", shorts_duration:"長さ", shorts_copy:"台本をコピー",
+    shorts_summary:"要約", shorts_clips:"✂️ 切り出す場面", shorts_estimated:"推定", shorts_real:"字幕に基づく",
+    thumbab_title:"サムネイルA/B", thumbab_intro:"2つのサムネイルを比較：ビジョンAIがどちらのCTRが高いか理由とともに教えます。",
+    thumbab_a:"サムネイルA", thumbab_b:"サムネイルB", thumbab_run:"📸 サムネイルを比較", thumbab_tips:"💡 勝者を改善するには", thumbab_need2:"先に2枚選んでください",
+    thumbab_prompt_label:"🎨 改善版サムネイルを作る詳細プロンプト：", thumbab_prompt_copy:"プロンプトをコピー",
+    thumbab_prompt_hint:"このプロンプトを画像AI（Midjourney、DALL·E、ChatGPT、Leonardo…）に貼り付けてサムネイルを生成。"
+  }
+};
+Object.keys(EXTRA_I18N).forEach(l => { if (I18N[l]) Object.assign(I18N[l], EXTRA_I18N[l]); });
+
+/* ── FILL_I18N : complète les langues partielles (fusion uniquement si clé absente) ── */
+const FILL_I18N = {
+ "es": {
+  "nav_abtest": "Test A/B",
+  "abtest_intro": "Compara dos títulos: la IA predice cuál obtiene más clics.",
+  "abtest_a": "Título A",
+  "abtest_b": "Título B",
+  "abtest_run": "⚔️ Comparar títulos",
+  "abtest_winner": "Ganador",
+  "abtest_verdict": "Veredicto IA",
+  "abtest_improved": "💡 Título sugerido (aún mejor)",
+  "abtest_ctr": "CTR est.",
+  "abtest_confidence": "Confianza",
+  "abtest_use": "Usar este título",
+  "thumbab_title": "Miniatura A/B",
+  "thumbab_intro": "Compara 2 miniaturas: la IA Vision dice cuál logra más CTR y por qué.",
+  "thumbab_a": "Miniatura A",
+  "thumbab_b": "Miniatura B",
+  "thumbab_run": "📸 Comparar miniaturas",
+  "thumbab_tips": "💡 Para mejorar la ganadora",
+  "thumbab_need2": "Elige 2 imágenes primero",
+  "thumbab_prompt_label": "🎨 Prompt detallado para crear la miniatura mejorada:",
+  "thumbab_prompt_copy": "Copiar prompt",
+  "thumbab_prompt_hint": "Pega este prompt en una IA de imágenes (Midjourney, DALL·E, ChatGPT, Leonardo…) para generar tu miniatura.",
+  "nav_shorts": "Shorts",
+  "shorts_intro": "Convierte este vídeo en ideas de Shorts virales (título, gancho, guion, hashtags).",
+  "shorts_generate": "🎬 Generar Shorts",
+  "shorts_hook": "Gancho (primeros 3 s)",
+  "shorts_script": "Guion",
+  "shorts_duration": "Duración",
+  "shorts_copy": "Copiar guion",
+  "shorts_summary": "Resumen",
+  "shorts_clips": "✂️ Clips para cortar",
+  "shorts_estimated": "estimado",
+  "shorts_real": "según los subtítulos",
+  "live_stats_title": "Estadísticas reales de YouTube",
+  "live_stats_btn": "Cargar datos reales (vistas/h, etiquetas…)",
+  "audit_title": "Auditoría del canal",
+  "audit_btn": "Auditar este canal",
+  "thumb_ai_title": "Análisis de miniatura con IA",
+  "thumb_ai_btn": "Analizar mi miniatura (IA)",
+  "thumb_ideas_title": "Generar conceptos de miniatura",
+  "thumb_ideas_intro": "3 conceptos (texto, colores, diseño, rostro) según tu título, listos para ejecutar.",
+  "thumb_ideas_btn": "Generar 3 conceptos",
+  "thumb_ideas_loading": "Generando conceptos…",
+  "thumb_ideas_concept": "Concepto",
+  "thumb_ideas_emotion": "Emoción",
+  "thumb_ideas_text": "Texto",
+  "thumb_ideas_focal": "Punto focal",
+  "thumb_ideas_face": "Rostro",
+  "thumb_ideas_bg": "Fondo",
+  "thumb_ideas_why": "Por qué",
+  "thumb_ideas_copy": "Copiar resumen",
+  "thumb_ideas_locked_sub": "Pásate a Pro para desbloquear los 3 conceptos",
+  "thumb_ideas_niche_ph": "Nicho (opcional, p. ej. cocina, gaming)",
+  "thumb_gen_btn": "🖼️ Generar fondo",
+  "thumb_gen_loading": "Generando fondo…",
+  "thumb_gen_overlay_note": "Fondo generado por IA + tu texto superpuesto (la IA de imágenes no escribe bien el texto, sobre todo en árabe).",
+  "thumb_gen_text_ph": "Texto del título sobre la imagen…",
+  "thumb_gen_download": "Descargar imagen",
+  "thumb_gen_downloaded": "Imagen descargada",
+  "thumb_gen_drag_note": "2 líneas: escribe tu texto, arrastra cada línea, elige color/tamaño/fuente y descarga.",
+  "thumb_gen_line": "Línea",
+  "thumb_gen_color": "Color",
+  "thumb_gen_font": "Fuente",
+  "thumb_gen_size": "Tamaño",
+  "real_comp_title": "Competidores reales",
+  "real_comp_btn": "Ver los vídeos reales que arrasan",
+  "keywords_title": "Investigación de palabras clave",
+  "keywords_ph": "p. ej. receta de pollo",
+  "title_types": "Tipos de título",
+  "result_label": "Resultado",
+  "hook_title": "Analizador de ganchos",
+  "hook_intro": "Pega el guion de tu intro (primeros 15-30 s): la IA predice la retención y dónde se van los espectadores.",
+  "hook_ph": "Pega aquí el texto de tu intro…",
+  "hook_run": "Analizar retención",
+  "hook_need": "Pega al menos tu intro",
+  "hook_retention": "Retención est.",
+  "hook_score_label": "Puntuación del gancho",
+  "hook_drops": "⚠️ Puntos de abandono",
+  "hook_fixes": "✅ Correcciones",
+  "hook_rewrite": "💡 Intro reescrita (mejor)",
+  "nav_region": "Región",
+  "audience_intro": "Elige tu objetivo (mundial, región o país) y el idioma: la IA da mejores horas, tendencias, hashtags y temas.",
+  "audience_target": "Objetivo (país / región / mundial)",
+  "audience_target_ph": "p. ej. Argelia, MENA, Francia, Mundial…",
+  "audience_worldwide": "Mundial",
+  "audience_niche": "Nicho / estilo del canal",
+  "audience_niche_ph": "p. ej. Gaming, Cocina, Tech, Fútbol…",
+  "audience_lang": "Idioma del contenido",
+  "audience_run": "Optimizar para este público",
+  "audience_times": "📅 Mejores horas para publicar",
+  "audience_trends": "📈 Tendencias y formatos",
+  "audience_hashtags": "🏷️ Hashtags localizados",
+  "audience_topics": "💡 Ideas de temas",
+  "audience_tips": "🎯 Consejos",
+  "titles_section": "Títulos IA",
+  "td_title": "Doctor de títulos",
+  "td_run": "Diagnóstico IA profundo",
+  "td_need": "Escribe un título primero",
+  "td_len": "Longitud",
+  "td_num": "Número",
+  "td_emotion": "Palabra de impacto",
+  "td_hook": "Gancho",
+  "td_punct": "Puntuación",
+  "td_ai_score": "Puntuación CTR",
+  "td_missing": "⚠️ Qué falta",
+  "td_improved": "💡 Título mejorado",
+  "td_tips": "✅ Consejos",
+  "tdh_len": "Ideal 40-70 caracteres: lo bastante descriptivo sin que YouTube lo corte.",
+  "tdh_num": "Un número hace el título concreto (p. ej. 5 trucos, 2024) y llama la atención.",
+  "tdh_emotion": "Una palabra de impacto (increíble, secreto, gratis, impactante…) provoca el clic.",
+  "tdh_hook": "Un gancho al inicio (Cómo, Por qué, una pregunta…) crea curiosidad.",
+  "tdh_punct": "Un ? o ! añade emoción y dan ganas de hacer clic.",
+  "h_titledoctor": "Puntúa tu título en vivo y sugiere una versión optimizada para más clics.",
+  "h_titles": "Genera 5 variantes de título optimizadas (SEO, CTR, viral, Shorts, tendencia).",
+  "h_desc": "Crea una descripción completa con CTA de suscripción, hashtags y 15 etiquetas SEO.",
+  "h_abtest": "Compara 2 títulos: la IA predice cuál obtiene más clics.",
+  "h_thumbab": "Compara 2 miniaturas: la IA Vision dice cuál logra más clics y por qué.",
+  "h_shorts": "Convierte el vídeo en 3 ideas de Shorts con los clips exactos para cortar.",
+  "h_hook": "Analiza tu intro y predice la retención + dónde abandonan los espectadores.",
+  "h_audience": "Mejores horas, tendencias, hashtags y temas para tu región y nicho.",
+  "h_revenue": "Estima las vistas a 7 días y los ingresos de AdSense de tu vídeo.",
+  "h_channel": "Estadísticas reales del canal + puntuación de salud y recomendaciones IA.",
+  "h_comments": "Resume el sentimiento de los comentarios, las peticiones y sugiere respuestas.",
+  "h_ideas": "Sugiere 10 ideas de vídeo de alto potencial adaptadas a tu nicho.",
+  "desc_section": "Descripción completa",
+  "desc_intro": "Título + nicho + región → descripción con CTA de suscripción, hashtags y etiquetas.",
+  "desc_title": "Título del vídeo",
+  "desc_title_ph": "El título de tu vídeo…",
+  "desc_run": "Generar descripción completa",
+  "desc_need": "Introduce un título primero",
+  "desc_ready": "✅ Descripción lista para pegar",
+  "desc_copy": "Copiar descripción",
+  "desc_tags": "🏷️ Etiquetas SEO",
+  "desc_copy_tags": "Copiar etiquetas",
+  "chap_section": "Capítulos",
+  "chap_intro": "Genera capítulos con marcas de tiempo (desde los subtítulos) para pegar en tu descripción.",
+  "chap_run": "Generar capítulos",
+  "chap_copy": "Copiar capítulos",
+  "chap_none": "Subtítulos no disponibles para este vídeo.",
+  "nav_revenue": "Ingresos",
+  "rev_intro": "Estima las vistas a 7 días y los ingresos de AdSense según tu nicho, público y suscriptores.",
+  "rev_subs": "Suscriptores de tu canal",
+  "rev_subs_ph": "p. ej. 6m, 14k, 5000",
+  "rev_run": "Estimar vistas e ingresos",
+  "rev_views": "Vistas (D+7)",
+  "rev_income": "Ingresos est.",
+  "rev_factors": "📊 Factores clave",
+  "rev_tips": "💡 Para aumentar",
+  "rev_disclaimer": "Estimación basada en IA — los resultados reales pueden variar.",
+  "nav_sponsor": "Patrocinio",
+  "h_sponsor": "Estima tu tarifa de patrocinio, genera un pitch para marcas, un media kit e ideas de afiliación.",
+  "sp_intro": "Estima tu valor de patrocinio y genera un pitch + media kit para conseguir acuerdos.",
+  "sp_subs_ph": "Suscriptores (p. ej. 6m, 14k)",
+  "sp_views_ph": "Vistas medias/vídeo (p. ej. 50k)",
+  "sp_run": "Generar mi kit de patrocinio",
+  "sp_rate": "Tarifa de patrocinio estimada (por vídeo)",
+  "sp_pitch": "✉️ Mensaje de pitch para marcas",
+  "sp_copy_pitch": "Copiar pitch",
+  "sp_mediakit": "📋 Media kit (puntos de venta)",
+  "sp_brands": "🏢 Marcas que encajarían",
+  "sp_affiliate": "🔗 Ideas de afiliación",
+  "sp_disclaimer": "Estimación IA — negocia según tu engagement real.",
+  "nav_trends": "Tendencias",
+  "h_trends": "Detecta lo que explota ahora en tu nicho (vídeos recientes reales) + análisis IA.",
+  "tre_intro": "Lo que arrasa AHORA en tu nicho: vídeos que explotan + tendencias y palabras clave en alza.",
+  "tre_run": "Detectar tendencias",
+  "tre_need": "Elige un nicho primero",
+  "tre_trends": "🔥 Tendencias actuales",
+  "tre_keywords": "📈 Palabras clave en alza",
+  "tre_advice": "💡 Cómo aprovecharlas",
+  "tre_hot": "🚀 Vídeos que explotan (recientes)",
+  "tre_none": "No se encontraron tendencias. Prueba un nicho más amplio.",
+  "nav_planner": "Planificador",
+  "h_planner": "Crea un calendario de 7 días adaptado a tu nicho para publicar con constancia.",
+  "plan_intro": "Genera un plan de 7 días: qué publicar cada día + la mejor franja horaria.",
+  "plan_freq": "Cadencia (opcional)",
+  "plan_run": "Generar mi plan de 7 días",
+  "tr_section": "Localización / Traducción",
+  "h_translate": "Traduce y adapta tu título, descripción y etiquetas a otro idioma.",
+  "tr_intro": "Traduce título + descripción + etiquetas a un idioma para llegar a un público global.",
+  "tr_run": "Traducir",
+  "tr_title": "Título traducido",
+  "tr_desc": "Descripción traducida",
+  "tr_copy": "Copiar traducción",
+  "cp_section": "Publicaciones de comunidad",
+  "h_community": "Genera encuestas, preguntas y teasers para la pestaña Comunidad.",
+  "cp_intro": "Genera 5 publicaciones (encuestas, preguntas, teasers) para enganchar a tu público entre vídeos.",
+  "cp_run": "Generar 5 publicaciones",
+  "sc_section": "Guion completo",
+  "h_script": "Escribe un guion estructurado (gancho, secciones, CTA) a partir de un tema.",
+  "sc_intro": "Da un tema: la IA escribe el guion completo (gancho, intro, secciones, CTA, cierre).",
+  "sc_topic_ph": "Tema del vídeo…",
+  "sc_dur": "Duración",
+  "sc_run": "Escribir el guion",
+  "sc_need": "Introduce un tema primero",
+  "sc_hook": "Gancho (primeros 5 s)",
+  "sc_copy": "Copiar guion",
+  "pc_section": "Comprobación título + miniatura",
+  "h_pair": "Comprueba que tu título y miniatura se complementan y son legibles en TV y móvil.",
+  "pc_intro": "La IA comprueba que tu título y miniatura se complementan (sin repetir) y su legibilidad.",
+  "pc_run": "Comprobar el par",
+  "pc_complement": "Complementarios",
+  "pc_issues": "⚠️ Problemas",
+  "pc_tips": "✅ Consejos",
+  "pl_section": "Optimizador de playlists",
+  "h_playlists": "Agrupa tus vídeos en playlists optimizadas para el tiempo de sesión.",
+  "pl_intro": "La IA agrupa tus vídeos en playlists optimizadas (más tiempo de visualización).",
+  "pl_run": "Optimizar mis playlists",
+  "au_section": "Auditoría completa en 1 clic",
+  "h_audit": "Ejecuta SEO + Miniatura + Título a la vez y da un plan de acción priorizado.",
+  "au_run": "Ejecutar auditoría completa",
+  "au_global": "Puntuación global del vídeo",
+  "au_plan": "🎯 Plan de acción prioritario",
+  "ob_title": "¡Bienvenido a VidSpark AI!",
+  "ob_sub": "24 herramientas IA para optimizar tus vídeos. Esto es lo esencial:",
+  "ob_audit": "una auditoría completa en 1 clic",
+  "ob_title2": "puntuación CTR en vivo para tu título",
+  "ob_thumb": "comparar 2 miniaturas",
+  "ob_shorts": "ideas de Shorts + clips para cortar",
+  "ob_sponsor": "estima tus ingresos de patrocinio",
+  "ob_btn": "¡Vamos! 🚀",
+  "nav_channel": "Canal",
+  "chan_intro": "Panel del canal: estadísticas reales + puntuación de salud y recomendaciones IA.",
+  "chan_run": "Analizar mi canal",
+  "chan_subs": "Suscriptores",
+  "chan_views": "Vistas totales",
+  "chan_vids": "Vídeos",
+  "chan_avg": "Vistas medias",
+  "chan_eng": "Engagement",
+  "chan_freq": "Frecuencia",
+  "chan_ai_loading": "Diagnóstico IA en curso…",
+  "chan_ai_fail": "Diagnóstico IA no disponible",
+  "chan_health": "Puntuación de salud",
+  "chan_strengths": "✅ Fortalezas",
+  "chan_weak": "⚠️ Debilidades",
+  "chan_reco": "💡 Recomendaciones",
+  "nav_comments": "Comentarios",
+  "com_intro": "La IA lee los comentarios: sentimiento, peticiones del público, ideas de vídeo y respuestas sugeridas.",
+  "com_run": "Analizar comentarios",
+  "com_none": "No se encontraron comentarios en este vídeo.",
+  "com_sentiment": "Sentimiento general",
+  "com_pos": "Positivo",
+  "com_neu": "Neutral",
+  "com_neg": "Negativo",
+  "com_requests": "🙋 Peticiones del público",
+  "com_ideas": "💡 Ideas para el próximo vídeo",
+  "com_replies": "✍️ Respuestas sugeridas",
+  "com_copy": "Copiar",
+  "nav_ideas": "Ideas",
+  "idea_intro": "Elige tu nicho, región y un tema opcional: la IA sugiere 10 ideas de vídeo de alto potencial.",
+  "idea_topic_ph": "Tema o palabra clave (opcional)…",
+  "idea_run": "Generar 10 ideas",
+  "idea_copy": "Copiar título",
+  "kw_opportunity": "Puntuación de oportunidad",
+  "kw_difficulty": "Dificultad",
+  "kw_demand": "Demanda",
+  "kw_trend": "Tendencia",
+  "kw_best": "🎯 Palabras clave a las que apuntar",
+  "kw_competition": "Competencia",
+  "seo_tab_analyse": "📊 Análisis",
+  "seo_tab_optim": "🎯 Optimización",
+  "seo_tab_kw": "🔑 Palabras clave",
+  "seo_tab_rec_kw": "Palabras clave recomendadas",
+  "seo_tab_issues": "problemas",
+  "seo_all_ok": "¡Todos los criterios validados!",
+  "example_label": "Ejemplo:",
+  "recommendation_label": "RECOMENDACIÓN:",
+  "impact_pos_num": "Impacto positivo +8% CTR estimado",
+  "impact_neg_num": "Añadir un número puede aumentar el CTR un 15–40%",
+  "viral_pos_hook": "Gancho CTR al inicio del título",
+  "viral_pos_num": "Número en el título",
+  "viral_pos_em": "Palabra emocional presente",
+  "viral_pos_desc": "Descripción lo bastante larga",
+  "viral_pos_len": "Longitud de título óptima",
+  "viral_neg_hook": "Sin gancho CTR — añade una pregunta o número al inicio",
+  "viral_neg_num": "Sin número — los títulos con números logran +40% CTR",
+  "viral_neg_em": "Sin palabra emocional — añade una palabra de impacto",
+  "viral_neg_desc_tpl": "Descripción corta (N caracteres) — apunta a 500+",
+  "viral_neg_len_short": "Título demasiado corto",
+  "viral_neg_len_long": "Título demasiado largo",
+  "viral_potential_title": "Puntuación de potencial viral",
+  "btn_viral_ai": "✨ Análisis Viral IA"
+ },
+ "pt": {
+  "nav_abtest": "Teste A/B",
+  "abtest_intro": "Compare dois títulos: a IA prevê qual recebe mais cliques.",
+  "abtest_a": "Título A",
+  "abtest_b": "Título B",
+  "abtest_run": "⚔️ Comparar títulos",
+  "abtest_winner": "Vencedor",
+  "abtest_verdict": "Veredito da IA",
+  "abtest_improved": "💡 Título sugerido (ainda melhor)",
+  "abtest_ctr": "CTR est.",
+  "abtest_confidence": "Confiança",
+  "abtest_use": "Usar este título",
+  "thumbab_title": "Miniatura A/B",
+  "thumbab_intro": "Compare 2 miniaturas: a IA Vision diz qual tem mais CTR e por quê.",
+  "thumbab_a": "Miniatura A",
+  "thumbab_b": "Miniatura B",
+  "thumbab_run": "📸 Comparar miniaturas",
+  "thumbab_tips": "💡 Para melhorar a vencedora",
+  "thumbab_need2": "Escolha 2 imagens primeiro",
+  "thumbab_prompt_label": "🎨 Prompt detalhado para criar a miniatura melhorada:",
+  "thumbab_prompt_copy": "Copiar prompt",
+  "thumbab_prompt_hint": "Cole este prompt numa IA de imagens (Midjourney, DALL·E, ChatGPT, Leonardo…) para gerar sua miniatura.",
+  "nav_shorts": "Shorts",
+  "shorts_intro": "Transforme este vídeo em ideias de Shorts virais (título, gancho, roteiro, hashtags).",
+  "shorts_generate": "🎬 Gerar Shorts",
+  "shorts_hook": "Gancho (primeiros 3 s)",
+  "shorts_script": "Roteiro",
+  "shorts_duration": "Duração",
+  "shorts_copy": "Copiar roteiro",
+  "shorts_summary": "Resumo",
+  "shorts_clips": "✂️ Clipes para cortar",
+  "shorts_estimated": "estimado",
+  "shorts_real": "com base nas legendas",
+  "live_stats_title": "Estatísticas reais do YouTube",
+  "live_stats_btn": "Carregar dados reais (views/h, tags…)",
+  "audit_title": "Auditoria do canal",
+  "audit_btn": "Auditar este canal",
+  "thumb_ai_title": "Análise de miniatura com IA",
+  "thumb_ai_btn": "Analisar minha miniatura (IA)",
+  "thumb_ideas_title": "Gerar conceitos de miniatura",
+  "thumb_ideas_intro": "3 conceitos (texto, cores, layout, rosto) com base no seu título, prontos para executar.",
+  "thumb_ideas_btn": "Gerar 3 conceitos",
+  "thumb_ideas_loading": "Gerando conceitos…",
+  "thumb_ideas_concept": "Conceito",
+  "thumb_ideas_emotion": "Emoção",
+  "thumb_ideas_text": "Texto",
+  "thumb_ideas_focal": "Ponto focal",
+  "thumb_ideas_face": "Rosto",
+  "thumb_ideas_bg": "Fundo",
+  "thumb_ideas_why": "Por quê",
+  "thumb_ideas_copy": "Copiar resumo",
+  "thumb_ideas_locked_sub": "Faça upgrade para Pro para desbloquear os 3 conceitos",
+  "thumb_ideas_niche_ph": "Nicho (opcional, ex.: culinária, games)",
+  "thumb_gen_btn": "🖼️ Gerar fundo",
+  "thumb_gen_loading": "Gerando fundo…",
+  "thumb_gen_overlay_note": "Fundo gerado por IA + seu texto sobreposto (a IA de imagens não escreve bem o texto, sobretudo em árabe).",
+  "thumb_gen_text_ph": "Texto do título na imagem…",
+  "thumb_gen_download": "Baixar imagem",
+  "thumb_gen_downloaded": "Imagem baixada",
+  "thumb_gen_drag_note": "2 linhas: digite seu texto, arraste cada linha, escolha cor/tamanho/fonte e baixe.",
+  "thumb_gen_line": "Linha",
+  "thumb_gen_color": "Cor",
+  "thumb_gen_font": "Fonte",
+  "thumb_gen_size": "Tamanho",
+  "real_comp_title": "Concorrentes reais",
+  "real_comp_btn": "Ver os vídeos reais que estão bombando",
+  "keywords_title": "Pesquisa de palavras-chave",
+  "keywords_ph": "ex.: receita de frango",
+  "title_types": "Tipos de título",
+  "result_label": "Resultado",
+  "hook_title": "Analisador de ganchos",
+  "hook_intro": "Cole o roteiro da sua intro (primeiros 15-30 s): a IA prevê a retenção e onde os espectadores saem.",
+  "hook_ph": "Cole aqui o texto da sua intro…",
+  "hook_run": "Analisar retenção",
+  "hook_need": "Cole ao menos sua intro",
+  "hook_retention": "Retenção est.",
+  "hook_score_label": "Pontuação do gancho",
+  "hook_drops": "⚠️ Pontos de abandono",
+  "hook_fixes": "✅ Correções",
+  "hook_rewrite": "💡 Intro reescrita (melhor)",
+  "nav_region": "Região",
+  "audience_intro": "Escolha seu alvo (mundial, região ou país) e o idioma: a IA dá melhores horários, tendências, hashtags e temas.",
+  "audience_target": "Alvo (país / região / mundial)",
+  "audience_target_ph": "ex.: Argélia, MENA, França, Mundial…",
+  "audience_worldwide": "Mundial",
+  "audience_niche": "Nicho / estilo do canal",
+  "audience_niche_ph": "ex.: Games, Culinária, Tech, Futebol…",
+  "audience_lang": "Idioma do conteúdo",
+  "audience_run": "Otimizar para este público",
+  "audience_times": "📅 Melhores horários para postar",
+  "audience_trends": "📈 Tendências e formatos",
+  "audience_hashtags": "🏷️ Hashtags localizadas",
+  "audience_topics": "💡 Ideias de temas",
+  "audience_tips": "🎯 Dicas",
+  "titles_section": "Títulos IA",
+  "td_title": "Doutor de títulos",
+  "td_run": "Diagnóstico IA profundo",
+  "td_need": "Digite um título primeiro",
+  "td_len": "Comprimento",
+  "td_num": "Número",
+  "td_emotion": "Palavra de impacto",
+  "td_hook": "Gancho",
+  "td_punct": "Pontuação",
+  "td_ai_score": "Pontuação CTR",
+  "td_missing": "⚠️ O que falta",
+  "td_improved": "💡 Título melhorado",
+  "td_tips": "✅ Dicas",
+  "tdh_len": "Ideal 40-70 caracteres: descritivo o bastante sem ser cortado pelo YouTube.",
+  "tdh_num": "Um número deixa o título concreto (ex.: 5 dicas, 2024) e chama a atenção.",
+  "tdh_emotion": "Uma palavra de impacto (incrível, segredo, grátis, chocante…) provoca o clique.",
+  "tdh_hook": "Um gancho no início (Como, Por que, uma pergunta…) cria curiosidade.",
+  "tdh_punct": "Um ? ou ! adiciona emoção e dá vontade de clicar.",
+  "h_titledoctor": "Pontua seu título ao vivo e sugere uma versão otimizada para mais cliques.",
+  "h_titles": "Gera 5 variações de título otimizadas (SEO, CTR, viral, Shorts, tendência).",
+  "h_desc": "Cria uma descrição completa com CTA de inscrição, hashtags e 15 tags SEO.",
+  "h_abtest": "Compara 2 títulos: a IA prevê qual recebe mais cliques.",
+  "h_thumbab": "Compara 2 miniaturas: a IA Vision diz qual tem mais cliques e por quê.",
+  "h_shorts": "Transforma o vídeo em 3 ideias de Shorts com os clipes exatos para cortar.",
+  "h_hook": "Analisa sua intro e prevê a retenção + onde os espectadores saem.",
+  "h_audience": "Melhores horários, tendências, hashtags e temas para sua região e nicho.",
+  "h_revenue": "Estima as views em 7 dias e a receita do AdSense do seu vídeo.",
+  "h_channel": "Estatísticas reais do canal + pontuação de saúde e recomendações IA.",
+  "h_comments": "Resume o sentimento dos comentários, os pedidos e sugere respostas.",
+  "h_ideas": "Sugere 10 ideias de vídeo de alto potencial adaptadas ao seu nicho.",
+  "desc_section": "Descrição completa",
+  "desc_intro": "Título + nicho + região → descrição com CTA de inscrição, hashtags e tags.",
+  "desc_title": "Título do vídeo",
+  "desc_title_ph": "O título do seu vídeo…",
+  "desc_run": "Gerar descrição completa",
+  "desc_need": "Digite um título primeiro",
+  "desc_ready": "✅ Descrição pronta para colar",
+  "desc_copy": "Copiar descrição",
+  "desc_tags": "🏷️ Tags SEO",
+  "desc_copy_tags": "Copiar tags",
+  "chap_section": "Capítulos",
+  "chap_intro": "Gere capítulos com marcações de tempo (a partir das legendas) para colar na descrição.",
+  "chap_run": "Gerar capítulos",
+  "chap_copy": "Copiar capítulos",
+  "chap_none": "Legendas indisponíveis para este vídeo.",
+  "nav_revenue": "Receita",
+  "rev_intro": "Estime as views em 7 dias e a receita do AdSense com base no seu nicho, público e inscritos.",
+  "rev_subs": "Inscritos do seu canal",
+  "rev_subs_ph": "ex.: 6m, 14k, 5000",
+  "rev_run": "Estimar views e receita",
+  "rev_views": "Views (D+7)",
+  "rev_income": "Receita est.",
+  "rev_factors": "📊 Fatores-chave",
+  "rev_tips": "💡 Para aumentar",
+  "rev_disclaimer": "Estimativa baseada em IA — os resultados reais podem variar.",
+  "nav_sponsor": "Patrocínio",
+  "h_sponsor": "Estima sua tarifa de patrocínio, gera um pitch para marcas, um media kit e ideias de afiliação.",
+  "sp_intro": "Estime seu valor de patrocínio e gere um pitch + media kit para fechar acordos.",
+  "sp_subs_ph": "Inscritos (ex.: 6m, 14k)",
+  "sp_views_ph": "Views médias/vídeo (ex.: 50k)",
+  "sp_run": "Gerar meu kit de patrocínio",
+  "sp_rate": "Tarifa de patrocínio estimada (por vídeo)",
+  "sp_pitch": "✉️ Mensagem de pitch para marcas",
+  "sp_copy_pitch": "Copiar pitch",
+  "sp_mediakit": "📋 Media kit (pontos de venda)",
+  "sp_brands": "🏢 Marcas que combinariam",
+  "sp_affiliate": "🔗 Ideias de afiliação",
+  "sp_disclaimer": "Estimativa IA — negocie com base no seu engajamento real.",
+  "nav_trends": "Tendências",
+  "h_trends": "Detecta o que está explodindo agora no seu nicho (vídeos recentes reais) + análise IA.",
+  "tre_intro": "O que está bombando AGORA no seu nicho: vídeos explodindo + tendências e palavras-chave em alta.",
+  "tre_run": "Detectar tendências",
+  "tre_need": "Escolha um nicho primeiro",
+  "tre_trends": "🔥 Tendências atuais",
+  "tre_keywords": "📈 Palavras-chave em alta",
+  "tre_advice": "💡 Como aproveitá-las",
+  "tre_hot": "🚀 Vídeos explodindo (recentes)",
+  "tre_none": "Nenhuma tendência encontrada. Tente um nicho mais amplo.",
+  "nav_planner": "Planejador",
+  "h_planner": "Cria um calendário de 7 dias adaptado ao seu nicho para postar com constância.",
+  "plan_intro": "Gere um plano de 7 dias: o que postar a cada dia + o melhor horário.",
+  "plan_freq": "Cadência (opcional)",
+  "plan_run": "Gerar meu plano de 7 dias",
+  "tr_section": "Localização / Tradução",
+  "h_translate": "Traduz e adapta seu título, descrição e tags para outro idioma.",
+  "tr_intro": "Traduza título + descrição + tags para um idioma e alcance um público global.",
+  "tr_run": "Traduzir",
+  "tr_title": "Título traduzido",
+  "tr_desc": "Descrição traduzida",
+  "tr_copy": "Copiar tradução",
+  "cp_section": "Posts da comunidade",
+  "h_community": "Gera enquetes, perguntas e teasers para a aba Comunidade.",
+  "cp_intro": "Gere 5 posts (enquetes, perguntas, teasers) para engajar seu público entre vídeos.",
+  "cp_run": "Gerar 5 posts",
+  "sc_section": "Roteiro completo",
+  "h_script": "Escreve um roteiro estruturado (gancho, seções, CTA) a partir de um tema.",
+  "sc_intro": "Dê um tema: a IA escreve o roteiro completo (gancho, intro, seções, CTA, encerramento).",
+  "sc_topic_ph": "Tema do vídeo…",
+  "sc_dur": "Duração",
+  "sc_run": "Escrever o roteiro",
+  "sc_need": "Digite um tema primeiro",
+  "sc_hook": "Gancho (primeiros 5 s)",
+  "sc_copy": "Copiar roteiro",
+  "pc_section": "Verificação título + miniatura",
+  "h_pair": "Verifica se seu título e miniatura se complementam e são legíveis na TV e no celular.",
+  "pc_intro": "A IA verifica se seu título e miniatura se complementam (sem repetir) e sua legibilidade.",
+  "pc_run": "Verificar o par",
+  "pc_complement": "Complementares",
+  "pc_issues": "⚠️ Problemas",
+  "pc_tips": "✅ Dicas",
+  "pl_section": "Otimizador de playlists",
+  "h_playlists": "Agrupa seus vídeos em playlists otimizadas para o tempo de sessão.",
+  "pl_intro": "A IA agrupa seus vídeos em playlists otimizadas (mais tempo de exibição).",
+  "pl_run": "Otimizar minhas playlists",
+  "au_section": "Auditoria completa em 1 clique",
+  "h_audit": "Executa SEO + Miniatura + Título de uma vez e dá um plano de ação priorizado.",
+  "au_run": "Executar auditoria completa",
+  "au_global": "Pontuação global do vídeo",
+  "au_plan": "🎯 Plano de ação prioritário",
+  "ob_title": "Bem-vindo ao VidSpark AI!",
+  "ob_sub": "24 ferramentas IA para otimizar seus vídeos. Veja o essencial:",
+  "ob_audit": "uma auditoria completa em 1 clique",
+  "ob_title2": "pontuação CTR ao vivo para seu título",
+  "ob_thumb": "comparar 2 miniaturas",
+  "ob_shorts": "ideias de Shorts + clipes para cortar",
+  "ob_sponsor": "estime sua receita de patrocínio",
+  "ob_btn": "Vamos lá 🚀",
+  "nav_channel": "Canal",
+  "chan_intro": "Painel do canal: estatísticas reais + pontuação de saúde e recomendações IA.",
+  "chan_run": "Analisar meu canal",
+  "chan_subs": "Inscritos",
+  "chan_views": "Views totais",
+  "chan_vids": "Vídeos",
+  "chan_avg": "Views médias",
+  "chan_eng": "Engajamento",
+  "chan_freq": "Frequência",
+  "chan_ai_loading": "Diagnóstico IA em andamento…",
+  "chan_ai_fail": "Diagnóstico IA indisponível",
+  "chan_health": "Pontuação de saúde",
+  "chan_strengths": "✅ Pontos fortes",
+  "chan_weak": "⚠️ Pontos fracos",
+  "chan_reco": "💡 Recomendações",
+  "nav_comments": "Comentários",
+  "com_intro": "A IA lê os comentários: sentimento, pedidos do público, ideias de vídeo e respostas sugeridas.",
+  "com_run": "Analisar comentários",
+  "com_none": "Nenhum comentário encontrado neste vídeo.",
+  "com_sentiment": "Sentimento geral",
+  "com_pos": "Positivo",
+  "com_neu": "Neutro",
+  "com_neg": "Negativo",
+  "com_requests": "🙋 Pedidos do público",
+  "com_ideas": "💡 Ideias para o próximo vídeo",
+  "com_replies": "✍️ Respostas sugeridas",
+  "com_copy": "Copiar",
+  "nav_ideas": "Ideias",
+  "idea_intro": "Escolha seu nicho, região e um tema opcional: a IA sugere 10 ideias de vídeo de alto potencial.",
+  "idea_topic_ph": "Tema ou palavra-chave (opcional)…",
+  "idea_run": "Gerar 10 ideias",
+  "idea_copy": "Copiar título",
+  "kw_opportunity": "Pontuação de oportunidade",
+  "kw_difficulty": "Dificuldade",
+  "kw_demand": "Demanda",
+  "kw_trend": "Tendência",
+  "kw_best": "🎯 Palavras-chave para mirar",
+  "kw_competition": "Concorrência",
+  "seo_tab_analyse": "📊 Análise",
+  "seo_tab_optim": "🎯 Otimização",
+  "seo_tab_kw": "🔑 Palavras-chave",
+  "seo_tab_rec_kw": "Palavras-chave recomendadas",
+  "seo_tab_issues": "problemas",
+  "seo_all_ok": "Todos os critérios validados!",
+  "example_label": "Exemplo:",
+  "recommendation_label": "RECOMENDAÇÃO:",
+  "impact_pos_num": "Impacto positivo +8% de CTR estimado",
+  "impact_neg_num": "Adicionar um número pode aumentar o CTR em 15–40%",
+  "viral_pos_hook": "Gancho CTR no início do título",
+  "viral_pos_num": "Número no título",
+  "viral_pos_em": "Palavra emocional presente",
+  "viral_pos_desc": "Descrição longa o bastante",
+  "viral_pos_len": "Comprimento de título ótimo",
+  "viral_neg_hook": "Sem gancho CTR — adicione uma pergunta ou número no início",
+  "viral_neg_num": "Sem número — títulos com números têm +40% de CTR",
+  "viral_neg_em": "Sem palavra emocional — adicione uma palavra de impacto",
+  "viral_neg_desc_tpl": "Descrição curta (N caracteres) — mire em 500+",
+  "viral_neg_len_short": "Título curto demais",
+  "viral_neg_len_long": "Título longo demais",
+  "viral_potential_title": "Pontuação de potencial viral",
+  "btn_viral_ai": "✨ Análise Viral IA"
+ },
+ "de": {
+  "nav_abtest": "A/B-Test",
+  "abtest_intro": "Vergleiche zwei Titel: Die KI sagt voraus, welcher mehr Klicks erhält.",
+  "abtest_a": "Titel A",
+  "abtest_b": "Titel B",
+  "abtest_run": "⚔️ Titel vergleichen",
+  "abtest_winner": "Gewinner",
+  "abtest_verdict": "KI-Urteil",
+  "abtest_improved": "💡 Vorgeschlagener Titel (noch besser)",
+  "abtest_ctr": "Gesch. CTR",
+  "abtest_confidence": "Sicherheit",
+  "abtest_use": "Diesen Titel verwenden",
+  "thumbab_title": "Thumbnail A/B",
+  "thumbab_intro": "Vergleiche 2 Thumbnails: Die Vision-KI sagt, welches mehr CTR bringt und warum.",
+  "thumbab_a": "Thumbnail A",
+  "thumbab_b": "Thumbnail B",
+  "thumbab_run": "📸 Thumbnails vergleichen",
+  "thumbab_tips": "💡 Um den Gewinner zu verbessern",
+  "thumbab_need2": "Wähle zuerst 2 Bilder",
+  "thumbab_prompt_label": "🎨 Detaillierter Prompt für das verbesserte Thumbnail:",
+  "thumbab_prompt_copy": "Prompt kopieren",
+  "thumbab_prompt_hint": "Füge diesen Prompt in eine Bild-KI ein (Midjourney, DALL·E, ChatGPT, Leonardo…), um dein Thumbnail zu erzeugen.",
+  "nav_shorts": "Shorts",
+  "shorts_intro": "Mach aus diesem Video virale Shorts-Ideen (Titel, Hook, Skript, Hashtags).",
+  "shorts_generate": "🎬 Shorts generieren",
+  "shorts_hook": "Hook (erste 3 Sek.)",
+  "shorts_script": "Skript",
+  "shorts_duration": "Dauer",
+  "shorts_copy": "Skript kopieren",
+  "shorts_summary": "Zusammenfassung",
+  "shorts_clips": "✂️ Clips zum Schneiden",
+  "shorts_estimated": "geschätzt",
+  "shorts_real": "basierend auf Untertiteln",
+  "live_stats_title": "Echte YouTube-Statistiken",
+  "live_stats_btn": "Echte Daten laden (Views/Std., Tags…)",
+  "audit_title": "Kanal-Audit",
+  "audit_btn": "Diesen Kanal prüfen",
+  "thumb_ai_title": "KI-Thumbnail-Analyse",
+  "thumb_ai_btn": "Mein Thumbnail analysieren (KI)",
+  "thumb_ideas_title": "Thumbnail-Konzepte generieren",
+  "thumb_ideas_intro": "3 Konzepte (Text, Farben, Layout, Gesicht) basierend auf deinem Titel, sofort umsetzbar.",
+  "thumb_ideas_btn": "3 Konzepte generieren",
+  "thumb_ideas_loading": "Konzepte werden generiert…",
+  "thumb_ideas_concept": "Konzept",
+  "thumb_ideas_emotion": "Emotion",
+  "thumb_ideas_text": "Text",
+  "thumb_ideas_focal": "Fokuspunkt",
+  "thumb_ideas_face": "Gesicht",
+  "thumb_ideas_bg": "Hintergrund",
+  "thumb_ideas_why": "Warum",
+  "thumb_ideas_copy": "Briefing kopieren",
+  "thumb_ideas_locked_sub": "Upgrade auf Pro, um alle 3 Konzepte freizuschalten",
+  "thumb_ideas_niche_ph": "Nische (optional, z. B. Kochen, Gaming)",
+  "thumb_gen_btn": "🖼️ Hintergrund generieren",
+  "thumb_gen_loading": "Hintergrund wird generiert…",
+  "thumb_gen_overlay_note": "KI-generierter Hintergrund + dein überlagerter Text (Bild-KI kann Text nicht gut schreiben, besonders Arabisch).",
+  "thumb_gen_text_ph": "Titeltext auf dem Bild…",
+  "thumb_gen_download": "Bild herunterladen",
+  "thumb_gen_downloaded": "Bild heruntergeladen",
+  "thumb_gen_drag_note": "2 Zeilen: Text eingeben, jede Zeile ziehen, Farbe/Größe/Schrift wählen, dann herunterladen.",
+  "thumb_gen_line": "Zeile",
+  "thumb_gen_color": "Farbe",
+  "thumb_gen_font": "Schrift",
+  "thumb_gen_size": "Größe",
+  "real_comp_title": "Echte Konkurrenten",
+  "real_comp_btn": "Die echten Top-Videos ansehen",
+  "keywords_title": "Keyword-Recherche",
+  "keywords_ph": "z. B. Hähnchen-Rezept",
+  "title_types": "Titelarten",
+  "result_label": "Ergebnis",
+  "hook_title": "Hook-Analyse",
+  "hook_intro": "Füge dein Intro-Skript ein (erste 15-30 Sek.): Die KI sagt die Bindung voraus und wo Zuschauer abspringen.",
+  "hook_ph": "Füge hier deinen Intro-Text ein…",
+  "hook_run": "Bindung analysieren",
+  "hook_need": "Füge mindestens dein Intro ein",
+  "hook_retention": "Gesch. Bindung",
+  "hook_score_label": "Hook-Score",
+  "hook_drops": "⚠️ Absprungstellen",
+  "hook_fixes": "✅ Korrekturen",
+  "hook_rewrite": "💡 Neu geschriebenes Intro (besser)",
+  "nav_region": "Region",
+  "audience_intro": "Wähle dein Ziel (weltweit, Region oder Land) und die Sprache: Die KI nennt beste Zeiten, Trends, Hashtags und Themen.",
+  "audience_target": "Ziel (Land / Region / weltweit)",
+  "audience_target_ph": "z. B. Algerien, MENA, Frankreich, Weltweit…",
+  "audience_worldwide": "Weltweit",
+  "audience_niche": "Nische / Kanalstil",
+  "audience_niche_ph": "z. B. Gaming, Kochen, Tech, Fußball…",
+  "audience_lang": "Inhaltssprache",
+  "audience_run": "Für dieses Publikum optimieren",
+  "audience_times": "📅 Beste Posting-Zeiten",
+  "audience_trends": "📈 Trends & Formate",
+  "audience_hashtags": "🏷️ Lokalisierte Hashtags",
+  "audience_topics": "💡 Themenideen",
+  "audience_tips": "🎯 Tipps",
+  "titles_section": "KI-Titel",
+  "td_title": "Titel-Doktor",
+  "td_run": "Tiefe KI-Diagnose",
+  "td_need": "Gib zuerst einen Titel ein",
+  "td_len": "Länge",
+  "td_num": "Zahl",
+  "td_emotion": "Power-Wort",
+  "td_hook": "Hook",
+  "td_punct": "Satzzeichen",
+  "td_ai_score": "CTR-Score",
+  "td_missing": "⚠️ Was fehlt",
+  "td_improved": "💡 Verbesserter Titel",
+  "td_tips": "✅ Tipps",
+  "tdh_len": "Ideal 40-70 Zeichen: beschreibend genug, ohne von YouTube abgeschnitten zu werden.",
+  "tdh_num": "Eine Zahl macht den Titel konkret (z. B. 5 Tipps, 2024) und fällt auf.",
+  "tdh_emotion": "Ein Power-Wort (unglaublich, Geheimnis, gratis, schockierend…) löst den Klick aus.",
+  "tdh_hook": "Ein Hook am Anfang (Wie, Warum, eine Frage…) erzeugt Neugier.",
+  "tdh_punct": "Ein ? oder ! fügt Emotion hinzu und macht Lust zu klicken.",
+  "h_titledoctor": "Bewertet deinen Titel live und schlägt eine optimierte Version für mehr Klicks vor.",
+  "h_titles": "Generiert 5 optimierte Titelvarianten (SEO, CTR, viral, Shorts, Trend).",
+  "h_desc": "Erstellt eine vollständige Beschreibung mit Abo-CTA, Hashtags und 15 SEO-Tags.",
+  "h_abtest": "Vergleicht 2 Titel: Die KI sagt voraus, welcher mehr Klicks erhält.",
+  "h_thumbab": "Vergleicht 2 Thumbnails: Die Vision-KI sagt, welches mehr Klicks bringt und warum.",
+  "h_shorts": "Macht aus dem Video 3 Shorts-Ideen mit den genauen Clips zum Schneiden.",
+  "h_hook": "Analysiert dein Intro und sagt die Bindung voraus + wo Zuschauer abspringen.",
+  "h_audience": "Beste Zeiten, Trends, Hashtags und Themen für deine Region und Nische.",
+  "h_revenue": "Schätzt die 7-Tage-Views und die AdSense-Einnahmen deines Videos.",
+  "h_channel": "Echte Kanalstatistiken + Gesundheits-Score und KI-Empfehlungen.",
+  "h_comments": "Fasst die Stimmung der Kommentare und Wünsche zusammen und schlägt Antworten vor.",
+  "h_ideas": "Schlägt 10 Video-Ideen mit hohem Potenzial für deine Nische vor.",
+  "desc_section": "Vollständige Beschreibung",
+  "desc_intro": "Titel + Nische + Region → Beschreibung mit Abo-CTA, Hashtags und Tags.",
+  "desc_title": "Videotitel",
+  "desc_title_ph": "Dein Videotitel…",
+  "desc_run": "Vollständige Beschreibung generieren",
+  "desc_need": "Gib zuerst einen Titel ein",
+  "desc_ready": "✅ Fertige Beschreibung zum Einfügen",
+  "desc_copy": "Beschreibung kopieren",
+  "desc_tags": "🏷️ SEO-Tags",
+  "desc_copy_tags": "Tags kopieren",
+  "chap_section": "Kapitel",
+  "chap_intro": "Generiere Kapitel mit Zeitstempeln (aus Untertiteln) zum Einfügen in deine Beschreibung.",
+  "chap_run": "Kapitel generieren",
+  "chap_copy": "Kapitel kopieren",
+  "chap_none": "Untertitel für dieses Video nicht verfügbar.",
+  "nav_revenue": "Einnahmen",
+  "rev_intro": "Schätze die 7-Tage-Views und die AdSense-Einnahmen anhand von Nische, Publikum und Abonnenten.",
+  "rev_subs": "Abonnenten deines Kanals",
+  "rev_subs_ph": "z. B. 6m, 14k, 5000",
+  "rev_run": "Views & Einnahmen schätzen",
+  "rev_views": "Views (T+7)",
+  "rev_income": "Gesch. Einnahmen",
+  "rev_factors": "📊 Schlüsselfaktoren",
+  "rev_tips": "💡 Zum Steigern",
+  "rev_disclaimer": "KI-basierte Schätzung — die tatsächlichen Ergebnisse können abweichen.",
+  "nav_sponsor": "Sponsoring",
+  "h_sponsor": "Schätzt deinen Sponsoring-Preis, erstellt einen Marken-Pitch, ein Media-Kit und Affiliate-Ideen.",
+  "sp_intro": "Schätze deinen Sponsoring-Wert und erstelle einen Pitch + Media-Kit, um Deals zu landen.",
+  "sp_subs_ph": "Abonnenten (z. B. 6m, 14k)",
+  "sp_views_ph": "Ø Views/Video (z. B. 50k)",
+  "sp_run": "Mein Sponsoring-Kit erstellen",
+  "sp_rate": "Geschätzter Sponsoring-Preis (pro Video)",
+  "sp_pitch": "✉️ Marken-Pitch-Nachricht",
+  "sp_copy_pitch": "Pitch kopieren",
+  "sp_mediakit": "📋 Media-Kit (Verkaufsargumente)",
+  "sp_brands": "🏢 Passende Marken",
+  "sp_affiliate": "🔗 Affiliate-Ideen",
+  "sp_disclaimer": "KI-Schätzung — verhandle auf Basis deines echten Engagements.",
+  "nav_trends": "Trends",
+  "h_trends": "Erkennt, was gerade in deiner Nische explodiert (echte aktuelle Videos) + KI-Analyse.",
+  "tre_intro": "Was JETZT in deiner Nische angesagt ist: explodierende Videos + aufkommende Trends und Keywords.",
+  "tre_run": "Trends erkennen",
+  "tre_need": "Wähle zuerst eine Nische",
+  "tre_trends": "🔥 Aktuelle Trends",
+  "tre_keywords": "📈 Aufkommende Keywords",
+  "tre_advice": "💡 Wie du sie nutzt",
+  "tre_hot": "🚀 Explodierende Videos (aktuell)",
+  "tre_none": "Keine Trends gefunden. Versuche eine breitere Nische.",
+  "nav_planner": "Planer",
+  "h_planner": "Erstellt einen 7-Tage-Kalender für deine Nische, um regelmäßig zu posten.",
+  "plan_intro": "Generiere einen 7-Tage-Plan: was jeden Tag posten + das beste Zeitfenster.",
+  "plan_freq": "Frequenz (optional)",
+  "plan_run": "Meinen 7-Tage-Plan generieren",
+  "tr_section": "Lokalisierung / Übersetzung",
+  "h_translate": "Übersetzt und passt deinen Titel, Beschreibung und Tags in eine andere Sprache an.",
+  "tr_intro": "Übersetze Titel + Beschreibung + Tags in eine Sprache, um ein globales Publikum zu erreichen.",
+  "tr_run": "Übersetzen",
+  "tr_title": "Übersetzter Titel",
+  "tr_desc": "Übersetzte Beschreibung",
+  "tr_copy": "Übersetzung kopieren",
+  "cp_section": "Community-Beiträge",
+  "h_community": "Generiert Umfragen, Fragen und Teaser für den Community-Tab.",
+  "cp_intro": "Generiere 5 Beiträge (Umfragen, Fragen, Teaser), um dein Publikum zwischen Videos zu binden.",
+  "cp_run": "5 Beiträge generieren",
+  "sc_section": "Vollständiges Skript",
+  "h_script": "Schreibt ein strukturiertes Skript (Hook, Abschnitte, CTA) aus einem Thema.",
+  "sc_intro": "Gib ein Thema an: Die KI schreibt das ganze Skript (Hook, Intro, Abschnitte, CTA, Outro).",
+  "sc_topic_ph": "Videothema…",
+  "sc_dur": "Dauer",
+  "sc_run": "Das Skript schreiben",
+  "sc_need": "Gib zuerst ein Thema ein",
+  "sc_hook": "Hook (erste 5 Sek.)",
+  "sc_copy": "Skript kopieren",
+  "pc_section": "Titel + Thumbnail prüfen",
+  "h_pair": "Prüft, ob Titel und Thumbnail sich ergänzen und auf TV und Handy lesbar sind.",
+  "pc_intro": "Die KI prüft, ob Titel und Thumbnail sich ergänzen (keine Wiederholung) und ihre Lesbarkeit.",
+  "pc_run": "Das Paar prüfen",
+  "pc_complement": "Ergänzend",
+  "pc_issues": "⚠️ Probleme",
+  "pc_tips": "✅ Tipps",
+  "pl_section": "Playlist-Optimierer",
+  "h_playlists": "Gruppiert deine Videos in optimierte Playlists für die Sitzungsdauer.",
+  "pl_intro": "Die KI gruppiert deine Videos in optimierte Playlists (mehr Wiedergabezeit).",
+  "pl_run": "Meine Playlists optimieren",
+  "au_section": "Vollständiges Audit mit 1 Klick",
+  "h_audit": "Führt SEO + Thumbnail + Titel auf einmal aus und liefert einen priorisierten Aktionsplan.",
+  "au_run": "Vollständiges Audit ausführen",
+  "au_global": "Gesamt-Score des Videos",
+  "au_plan": "🎯 Prioritärer Aktionsplan",
+  "ob_title": "Willkommen bei VidSpark AI!",
+  "ob_sub": "24 KI-Tools, um deine Videos zu optimieren. Hier das Wichtigste:",
+  "ob_audit": "ein vollständiges Audit mit 1 Klick",
+  "ob_title2": "Live-CTR-Score für deinen Titel",
+  "ob_thumb": "2 Thumbnails vergleichen",
+  "ob_shorts": "Shorts-Ideen + Clips zum Schneiden",
+  "ob_sponsor": "schätze deine Sponsoring-Einnahmen",
+  "ob_btn": "Los geht's 🚀",
+  "nav_channel": "Kanal",
+  "chan_intro": "Kanal-Dashboard: echte Statistiken + Gesundheits-Score und KI-Empfehlungen.",
+  "chan_run": "Meinen Kanal analysieren",
+  "chan_subs": "Abonnenten",
+  "chan_views": "Views gesamt",
+  "chan_vids": "Videos",
+  "chan_avg": "Ø Views",
+  "chan_eng": "Engagement",
+  "chan_freq": "Häufigkeit",
+  "chan_ai_loading": "KI-Diagnose läuft…",
+  "chan_ai_fail": "KI-Diagnose nicht verfügbar",
+  "chan_health": "Gesundheits-Score",
+  "chan_strengths": "✅ Stärken",
+  "chan_weak": "⚠️ Schwächen",
+  "chan_reco": "💡 Empfehlungen",
+  "nav_comments": "Kommentare",
+  "com_intro": "Die KI liest die Kommentare: Stimmung, Wünsche des Publikums, Video-Ideen und Antwortvorschläge.",
+  "com_run": "Kommentare analysieren",
+  "com_none": "Keine Kommentare zu diesem Video gefunden.",
+  "com_sentiment": "Gesamtstimmung",
+  "com_pos": "Positiv",
+  "com_neu": "Neutral",
+  "com_neg": "Negativ",
+  "com_requests": "🙋 Wünsche des Publikums",
+  "com_ideas": "💡 Ideen fürs nächste Video",
+  "com_replies": "✍️ Antwortvorschläge",
+  "com_copy": "Kopieren",
+  "nav_ideas": "Ideen",
+  "idea_intro": "Wähle Nische, Region und ein optionales Thema: Die KI schlägt 10 Video-Ideen mit hohem Potenzial vor.",
+  "idea_topic_ph": "Thema oder Keyword (optional)…",
+  "idea_run": "10 Ideen generieren",
+  "idea_copy": "Titel kopieren",
+  "kw_opportunity": "Chancen-Score",
+  "kw_difficulty": "Schwierigkeit",
+  "kw_demand": "Nachfrage",
+  "kw_trend": "Trend",
+  "kw_best": "🎯 Keywords zum Anvisieren",
+  "kw_competition": "Konkurrenz",
+  "seo_tab_analyse": "📊 Analyse",
+  "seo_tab_optim": "🎯 Optimierung",
+  "seo_tab_kw": "🔑 Keywords",
+  "seo_tab_rec_kw": "Empfohlene Keywords",
+  "seo_tab_issues": "Probleme",
+  "seo_all_ok": "Alle Kriterien erfüllt!",
+  "example_label": "Beispiel:",
+  "recommendation_label": "EMPFEHLUNG:",
+  "impact_pos_num": "Positiver Effekt +8% geschätzter CTR",
+  "impact_neg_num": "Eine Zahl kann den CTR um 15–40% steigern",
+  "viral_pos_hook": "CTR-Hook am Titelanfang",
+  "viral_pos_num": "Zahl im Titel",
+  "viral_pos_em": "Emotionales Wort vorhanden",
+  "viral_pos_desc": "Beschreibung lang genug",
+  "viral_pos_len": "Optimale Titellänge",
+  "viral_neg_hook": "Kein CTR-Hook — füge am Anfang eine Frage oder Zahl hinzu",
+  "viral_neg_num": "Keine Zahl — Titel mit Zahlen erzielen +40% CTR",
+  "viral_neg_em": "Kein emotionales Wort — füge ein Power-Wort hinzu",
+  "viral_neg_desc_tpl": "Kurze Beschreibung (N Zeichen) — strebe 500+ an",
+  "viral_neg_len_short": "Titel zu kurz",
+  "viral_neg_len_long": "Titel zu lang",
+  "viral_potential_title": "Viral-Potenzial-Score",
+  "btn_viral_ai": "✨ Virale KI-Analyse"
+ },
+ "it": {
+  "nav_abtest": "Test A/B",
+  "abtest_intro": "Confronta due titoli: l'IA prevede quale ottiene più clic.",
+  "abtest_a": "Titolo A",
+  "abtest_b": "Titolo B",
+  "abtest_run": "⚔️ Confronta i titoli",
+  "abtest_winner": "Vincitore",
+  "abtest_verdict": "Verdetto IA",
+  "abtest_improved": "💡 Titolo suggerito (ancora migliore)",
+  "abtest_ctr": "CTR stim.",
+  "abtest_confidence": "Affidabilità",
+  "abtest_use": "Usa questo titolo",
+  "thumbab_title": "Miniatura A/B",
+  "thumbab_intro": "Confronta 2 miniature: l'IA Vision dice quale ottiene più CTR e perché.",
+  "thumbab_a": "Miniatura A",
+  "thumbab_b": "Miniatura B",
+  "thumbab_run": "📸 Confronta le miniature",
+  "thumbab_tips": "💡 Per migliorare la vincitrice",
+  "thumbab_need2": "Scegli prima 2 immagini",
+  "thumbab_prompt_label": "🎨 Prompt dettagliato per creare la miniatura migliorata:",
+  "thumbab_prompt_copy": "Copia prompt",
+  "thumbab_prompt_hint": "Incolla questo prompt in un'IA per immagini (Midjourney, DALL·E, ChatGPT, Leonardo…) per generare la tua miniatura.",
+  "nav_shorts": "Shorts",
+  "shorts_intro": "Trasforma questo video in idee per Shorts virali (titolo, hook, copione, hashtag).",
+  "shorts_generate": "🎬 Genera Shorts",
+  "shorts_hook": "Hook (primi 3 sec)",
+  "shorts_script": "Copione",
+  "shorts_duration": "Durata",
+  "shorts_copy": "Copia copione",
+  "shorts_summary": "Riassunto",
+  "shorts_clips": "✂️ Clip da tagliare",
+  "shorts_estimated": "stimato",
+  "shorts_real": "basato sui sottotitoli",
+  "live_stats_title": "Statistiche reali di YouTube",
+  "live_stats_btn": "Carica dati reali (visual./h, tag…)",
+  "audit_title": "Audit del canale",
+  "audit_btn": "Esamina questo canale",
+  "thumb_ai_title": "Analisi miniatura con IA",
+  "thumb_ai_btn": "Analizza la mia miniatura (IA)",
+  "thumb_ideas_title": "Genera concept di miniatura",
+  "thumb_ideas_intro": "3 concept (testo, colori, layout, volto) basati sul tuo titolo, pronti da realizzare.",
+  "thumb_ideas_btn": "Genera 3 concept",
+  "thumb_ideas_loading": "Generazione dei concept…",
+  "thumb_ideas_concept": "Concept",
+  "thumb_ideas_emotion": "Emozione",
+  "thumb_ideas_text": "Testo",
+  "thumb_ideas_focal": "Punto focale",
+  "thumb_ideas_face": "Volto",
+  "thumb_ideas_bg": "Sfondo",
+  "thumb_ideas_why": "Perché",
+  "thumb_ideas_copy": "Copia il brief",
+  "thumb_ideas_locked_sub": "Passa a Pro per sbloccare tutti e 3 i concept",
+  "thumb_ideas_niche_ph": "Nicchia (facoltativo, es. cucina, gaming)",
+  "thumb_gen_btn": "🖼️ Genera sfondo",
+  "thumb_gen_loading": "Generazione dello sfondo…",
+  "thumb_gen_overlay_note": "Sfondo generato dall'IA + il tuo testo sovrapposto (l'IA per immagini non scrive bene il testo, soprattutto in arabo).",
+  "thumb_gen_text_ph": "Testo del titolo sull'immagine…",
+  "thumb_gen_download": "Scarica immagine",
+  "thumb_gen_downloaded": "Immagine scaricata",
+  "thumb_gen_drag_note": "2 righe: scrivi il testo, trascina ogni riga, scegli colore/dimensione/font, poi scarica.",
+  "thumb_gen_line": "Riga",
+  "thumb_gen_color": "Colore",
+  "thumb_gen_font": "Font",
+  "thumb_gen_size": "Dimensione",
+  "real_comp_title": "Concorrenti reali",
+  "real_comp_btn": "Vedi i video reali che spaccano",
+  "keywords_title": "Ricerca parole chiave",
+  "keywords_ph": "es. ricetta di pollo",
+  "title_types": "Tipi di titolo",
+  "result_label": "Risultato",
+  "hook_title": "Analizzatore di hook",
+  "hook_intro": "Incolla il copione dell'intro (primi 15-30 sec): l'IA prevede la retention e dove gli spettatori abbandonano.",
+  "hook_ph": "Incolla qui il testo della tua intro…",
+  "hook_run": "Analizza la retention",
+  "hook_need": "Incolla almeno la tua intro",
+  "hook_retention": "Retention stim.",
+  "hook_score_label": "Punteggio hook",
+  "hook_drops": "⚠️ Punti di abbandono",
+  "hook_fixes": "✅ Correzioni",
+  "hook_rewrite": "💡 Intro riscritta (migliore)",
+  "nav_region": "Regione",
+  "audience_intro": "Scegli il tuo target (mondiale, regione o paese) e la lingua: l'IA dà orari migliori, trend, hashtag e argomenti.",
+  "audience_target": "Target (paese / regione / mondiale)",
+  "audience_target_ph": "es. Algeria, MENA, Francia, Mondiale…",
+  "audience_worldwide": "Mondiale",
+  "audience_niche": "Nicchia / stile del canale",
+  "audience_niche_ph": "es. Gaming, Cucina, Tech, Calcio…",
+  "audience_lang": "Lingua dei contenuti",
+  "audience_run": "Ottimizza per questo pubblico",
+  "audience_times": "📅 Orari migliori per pubblicare",
+  "audience_trends": "📈 Trend e formati",
+  "audience_hashtags": "🏷️ Hashtag localizzati",
+  "audience_topics": "💡 Idee di argomenti",
+  "audience_tips": "🎯 Consigli",
+  "titles_section": "Titoli IA",
+  "td_title": "Dottore dei titoli",
+  "td_run": "Diagnosi IA approfondita",
+  "td_need": "Scrivi prima un titolo",
+  "td_len": "Lunghezza",
+  "td_num": "Numero",
+  "td_emotion": "Parola d'impatto",
+  "td_hook": "Hook",
+  "td_punct": "Punteggiatura",
+  "td_ai_score": "Punteggio CTR",
+  "td_missing": "⚠️ Cosa manca",
+  "td_improved": "💡 Titolo migliorato",
+  "td_tips": "✅ Consigli",
+  "tdh_len": "Ideale 40-70 caratteri: abbastanza descrittivo senza essere tagliato da YouTube.",
+  "tdh_num": "Un numero rende il titolo concreto (es. 5 consigli, 2024) e attira l'occhio.",
+  "tdh_emotion": "Una parola d'impatto (incredibile, segreto, gratis, scioccante…) spinge al clic.",
+  "tdh_hook": "Un hook all'inizio (Come, Perché, una domanda…) crea curiosità.",
+  "tdh_punct": "Un ? o ! aggiunge emozione e fa venire voglia di cliccare.",
+  "h_titledoctor": "Valuta il tuo titolo in tempo reale e suggerisce una versione ottimizzata per più clic.",
+  "h_titles": "Genera 5 varianti di titolo ottimizzate (SEO, CTR, virale, Shorts, trend).",
+  "h_desc": "Crea una descrizione completa con CTA di iscrizione, hashtag e 15 tag SEO.",
+  "h_abtest": "Confronta 2 titoli: l'IA prevede quale ottiene più clic.",
+  "h_thumbab": "Confronta 2 miniature: l'IA Vision dice quale ottiene più clic e perché.",
+  "h_shorts": "Trasforma il video in 3 idee per Shorts con le clip esatte da tagliare.",
+  "h_hook": "Analizza la tua intro e prevede la retention + dove gli spettatori abbandonano.",
+  "h_audience": "Orari migliori, trend, hashtag e argomenti per la tua regione e nicchia.",
+  "h_revenue": "Stima le visualizzazioni a 7 giorni e i ricavi AdSense del tuo video.",
+  "h_channel": "Statistiche reali del canale + punteggio di salute e raccomandazioni IA.",
+  "h_comments": "Riassume il sentiment dei commenti, le richieste e suggerisce risposte.",
+  "h_ideas": "Suggerisce 10 idee video ad alto potenziale per la tua nicchia.",
+  "desc_section": "Descrizione completa",
+  "desc_intro": "Titolo + nicchia + regione → descrizione con CTA di iscrizione, hashtag e tag.",
+  "desc_title": "Titolo del video",
+  "desc_title_ph": "Il titolo del tuo video…",
+  "desc_run": "Genera descrizione completa",
+  "desc_need": "Inserisci prima un titolo",
+  "desc_ready": "✅ Descrizione pronta da incollare",
+  "desc_copy": "Copia descrizione",
+  "desc_tags": "🏷️ Tag SEO",
+  "desc_copy_tags": "Copia tag",
+  "chap_section": "Capitoli",
+  "chap_intro": "Genera capitoli con timestamp (dai sottotitoli) da incollare nella descrizione.",
+  "chap_run": "Genera capitoli",
+  "chap_copy": "Copia capitoli",
+  "chap_none": "Sottotitoli non disponibili per questo video.",
+  "nav_revenue": "Ricavi",
+  "rev_intro": "Stima le visualizzazioni a 7 giorni e i ricavi AdSense in base a nicchia, pubblico e iscritti.",
+  "rev_subs": "Iscritti del tuo canale",
+  "rev_subs_ph": "es. 6m, 14k, 5000",
+  "rev_run": "Stima visualizzazioni e ricavi",
+  "rev_views": "Visualizzazioni (G+7)",
+  "rev_income": "Ricavi stim.",
+  "rev_factors": "📊 Fattori chiave",
+  "rev_tips": "💡 Per aumentare",
+  "rev_disclaimer": "Stima basata su IA — i risultati reali possono variare.",
+  "nav_sponsor": "Sponsor",
+  "h_sponsor": "Stima la tua tariffa sponsor, genera un pitch per i brand, un media kit e idee di affiliazione.",
+  "sp_intro": "Stima il tuo valore sponsor e genera un pitch + media kit per chiudere accordi.",
+  "sp_subs_ph": "Iscritti (es. 6m, 14k)",
+  "sp_views_ph": "Visual. medie/video (es. 50k)",
+  "sp_run": "Genera il mio kit sponsor",
+  "sp_rate": "Tariffa sponsor stimata (per video)",
+  "sp_pitch": "✉️ Messaggio pitch per i brand",
+  "sp_copy_pitch": "Copia pitch",
+  "sp_mediakit": "📋 Media kit (punti di forza)",
+  "sp_brands": "🏢 Brand adatti",
+  "sp_affiliate": "🔗 Idee di affiliazione",
+  "sp_disclaimer": "Stima IA — negozia in base al tuo engagement reale.",
+  "nav_trends": "Trend",
+  "h_trends": "Rileva cosa sta esplodendo ora nella tua nicchia (video recenti reali) + analisi IA.",
+  "tre_intro": "Cosa spopola ORA nella tua nicchia: video che esplodono + trend e parole chiave in crescita.",
+  "tre_run": "Rileva i trend",
+  "tre_need": "Scegli prima una nicchia",
+  "tre_trends": "🔥 Trend attuali",
+  "tre_keywords": "📈 Parole chiave in crescita",
+  "tre_advice": "💡 Come sfruttarli",
+  "tre_hot": "🚀 Video che esplodono (recenti)",
+  "tre_none": "Nessun trend trovato. Prova una nicchia più ampia.",
+  "nav_planner": "Planner",
+  "h_planner": "Crea un calendario di 7 giorni su misura per la tua nicchia per pubblicare con costanza.",
+  "plan_intro": "Genera un piano di 7 giorni: cosa pubblicare ogni giorno + la fascia oraria migliore.",
+  "plan_freq": "Cadenza (facoltativo)",
+  "plan_run": "Genera il mio piano di 7 giorni",
+  "tr_section": "Localizzazione / Traduzione",
+  "h_translate": "Traduce e adatta il tuo titolo, descrizione e tag in un'altra lingua.",
+  "tr_intro": "Traduci titolo + descrizione + tag in una lingua per raggiungere un pubblico globale.",
+  "tr_run": "Traduci",
+  "tr_title": "Titolo tradotto",
+  "tr_desc": "Descrizione tradotta",
+  "tr_copy": "Copia traduzione",
+  "cp_section": "Post della community",
+  "h_community": "Genera sondaggi, domande e teaser per la scheda Community.",
+  "cp_intro": "Genera 5 post (sondaggi, domande, teaser) per coinvolgere il pubblico tra un video e l'altro.",
+  "cp_run": "Genera 5 post",
+  "sc_section": "Copione completo",
+  "h_script": "Scrive un copione strutturato (hook, sezioni, CTA) a partire da un argomento.",
+  "sc_intro": "Dai un argomento: l'IA scrive il copione completo (hook, intro, sezioni, CTA, chiusura).",
+  "sc_topic_ph": "Argomento del video…",
+  "sc_dur": "Durata",
+  "sc_run": "Scrivi il copione",
+  "sc_need": "Inserisci prima un argomento",
+  "sc_hook": "Hook (primi 5 sec)",
+  "sc_copy": "Copia copione",
+  "pc_section": "Controllo titolo + miniatura",
+  "h_pair": "Verifica che titolo e miniatura si completino e siano leggibili su TV e mobile.",
+  "pc_intro": "L'IA verifica che titolo e miniatura si completino (senza ripetersi) e la loro leggibilità.",
+  "pc_run": "Controlla la coppia",
+  "pc_complement": "Complementari",
+  "pc_issues": "⚠️ Problemi",
+  "pc_tips": "✅ Consigli",
+  "pl_section": "Ottimizzatore di playlist",
+  "h_playlists": "Raggruppa i tuoi video in playlist ottimizzate per il tempo di sessione.",
+  "pl_intro": "L'IA raggruppa i tuoi video in playlist ottimizzate (più tempo di visione).",
+  "pl_run": "Ottimizza le mie playlist",
+  "au_section": "Audit completo in 1 clic",
+  "h_audit": "Esegue SEO + Miniatura + Titolo in una volta e dà un piano d'azione prioritario.",
+  "au_run": "Esegui l'audit completo",
+  "au_global": "Punteggio globale del video",
+  "au_plan": "🎯 Piano d'azione prioritario",
+  "ob_title": "Benvenuto in VidSpark AI!",
+  "ob_sub": "24 strumenti IA per ottimizzare i tuoi video. Ecco l'essenziale:",
+  "ob_audit": "un audit completo in 1 clic",
+  "ob_title2": "punteggio CTR in tempo reale per il tuo titolo",
+  "ob_thumb": "confronta 2 miniature",
+  "ob_shorts": "idee per Shorts + clip da tagliare",
+  "ob_sponsor": "stima i tuoi ricavi da sponsor",
+  "ob_btn": "Iniziamo 🚀",
+  "nav_channel": "Canale",
+  "chan_intro": "Dashboard del canale: statistiche reali + punteggio di salute e raccomandazioni IA.",
+  "chan_run": "Analizza il mio canale",
+  "chan_subs": "Iscritti",
+  "chan_views": "Visualizzazioni totali",
+  "chan_vids": "Video",
+  "chan_avg": "Visual. medie",
+  "chan_eng": "Engagement",
+  "chan_freq": "Frequenza",
+  "chan_ai_loading": "Diagnosi IA in corso…",
+  "chan_ai_fail": "Diagnosi IA non disponibile",
+  "chan_health": "Punteggio di salute",
+  "chan_strengths": "✅ Punti di forza",
+  "chan_weak": "⚠️ Punti deboli",
+  "chan_reco": "💡 Raccomandazioni",
+  "nav_comments": "Commenti",
+  "com_intro": "L'IA legge i commenti: sentiment, richieste del pubblico, idee video e risposte suggerite.",
+  "com_run": "Analizza i commenti",
+  "com_none": "Nessun commento trovato su questo video.",
+  "com_sentiment": "Sentiment generale",
+  "com_pos": "Positivo",
+  "com_neu": "Neutro",
+  "com_neg": "Negativo",
+  "com_requests": "🙋 Richieste del pubblico",
+  "com_ideas": "💡 Idee per il prossimo video",
+  "com_replies": "✍️ Risposte suggerite",
+  "com_copy": "Copia",
+  "nav_ideas": "Idee",
+  "idea_intro": "Scegli nicchia, regione e un argomento facoltativo: l'IA suggerisce 10 idee video ad alto potenziale.",
+  "idea_topic_ph": "Argomento o parola chiave (facoltativo)…",
+  "idea_run": "Genera 10 idee",
+  "idea_copy": "Copia titolo",
+  "kw_opportunity": "Punteggio di opportunità",
+  "kw_difficulty": "Difficoltà",
+  "kw_demand": "Domanda",
+  "kw_trend": "Trend",
+  "kw_best": "🎯 Parole chiave da puntare",
+  "kw_competition": "Concorrenza",
+  "seo_tab_analyse": "📊 Analisi",
+  "seo_tab_optim": "🎯 Ottimizzazione",
+  "seo_tab_kw": "🔑 Parole chiave",
+  "seo_tab_rec_kw": "Parole chiave consigliate",
+  "seo_tab_issues": "problemi",
+  "seo_all_ok": "Tutti i criteri soddisfatti!",
+  "example_label": "Esempio:",
+  "recommendation_label": "RACCOMANDAZIONE:",
+  "impact_pos_num": "Impatto positivo +8% CTR stimato",
+  "impact_neg_num": "Aggiungere un numero può aumentare il CTR del 15–40%",
+  "viral_pos_hook": "Hook CTR all'inizio del titolo",
+  "viral_pos_num": "Numero nel titolo",
+  "viral_pos_em": "Parola emozionale presente",
+  "viral_pos_desc": "Descrizione abbastanza lunga",
+  "viral_pos_len": "Lunghezza del titolo ottimale",
+  "viral_neg_hook": "Nessun hook CTR — aggiungi una domanda o un numero all'inizio",
+  "viral_neg_num": "Nessun numero — i titoli con numeri ottengono +40% di CTR",
+  "viral_neg_em": "Nessuna parola emozionale — aggiungi una parola d'impatto",
+  "viral_neg_desc_tpl": "Descrizione corta (N caratteri) — punta a 500+",
+  "viral_neg_len_short": "Titolo troppo corto",
+  "viral_neg_len_long": "Titolo troppo lungo",
+  "viral_potential_title": "Punteggio di potenziale virale",
+  "btn_viral_ai": "✨ Analisi Virale IA"
+ },
+ "ru": {
+  "nav_abtest": "A/B-тест",
+  "abtest_intro": "Сравните два заголовка: ИИ предскажет, какой получит больше кликов.",
+  "abtest_a": "Заголовок A",
+  "abtest_b": "Заголовок B",
+  "abtest_run": "⚔️ Сравнить заголовки",
+  "abtest_winner": "Победитель",
+  "abtest_verdict": "Вердикт ИИ",
+  "abtest_improved": "💡 Предложенный заголовок (ещё лучше)",
+  "abtest_ctr": "Прим. CTR",
+  "abtest_confidence": "Уверенность",
+  "abtest_use": "Использовать этот заголовок",
+  "thumbab_title": "Превью A/B",
+  "thumbab_intro": "Сравните 2 превью: Vision ИИ скажет, какое даёт больше CTR и почему.",
+  "thumbab_a": "Превью A",
+  "thumbab_b": "Превью B",
+  "thumbab_run": "📸 Сравнить превью",
+  "thumbab_tips": "💡 Чтобы улучшить победителя",
+  "thumbab_need2": "Сначала выберите 2 изображения",
+  "thumbab_prompt_label": "🎨 Подробный промпт для создания улучшенного превью:",
+  "thumbab_prompt_copy": "Копировать промпт",
+  "thumbab_prompt_hint": "Вставьте этот промпт в ИИ для изображений (Midjourney, DALL·E, ChatGPT, Leonardo…), чтобы создать превью.",
+  "nav_shorts": "Shorts",
+  "shorts_intro": "Превратите это видео в идеи вирусных Shorts (заголовок, хук, сценарий, хэштеги).",
+  "shorts_generate": "🎬 Создать Shorts",
+  "shorts_hook": "Хук (первые 3 сек)",
+  "shorts_script": "Сценарий",
+  "shorts_duration": "Длительность",
+  "shorts_copy": "Копировать сценарий",
+  "shorts_summary": "Кратко",
+  "shorts_clips": "✂️ Клипы для нарезки",
+  "shorts_estimated": "примерно",
+  "shorts_real": "по субтитрам",
+  "live_stats_title": "Реальная статистика YouTube",
+  "live_stats_btn": "Загрузить реальные данные (просм./ч, теги…)",
+  "audit_title": "Аудит канала",
+  "audit_btn": "Проверить этот канал",
+  "thumb_ai_title": "ИИ-анализ превью",
+  "thumb_ai_btn": "Анализировать моё превью (ИИ)",
+  "thumb_ideas_title": "Создать концепты превью",
+  "thumb_ideas_intro": "3 концепта (текст, цвета, макет, лицо) на основе вашего заголовка, готовые к воплощению.",
+  "thumb_ideas_btn": "Создать 3 концепта",
+  "thumb_ideas_loading": "Создание концептов…",
+  "thumb_ideas_concept": "Концепт",
+  "thumb_ideas_emotion": "Эмоция",
+  "thumb_ideas_text": "Текст",
+  "thumb_ideas_focal": "Фокус",
+  "thumb_ideas_face": "Лицо",
+  "thumb_ideas_bg": "Фон",
+  "thumb_ideas_why": "Почему",
+  "thumb_ideas_copy": "Копировать бриф",
+  "thumb_ideas_locked_sub": "Перейдите на Pro, чтобы открыть все 3 концепта",
+  "thumb_ideas_niche_ph": "Ниша (необязательно, напр. кулинария, игры)",
+  "thumb_gen_btn": "🖼️ Создать фон",
+  "thumb_gen_loading": "Создание фона…",
+  "thumb_gen_overlay_note": "Фон, созданный ИИ, + ваш наложенный текст (ИИ для изображений плохо пишет текст, особенно на арабском).",
+  "thumb_gen_text_ph": "Текст заголовка на изображении…",
+  "thumb_gen_download": "Скачать изображение",
+  "thumb_gen_downloaded": "Изображение скачано",
+  "thumb_gen_drag_note": "2 строки: введите текст, перетащите каждую строку, выберите цвет/размер/шрифт, затем скачайте.",
+  "thumb_gen_line": "Строка",
+  "thumb_gen_color": "Цвет",
+  "thumb_gen_font": "Шрифт",
+  "thumb_gen_size": "Размер",
+  "real_comp_title": "Реальные конкуренты",
+  "real_comp_btn": "Смотреть реальные видео в топе",
+  "keywords_title": "Поиск ключевых слов",
+  "keywords_ph": "напр. рецепт курицы",
+  "title_types": "Типы заголовков",
+  "result_label": "Результат",
+  "hook_title": "Анализатор хука",
+  "hook_intro": "Вставьте сценарий интро (первые 15-30 сек): ИИ предскажет удержание и где зрители уходят.",
+  "hook_ph": "Вставьте сюда текст интро…",
+  "hook_run": "Анализировать удержание",
+  "hook_need": "Вставьте хотя бы интро",
+  "hook_retention": "Прим. удержание",
+  "hook_score_label": "Оценка хука",
+  "hook_drops": "⚠️ Точки оттока",
+  "hook_fixes": "✅ Исправления",
+  "hook_rewrite": "💡 Переписанное интро (лучше)",
+  "nav_region": "Регион",
+  "audience_intro": "Выберите цель (весь мир, регион или страна) и язык: ИИ подскажет лучшее время, тренды, хэштеги и темы.",
+  "audience_target": "Цель (страна / регион / весь мир)",
+  "audience_target_ph": "напр. Алжир, MENA, Франция, Весь мир…",
+  "audience_worldwide": "Весь мир",
+  "audience_niche": "Ниша / стиль канала",
+  "audience_niche_ph": "напр. Игры, Кулинария, Тех, Футбол…",
+  "audience_lang": "Язык контента",
+  "audience_run": "Оптимизировать под эту аудиторию",
+  "audience_times": "📅 Лучшее время для публикации",
+  "audience_trends": "📈 Тренды и форматы",
+  "audience_hashtags": "🏷️ Локальные хэштеги",
+  "audience_topics": "💡 Идеи тем",
+  "audience_tips": "🎯 Советы",
+  "titles_section": "ИИ-заголовки",
+  "td_title": "Доктор заголовков",
+  "td_run": "Глубокая ИИ-диагностика",
+  "td_need": "Сначала введите заголовок",
+  "td_len": "Длина",
+  "td_num": "Число",
+  "td_emotion": "Сильное слово",
+  "td_hook": "Хук",
+  "td_punct": "Пунктуация",
+  "td_ai_score": "Оценка CTR",
+  "td_missing": "⚠️ Чего не хватает",
+  "td_improved": "💡 Улучшенный заголовок",
+  "td_tips": "✅ Советы",
+  "tdh_len": "Идеально 40-70 символов: достаточно описательно, без обрезки YouTube.",
+  "tdh_num": "Число делает заголовок конкретным (напр. 5 советов, 2024) и привлекает взгляд.",
+  "tdh_emotion": "Сильное слово (невероятный, секрет, бесплатно, шокирующий…) вызывает клик.",
+  "tdh_hook": "Хук в начале (Как, Почему, вопрос…) создаёт любопытство.",
+  "tdh_punct": "Знак ? или ! добавляет эмоций и желание кликнуть.",
+  "h_titledoctor": "Оценивает ваш заголовок в реальном времени и предлагает оптимизированную версию для большего числа кликов.",
+  "h_titles": "Генерирует 5 оптимизированных вариантов заголовка (SEO, CTR, вирусный, Shorts, трендовый).",
+  "h_desc": "Создаёт полное описание с призывом подписаться, хэштегами и 15 SEO-тегами.",
+  "h_abtest": "Сравнивает 2 заголовка: ИИ предсказывает, какой получит больше кликов.",
+  "h_thumbab": "Сравнивает 2 превью: Vision ИИ скажет, какое даёт больше кликов и почему.",
+  "h_shorts": "Превращает видео в 3 идеи Shorts с точными клипами для нарезки.",
+  "h_hook": "Анализирует ваше интро и предсказывает удержание + где зрители уходят.",
+  "h_audience": "Лучшее время, тренды, хэштеги и темы для вашего региона и ниши.",
+  "h_revenue": "Оценивает просмотры за 7 дней и доход AdSense вашего видео.",
+  "h_channel": "Реальная статистика канала + оценка здоровья и ИИ-рекомендации.",
+  "h_comments": "Резюмирует тональность комментариев, запросы и предлагает ответы.",
+  "h_ideas": "Предлагает 10 перспективных идей видео под вашу нишу.",
+  "desc_section": "Полное описание",
+  "desc_intro": "Заголовок + ниша + регион → описание с призывом подписаться, хэштегами и тегами.",
+  "desc_title": "Заголовок видео",
+  "desc_title_ph": "Заголовок вашего видео…",
+  "desc_run": "Создать полное описание",
+  "desc_need": "Сначала введите заголовок",
+  "desc_ready": "✅ Описание готово к вставке",
+  "desc_copy": "Копировать описание",
+  "desc_tags": "🏷️ SEO-теги",
+  "desc_copy_tags": "Копировать теги",
+  "chap_section": "Главы",
+  "chap_intro": "Создайте главы с таймкодами (из субтитров) для вставки в описание.",
+  "chap_run": "Создать главы",
+  "chap_copy": "Копировать главы",
+  "chap_none": "Субтитры для этого видео недоступны.",
+  "nav_revenue": "Доход",
+  "rev_intro": "Оцените просмотры за 7 дней и доход AdSense на основе ниши, аудитории и подписчиков.",
+  "rev_subs": "Подписчики вашего канала",
+  "rev_subs_ph": "напр. 6m, 14k, 5000",
+  "rev_run": "Оценить просмотры и доход",
+  "rev_views": "Просмотры (Д+7)",
+  "rev_income": "Прим. доход",
+  "rev_factors": "📊 Ключевые факторы",
+  "rev_tips": "💡 Чтобы увеличить",
+  "rev_disclaimer": "Оценка на основе ИИ — реальные результаты могут отличаться.",
+  "nav_sponsor": "Спонсор",
+  "h_sponsor": "Оценивает вашу ставку за спонсорство, создаёт питч для брендов, медиакит и идеи для партнёрки.",
+  "sp_intro": "Оцените свою спонсорскую ценность и создайте питч + медиакит, чтобы заключать сделки.",
+  "sp_subs_ph": "Подписчики (напр. 6m, 14k)",
+  "sp_views_ph": "Ср. просмотры/видео (напр. 50k)",
+  "sp_run": "Создать мой спонсорский кит",
+  "sp_rate": "Оценочная ставка за спонсорство (за видео)",
+  "sp_pitch": "✉️ Питч-сообщение для брендов",
+  "sp_copy_pitch": "Копировать питч",
+  "sp_mediakit": "📋 Медиакит (преимущества)",
+  "sp_brands": "🏢 Подходящие бренды",
+  "sp_affiliate": "🔗 Идеи для партнёрки",
+  "sp_disclaimer": "Оценка ИИ — договаривайтесь исходя из реальной вовлечённости.",
+  "nav_trends": "Тренды",
+  "h_trends": "Определяет, что взрывается прямо сейчас в вашей нише (реальные свежие видео) + ИИ-анализ.",
+  "tre_intro": "Что в тренде СЕЙЧАС в вашей нише: взрывные видео + растущие тренды и ключевые слова.",
+  "tre_run": "Определить тренды",
+  "tre_need": "Сначала выберите нишу",
+  "tre_trends": "🔥 Текущие тренды",
+  "tre_keywords": "📈 Растущие ключевые слова",
+  "tre_advice": "💡 Как их использовать",
+  "tre_hot": "🚀 Взрывные видео (свежие)",
+  "tre_none": "Тренды не найдены. Попробуйте более широкую нишу.",
+  "nav_planner": "Планировщик",
+  "h_planner": "Создаёт 7-дневный календарь под вашу нишу для регулярных публикаций.",
+  "plan_intro": "Создайте план на 7 дней: что публиковать каждый день + лучший временной слот.",
+  "plan_freq": "Частота (необязательно)",
+  "plan_run": "Создать мой план на 7 дней",
+  "tr_section": "Локализация / Перевод",
+  "h_translate": "Переводит и адаптирует ваш заголовок, описание и теги на другой язык.",
+  "tr_intro": "Переведите заголовок + описание + теги на язык, чтобы охватить мировую аудиторию.",
+  "tr_run": "Перевести",
+  "tr_title": "Переведённый заголовок",
+  "tr_desc": "Переведённое описание",
+  "tr_copy": "Копировать перевод",
+  "cp_section": "Посты сообщества",
+  "h_community": "Генерирует опросы, вопросы и тизеры для вкладки Сообщество.",
+  "cp_intro": "Создайте 5 постов (опросы, вопросы, тизеры), чтобы вовлекать аудиторию между видео.",
+  "cp_run": "Создать 5 постов",
+  "sc_section": "Полный сценарий",
+  "h_script": "Пишет структурированный сценарий (хук, разделы, призыв) по теме.",
+  "sc_intro": "Дайте тему: ИИ напишет полный сценарий (хук, интро, разделы, призыв, концовка).",
+  "sc_topic_ph": "Тема видео…",
+  "sc_dur": "Длительность",
+  "sc_run": "Написать сценарий",
+  "sc_need": "Сначала введите тему",
+  "sc_hook": "Хук (первые 5 сек)",
+  "sc_copy": "Копировать сценарий",
+  "pc_section": "Проверка заголовок + превью",
+  "h_pair": "Проверяет, что заголовок и превью дополняют друг друга и читаемы на ТВ и мобильном.",
+  "pc_intro": "ИИ проверяет, что заголовок и превью дополняют друг друга (без повтора) и их читаемость.",
+  "pc_run": "Проверить пару",
+  "pc_complement": "Дополняют",
+  "pc_issues": "⚠️ Проблемы",
+  "pc_tips": "✅ Советы",
+  "pl_section": "Оптимизатор плейлистов",
+  "h_playlists": "Группирует ваши видео в оптимизированные плейлисты для времени сессии.",
+  "pl_intro": "ИИ группирует ваши видео в оптимизированные плейлисты (больше времени просмотра).",
+  "pl_run": "Оптимизировать мои плейлисты",
+  "au_section": "Полный аудит в 1 клик",
+  "h_audit": "Запускает SEO + Превью + Заголовок сразу и даёт приоритетный план действий.",
+  "au_run": "Запустить полный аудит",
+  "au_global": "Общая оценка видео",
+  "au_plan": "🎯 Приоритетный план действий",
+  "ob_title": "Добро пожаловать в VidSpark AI!",
+  "ob_sub": "24 ИИ-инструмента для оптимизации видео. Вот главное:",
+  "ob_audit": "полный аудит в 1 клик",
+  "ob_title2": "оценка CTR заголовка в реальном времени",
+  "ob_thumb": "сравнить 2 превью",
+  "ob_shorts": "идеи Shorts + клипы для нарезки",
+  "ob_sponsor": "оцените доход от спонсорства",
+  "ob_btn": "Поехали 🚀",
+  "nav_channel": "Канал",
+  "chan_intro": "Дашборд канала: реальная статистика + оценка здоровья и ИИ-рекомендации.",
+  "chan_run": "Анализировать мой канал",
+  "chan_subs": "Подписчики",
+  "chan_views": "Всего просмотров",
+  "chan_vids": "Видео",
+  "chan_avg": "Ср. просмотры",
+  "chan_eng": "Вовлечённость",
+  "chan_freq": "Частота",
+  "chan_ai_loading": "ИИ-диагностика выполняется…",
+  "chan_ai_fail": "ИИ-диагностика недоступна",
+  "chan_health": "Оценка здоровья",
+  "chan_strengths": "✅ Сильные стороны",
+  "chan_weak": "⚠️ Слабые стороны",
+  "chan_reco": "💡 Рекомендации",
+  "nav_comments": "Комментарии",
+  "com_intro": "ИИ читает комментарии: тональность, запросы аудитории, идеи видео и предлагаемые ответы.",
+  "com_run": "Анализировать комментарии",
+  "com_none": "Комментариев к этому видео не найдено.",
+  "com_sentiment": "Общая тональность",
+  "com_pos": "Позитивная",
+  "com_neu": "Нейтральная",
+  "com_neg": "Негативная",
+  "com_requests": "🙋 Запросы аудитории",
+  "com_ideas": "💡 Идеи для следующего видео",
+  "com_replies": "✍️ Предлагаемые ответы",
+  "com_copy": "Копировать",
+  "nav_ideas": "Идеи",
+  "idea_intro": "Выберите нишу, регион и необязательную тему: ИИ предложит 10 перспективных идей видео.",
+  "idea_topic_ph": "Тема или ключевое слово (необязательно)…",
+  "idea_run": "Создать 10 идей",
+  "idea_copy": "Копировать заголовок",
+  "kw_opportunity": "Оценка возможности",
+  "kw_difficulty": "Сложность",
+  "kw_demand": "Спрос",
+  "kw_trend": "Тренд",
+  "kw_best": "🎯 Целевые ключевые слова",
+  "kw_competition": "Конкуренция",
+  "seo_tab_analyse": "📊 Анализ",
+  "seo_tab_optim": "🎯 Оптимизация",
+  "seo_tab_kw": "🔑 Ключевые слова",
+  "seo_tab_rec_kw": "Рекомендуемые ключевые слова",
+  "seo_tab_issues": "проблемы",
+  "seo_all_ok": "Все критерии выполнены!",
+  "example_label": "Пример:",
+  "recommendation_label": "РЕКОМЕНДАЦИЯ:",
+  "impact_pos_num": "Положительный эффект +8% к ожидаемому CTR",
+  "impact_neg_num": "Добавление числа может повысить CTR на 15–40%",
+  "viral_pos_hook": "CTR-хук в начале заголовка",
+  "viral_pos_num": "Число в заголовке",
+  "viral_pos_em": "Есть эмоциональное слово",
+  "viral_pos_desc": "Описание достаточно длинное",
+  "viral_pos_len": "Оптимальная длина заголовка",
+  "viral_neg_hook": "Нет CTR-хука — добавьте вопрос или число в начало",
+  "viral_neg_num": "Нет числа — заголовки с числами дают +40% CTR",
+  "viral_neg_em": "Нет эмоционального слова — добавьте сильное слово",
+  "viral_neg_desc_tpl": "Короткое описание (N символов) — стремитесь к 500+",
+  "viral_neg_len_short": "Заголовок слишком короткий",
+  "viral_neg_len_long": "Заголовок слишком длинный",
+  "viral_potential_title": "Оценка вирусного потенциала",
+  "btn_viral_ai": "✨ Вирусный ИИ-анализ"
+ },
+ "ko": {
+  "nav_abtest": "A/B 테스트",
+  "abtest_intro": "두 제목을 비교하세요: AI가 어느 쪽이 클릭률이 높을지 예측합니다.",
+  "abtest_a": "제목 A",
+  "abtest_b": "제목 B",
+  "abtest_run": "⚔️ 제목 비교",
+  "abtest_winner": "승자",
+  "abtest_verdict": "AI 판정",
+  "abtest_improved": "💡 추천 제목 (더 나음)",
+  "abtest_ctr": "예상 CTR",
+  "abtest_confidence": "신뢰도",
+  "abtest_use": "이 제목 사용",
+  "thumbab_title": "썸네일 A/B",
+  "thumbab_intro": "썸네일 2개 비교: Vision AI가 어느 쪽이 CTR이 높은지와 이유를 알려줍니다.",
+  "thumbab_a": "썸네일 A",
+  "thumbab_b": "썸네일 B",
+  "thumbab_run": "📸 썸네일 비교",
+  "thumbab_tips": "💡 승자를 개선하려면",
+  "thumbab_need2": "먼저 이미지 2개를 선택하세요",
+  "thumbab_prompt_label": "🎨 개선된 썸네일을 만들기 위한 상세 프롬프트:",
+  "thumbab_prompt_copy": "프롬프트 복사",
+  "thumbab_prompt_hint": "이 프롬프트를 이미지 AI(Midjourney, DALL·E, ChatGPT, Leonardo…)에 붙여넣어 썸네일을 생성하세요.",
+  "nav_shorts": "Shorts",
+  "shorts_intro": "이 영상을 바이럴 Shorts 아이디어로 바꾸세요 (제목, 후크, 대본, 해시태그).",
+  "shorts_generate": "🎬 Shorts 생성",
+  "shorts_hook": "후크 (첫 3초)",
+  "shorts_script": "대본",
+  "shorts_duration": "길이",
+  "shorts_copy": "대본 복사",
+  "shorts_summary": "요약",
+  "shorts_clips": "✂️ 자를 클립",
+  "shorts_estimated": "예상",
+  "shorts_real": "자막 기준",
+  "live_stats_title": "실제 YouTube 통계",
+  "live_stats_btn": "실제 데이터 불러오기 (조회수/시간, 태그…)",
+  "audit_title": "채널 진단",
+  "audit_btn": "이 채널 진단",
+  "thumb_ai_title": "AI 썸네일 분석",
+  "thumb_ai_btn": "내 썸네일 분석 (AI)",
+  "thumb_ideas_title": "썸네일 콘셉트 생성",
+  "thumb_ideas_intro": "제목 기반 3개 콘셉트(텍스트, 색상, 레이아웃, 얼굴), 바로 실행 가능.",
+  "thumb_ideas_btn": "콘셉트 3개 생성",
+  "thumb_ideas_loading": "콘셉트 생성 중…",
+  "thumb_ideas_concept": "콘셉트",
+  "thumb_ideas_emotion": "감정",
+  "thumb_ideas_text": "텍스트",
+  "thumb_ideas_focal": "초점",
+  "thumb_ideas_face": "얼굴",
+  "thumb_ideas_bg": "배경",
+  "thumb_ideas_why": "이유",
+  "thumb_ideas_copy": "브리프 복사",
+  "thumb_ideas_locked_sub": "Pro로 업그레이드하여 콘셉트 3개 모두 잠금 해제",
+  "thumb_ideas_niche_ph": "분야 (선택, 예: 요리, 게임)",
+  "thumb_gen_btn": "🖼️ 배경 생성",
+  "thumb_gen_loading": "배경 생성 중…",
+  "thumb_gen_overlay_note": "AI 생성 배경 + 덧입힌 텍스트 (이미지 AI는 특히 아랍어 텍스트를 잘 못 씁니다).",
+  "thumb_gen_text_ph": "이미지 위 제목 텍스트…",
+  "thumb_gen_download": "이미지 다운로드",
+  "thumb_gen_downloaded": "이미지 다운로드됨",
+  "thumb_gen_drag_note": "2줄: 텍스트 입력, 각 줄 드래그, 색상/크기/글꼴 선택 후 다운로드.",
+  "thumb_gen_line": "줄",
+  "thumb_gen_color": "색상",
+  "thumb_gen_font": "글꼴",
+  "thumb_gen_size": "크기",
+  "real_comp_title": "실제 경쟁자",
+  "real_comp_btn": "잘나가는 실제 영상 보기",
+  "keywords_title": "키워드 리서치",
+  "keywords_ph": "예: 닭고기 레시피",
+  "title_types": "제목 유형",
+  "result_label": "결과",
+  "hook_title": "후크 분석기",
+  "hook_intro": "인트로 대본(첫 15-30초)을 붙여넣으세요: AI가 시청 지속률과 이탈 지점을 예측합니다.",
+  "hook_ph": "여기에 인트로 텍스트를 붙여넣으세요…",
+  "hook_run": "지속률 분석",
+  "hook_need": "최소한 인트로를 붙여넣으세요",
+  "hook_retention": "예상 지속률",
+  "hook_score_label": "후크 점수",
+  "hook_drops": "⚠️ 이탈 지점",
+  "hook_fixes": "✅ 개선",
+  "hook_rewrite": "💡 다시 쓴 인트로 (개선)",
+  "nav_region": "지역",
+  "audience_intro": "타깃(전 세계, 지역 또는 국가)과 언어를 선택하세요: AI가 최적 시간, 트렌드, 해시태그, 주제를 제시합니다.",
+  "audience_target": "타깃 (국가 / 지역 / 전 세계)",
+  "audience_target_ph": "예: 알제리, MENA, 프랑스, 전 세계…",
+  "audience_worldwide": "전 세계",
+  "audience_niche": "분야 / 채널 스타일",
+  "audience_niche_ph": "예: 게임, 요리, 테크, 축구…",
+  "audience_lang": "콘텐츠 언어",
+  "audience_run": "이 시청자에 맞게 최적화",
+  "audience_times": "📅 최적 업로드 시간",
+  "audience_trends": "📈 트렌드 및 포맷",
+  "audience_hashtags": "🏷️ 지역화 해시태그",
+  "audience_topics": "💡 주제 아이디어",
+  "audience_tips": "🎯 팁",
+  "titles_section": "AI 제목",
+  "td_title": "제목 닥터",
+  "td_run": "심층 AI 진단",
+  "td_need": "먼저 제목을 입력하세요",
+  "td_len": "길이",
+  "td_num": "숫자",
+  "td_emotion": "강력한 단어",
+  "td_hook": "후크",
+  "td_punct": "구두점",
+  "td_ai_score": "CTR 점수",
+  "td_missing": "⚠️ 부족한 점",
+  "td_improved": "💡 개선된 제목",
+  "td_tips": "✅ 팁",
+  "tdh_len": "이상적 40-70자: YouTube에서 잘리지 않으면서 충분히 설명적.",
+  "tdh_num": "숫자는 제목을 구체화하고(예: 팁 5개, 2024) 눈길을 끕니다.",
+  "tdh_emotion": "강력한 단어(놀라운, 비밀, 무료, 충격적…)는 클릭을 유도합니다.",
+  "tdh_hook": "시작 부분의 후크(어떻게, 왜, 질문…)는 호기심을 만듭니다.",
+  "tdh_punct": "? 또는 !는 감정을 더하고 클릭하고 싶게 합니다.",
+  "h_titledoctor": "제목을 실시간으로 채점하고 더 많은 클릭을 위한 최적화 버전을 제안합니다.",
+  "h_titles": "최적화된 제목 5개 변형 생성 (SEO, CTR, 바이럴, Shorts, 트렌드).",
+  "h_desc": "구독 CTA, 해시태그, SEO 태그 15개가 포함된 전체 설명 생성.",
+  "h_abtest": "두 제목 비교: AI가 어느 쪽이 클릭률이 높을지 예측합니다.",
+  "h_thumbab": "썸네일 2개 비교: Vision AI가 어느 쪽이 더 많은 클릭을 받는지와 이유를 알려줍니다.",
+  "h_shorts": "영상을 자를 정확한 클립과 함께 Shorts 아이디어 3개로 변환.",
+  "h_hook": "인트로를 분석하여 지속률과 시청자 이탈 지점을 예측.",
+  "h_audience": "지역과 분야에 맞는 최적 시간, 트렌드, 해시태그, 주제.",
+  "h_revenue": "영상의 7일 조회수와 AdSense 수익을 추정.",
+  "h_channel": "실제 채널 통계 + 건강 점수와 AI 추천.",
+  "h_comments": "댓글 감정과 요청을 요약하고 답변을 제안.",
+  "h_ideas": "분야에 맞춘 잠재력 높은 영상 아이디어 10개 제안.",
+  "desc_section": "전체 설명",
+  "desc_intro": "제목 + 분야 + 지역 → 구독 CTA, 해시태그, 태그가 포함된 설명.",
+  "desc_title": "영상 제목",
+  "desc_title_ph": "영상 제목…",
+  "desc_run": "전체 설명 생성",
+  "desc_need": "먼저 제목을 입력하세요",
+  "desc_ready": "✅ 붙여넣기 준비된 설명",
+  "desc_copy": "설명 복사",
+  "desc_tags": "🏷️ SEO 태그",
+  "desc_copy_tags": "태그 복사",
+  "chap_section": "챕터",
+  "chap_intro": "설명에 붙여넣을 타임스탬프 챕터(자막 기반)를 생성.",
+  "chap_run": "챕터 생성",
+  "chap_copy": "챕터 복사",
+  "chap_none": "이 영상의 자막을 사용할 수 없습니다.",
+  "nav_revenue": "수익",
+  "rev_intro": "분야, 시청자, 구독자를 기반으로 7일 조회수와 AdSense 수익을 추정.",
+  "rev_subs": "채널 구독자 수",
+  "rev_subs_ph": "예: 6m, 14k, 5000",
+  "rev_run": "조회수 및 수익 추정",
+  "rev_views": "조회수 (D+7)",
+  "rev_income": "예상 수익",
+  "rev_factors": "📊 핵심 요인",
+  "rev_tips": "💡 늘리려면",
+  "rev_disclaimer": "AI 기반 추정 — 실제 결과는 다를 수 있습니다.",
+  "nav_sponsor": "스폰서",
+  "h_sponsor": "스폰서 단가를 추정하고 브랜드 피치, 미디어 키트, 제휴 아이디어를 생성.",
+  "sp_intro": "스폰서 가치를 추정하고 거래를 성사시킬 피치 + 미디어 키트를 생성.",
+  "sp_subs_ph": "구독자 (예: 6m, 14k)",
+  "sp_views_ph": "영상당 평균 조회수 (예: 50k)",
+  "sp_run": "내 스폰서 키트 생성",
+  "sp_rate": "예상 스폰서 단가 (영상당)",
+  "sp_pitch": "✉️ 브랜드 피치 메시지",
+  "sp_copy_pitch": "피치 복사",
+  "sp_mediakit": "📋 미디어 키트 (장점)",
+  "sp_brands": "🏢 어울리는 브랜드",
+  "sp_affiliate": "🔗 제휴 아이디어",
+  "sp_disclaimer": "AI 추정 — 실제 참여도를 기준으로 협상하세요.",
+  "nav_trends": "트렌드",
+  "h_trends": "분야에서 지금 폭발하는 것을 감지(실제 최신 영상) + AI 분석.",
+  "tre_intro": "지금 당신의 분야에서 뜨는 것: 폭발하는 영상 + 떠오르는 트렌드와 키워드.",
+  "tre_run": "트렌드 감지",
+  "tre_need": "먼저 분야를 선택하세요",
+  "tre_trends": "🔥 현재 트렌드",
+  "tre_keywords": "📈 떠오르는 키워드",
+  "tre_advice": "💡 활용 방법",
+  "tre_hot": "🚀 폭발하는 영상 (최신)",
+  "tre_none": "트렌드를 찾지 못했습니다. 더 넓은 분야를 시도하세요.",
+  "nav_planner": "플래너",
+  "h_planner": "꾸준한 업로드를 위해 분야에 맞춘 7일 캘린더를 생성.",
+  "plan_intro": "7일 계획 생성: 매일 무엇을 올릴지 + 최적 시간대.",
+  "plan_freq": "주기 (선택)",
+  "plan_run": "내 7일 계획 생성",
+  "tr_section": "현지화 / 번역",
+  "h_translate": "제목, 설명, 태그를 다른 언어로 번역하고 현지화.",
+  "tr_intro": "제목 + 설명 + 태그를 한 언어로 번역하여 글로벌 시청자에게 도달.",
+  "tr_run": "번역",
+  "tr_title": "번역된 제목",
+  "tr_desc": "번역된 설명",
+  "tr_copy": "번역 복사",
+  "cp_section": "커뮤니티 게시물",
+  "h_community": "커뮤니티 탭용 투표, 질문, 티저를 생성.",
+  "cp_intro": "영상 사이에 시청자를 참여시킬 게시물 5개(투표, 질문, 티저)를 생성.",
+  "cp_run": "게시물 5개 생성",
+  "sc_section": "전체 대본",
+  "h_script": "주제로부터 구조화된 대본(후크, 섹션, CTA)을 작성.",
+  "sc_intro": "주제를 입력하세요: AI가 전체 대본(후크, 인트로, 섹션, CTA, 아웃트로)을 작성.",
+  "sc_topic_ph": "영상 주제…",
+  "sc_dur": "길이",
+  "sc_run": "대본 작성",
+  "sc_need": "먼저 주제를 입력하세요",
+  "sc_hook": "후크 (첫 5초)",
+  "sc_copy": "대본 복사",
+  "pc_section": "제목 + 썸네일 확인",
+  "h_pair": "제목과 썸네일이 서로 보완되고 TV와 모바일에서 읽기 쉬운지 확인.",
+  "pc_intro": "AI가 제목과 썸네일이 서로 보완되는지(중복 없이)와 가독성을 확인.",
+  "pc_run": "쌍 확인",
+  "pc_complement": "상호 보완",
+  "pc_issues": "⚠️ 문제",
+  "pc_tips": "✅ 팁",
+  "pl_section": "재생목록 최적화",
+  "h_playlists": "세션 시간을 위해 영상을 최적화된 재생목록으로 그룹화.",
+  "pl_intro": "AI가 영상을 최적화된 재생목록으로 그룹화(시청 시간 증가).",
+  "pl_run": "내 재생목록 최적화",
+  "au_section": "원클릭 전체 진단",
+  "h_audit": "SEO + 썸네일 + 제목을 한 번에 실행하고 우선순위 실행 계획을 제공.",
+  "au_run": "전체 진단 실행",
+  "au_global": "영상 종합 점수",
+  "au_plan": "🎯 우선순위 실행 계획",
+  "ob_title": "VidSpark AI에 오신 것을 환영합니다!",
+  "ob_sub": "영상을 최적화하는 24개 AI 도구. 핵심은 다음과 같습니다:",
+  "ob_audit": "원클릭 전체 진단",
+  "ob_title2": "제목 실시간 CTR 점수",
+  "ob_thumb": "썸네일 2개 비교",
+  "ob_shorts": "Shorts 아이디어 + 자를 클립",
+  "ob_sponsor": "스폰서 수익 추정",
+  "ob_btn": "시작하기 🚀",
+  "nav_channel": "채널",
+  "chan_intro": "채널 대시보드: 실제 통계 + 건강 점수와 AI 추천.",
+  "chan_run": "내 채널 분석",
+  "chan_subs": "구독자",
+  "chan_views": "총 조회수",
+  "chan_vids": "영상",
+  "chan_avg": "평균 조회수",
+  "chan_eng": "참여도",
+  "chan_freq": "빈도",
+  "chan_ai_loading": "AI 진단 진행 중…",
+  "chan_ai_fail": "AI 진단 사용 불가",
+  "chan_health": "건강 점수",
+  "chan_strengths": "✅ 강점",
+  "chan_weak": "⚠️ 약점",
+  "chan_reco": "💡 추천",
+  "nav_comments": "댓글",
+  "com_intro": "AI가 댓글을 읽습니다: 감정, 시청자 요청, 영상 아이디어, 추천 답변.",
+  "com_run": "댓글 분석",
+  "com_none": "이 영상에서 댓글을 찾지 못했습니다.",
+  "com_sentiment": "전체 감정",
+  "com_pos": "긍정",
+  "com_neu": "중립",
+  "com_neg": "부정",
+  "com_requests": "🙋 시청자 요청",
+  "com_ideas": "💡 다음 영상 아이디어",
+  "com_replies": "✍️ 추천 답변",
+  "com_copy": "복사",
+  "nav_ideas": "아이디어",
+  "idea_intro": "분야, 지역, 선택 주제를 고르세요: AI가 잠재력 높은 영상 아이디어 10개를 제안합니다.",
+  "idea_topic_ph": "주제 또는 키워드 (선택)…",
+  "idea_run": "아이디어 10개 생성",
+  "idea_copy": "제목 복사",
+  "kw_opportunity": "기회 점수",
+  "kw_difficulty": "난이도",
+  "kw_demand": "수요",
+  "kw_trend": "트렌드",
+  "kw_best": "🎯 공략할 키워드",
+  "kw_competition": "경쟁",
+  "seo_tab_analyse": "📊 분석",
+  "seo_tab_optim": "🎯 최적화",
+  "seo_tab_kw": "🔑 키워드",
+  "seo_tab_rec_kw": "추천 키워드",
+  "seo_tab_issues": "문제",
+  "seo_all_ok": "모든 기준 충족!",
+  "example_label": "예시:",
+  "recommendation_label": "추천:",
+  "impact_pos_num": "긍정적 영향 +8% 예상 CTR",
+  "impact_neg_num": "숫자를 추가하면 CTR이 15–40% 증가할 수 있습니다",
+  "viral_pos_hook": "제목 시작의 CTR 후크",
+  "viral_pos_num": "제목 내 숫자",
+  "viral_pos_em": "감정 단어 있음",
+  "viral_pos_desc": "충분히 긴 설명",
+  "viral_pos_len": "최적 제목 길이",
+  "viral_neg_hook": "CTR 후크 없음 — 시작에 질문이나 숫자를 추가하세요",
+  "viral_neg_num": "숫자 없음 — 숫자가 있는 제목은 +40% CTR",
+  "viral_neg_em": "감정 단어 없음 — 강력한 단어를 추가하세요",
+  "viral_neg_desc_tpl": "짧은 설명 (N자) — 500자 이상을 목표로",
+  "viral_neg_len_short": "제목이 너무 짧음",
+  "viral_neg_len_long": "제목이 너무 김",
+  "viral_potential_title": "바이럴 잠재력 점수",
+  "btn_viral_ai": "✨ 바이럴 AI 분석"
+ },
+ "hi": {
+  "nav_abtest": "A/B टेस्ट",
+  "abtest_intro": "दो शीर्षकों की तुलना करें: AI बताता है कि किसे ज़्यादा क्लिक मिलेंगे।",
+  "abtest_a": "शीर्षक A",
+  "abtest_b": "शीर्षक B",
+  "abtest_run": "⚔️ शीर्षकों की तुलना करें",
+  "abtest_winner": "विजेता",
+  "abtest_verdict": "AI निर्णय",
+  "abtest_improved": "💡 सुझाया गया शीर्षक (और बेहतर)",
+  "abtest_ctr": "अनुमानित CTR",
+  "abtest_confidence": "विश्वास",
+  "abtest_use": "यह शीर्षक उपयोग करें",
+  "thumbab_title": "थंबनेल A/B",
+  "thumbab_intro": "2 थंबनेल की तुलना करें: Vision AI बताता है किसे ज़्यादा CTR मिलेगा और क्यों।",
+  "thumbab_a": "थंबनेल A",
+  "thumbab_b": "थंबनेल B",
+  "thumbab_run": "📸 थंबनेल की तुलना करें",
+  "thumbab_tips": "💡 विजेता को बेहतर करने के लिए",
+  "thumbab_need2": "पहले 2 इमेज चुनें",
+  "thumbab_prompt_label": "🎨 बेहतर थंबनेल बनाने के लिए विस्तृत प्रॉम्प्ट:",
+  "thumbab_prompt_copy": "प्रॉम्प्ट कॉपी करें",
+  "thumbab_prompt_hint": "इस प्रॉम्प्ट को किसी इमेज AI (Midjourney, DALL·E, ChatGPT, Leonardo…) में पेस्ट करके अपना थंबनेल बनाएं।",
+  "nav_shorts": "Shorts",
+  "shorts_intro": "इस वीडियो को वायरल Shorts आइडिया में बदलें (शीर्षक, हुक, स्क्रिप्ट, हैशटैग)।",
+  "shorts_generate": "🎬 Shorts बनाएं",
+  "shorts_hook": "हुक (पहले 3 सेकंड)",
+  "shorts_script": "स्क्रिप्ट",
+  "shorts_duration": "अवधि",
+  "shorts_copy": "स्क्रिप्ट कॉपी करें",
+  "shorts_summary": "सारांश",
+  "shorts_clips": "✂️ काटने वाले क्लिप",
+  "shorts_estimated": "अनुमानित",
+  "shorts_real": "कैप्शन के आधार पर",
+  "live_stats_title": "असली YouTube आँकड़े",
+  "live_stats_btn": "असली डेटा लोड करें (व्यू/घंटा, टैग…)",
+  "audit_title": "चैनल ऑडिट",
+  "audit_btn": "इस चैनल का ऑडिट करें",
+  "thumb_ai_title": "AI थंबनेल विश्लेषण",
+  "thumb_ai_btn": "मेरा थंबनेल विश्लेषण करें (AI)",
+  "thumb_ideas_title": "थंबनेल कॉन्सेप्ट बनाएं",
+  "thumb_ideas_intro": "आपके शीर्षक पर आधारित 3 कॉन्सेप्ट (टेक्स्ट, रंग, लेआउट, चेहरा), तुरंत लागू करने योग्य।",
+  "thumb_ideas_btn": "3 कॉन्सेप्ट बनाएं",
+  "thumb_ideas_loading": "कॉन्सेप्ट बन रहे हैं…",
+  "thumb_ideas_concept": "कॉन्सेप्ट",
+  "thumb_ideas_emotion": "भावना",
+  "thumb_ideas_text": "टेक्स्ट",
+  "thumb_ideas_focal": "फोकल पॉइंट",
+  "thumb_ideas_face": "चेहरा",
+  "thumb_ideas_bg": "बैकग्राउंड",
+  "thumb_ideas_why": "क्यों",
+  "thumb_ideas_copy": "ब्रीफ कॉपी करें",
+  "thumb_ideas_locked_sub": "सभी 3 कॉन्सेप्ट अनलॉक करने के लिए Pro पर अपग्रेड करें",
+  "thumb_ideas_niche_ph": "निच (वैकल्पिक, जैसे कुकिंग, गेमिंग)",
+  "thumb_gen_btn": "🖼️ बैकग्राउंड बनाएं",
+  "thumb_gen_loading": "बैकग्राउंड बन रहा है…",
+  "thumb_gen_overlay_note": "AI-निर्मित बैकग्राउंड + आपका ओवरले टेक्स्ट (इमेज AI टेक्स्ट ठीक से नहीं लिखता, खासकर अरबी)।",
+  "thumb_gen_text_ph": "इमेज पर शीर्षक टेक्स्ट…",
+  "thumb_gen_download": "इमेज डाउनलोड करें",
+  "thumb_gen_downloaded": "इमेज डाउनलोड हो गई",
+  "thumb_gen_drag_note": "2 लाइनें: टेक्स्ट टाइप करें, हर लाइन खींचें, रंग/आकार/फॉन्ट चुनें, फिर डाउनलोड करें।",
+  "thumb_gen_line": "लाइन",
+  "thumb_gen_color": "रंग",
+  "thumb_gen_font": "फॉन्ट",
+  "thumb_gen_size": "आकार",
+  "real_comp_title": "असली प्रतियोगी",
+  "real_comp_btn": "टॉप पर चल रहे असली वीडियो देखें",
+  "keywords_title": "कीवर्ड रिसर्च",
+  "keywords_ph": "जैसे चिकन रेसिपी",
+  "title_types": "शीर्षक प्रकार",
+  "result_label": "परिणाम",
+  "hook_title": "हुक विश्लेषक",
+  "hook_intro": "अपनी इंट्रो स्क्रिप्ट (पहले 15-30 सेकंड) पेस्ट करें: AI रिटेंशन और दर्शकों के छोड़ने की जगह बताता है।",
+  "hook_ph": "अपना इंट्रो टेक्स्ट यहाँ पेस्ट करें…",
+  "hook_run": "रिटेंशन विश्लेषण करें",
+  "hook_need": "कम से कम अपना इंट्रो पेस्ट करें",
+  "hook_retention": "अनुमानित रिटेंशन",
+  "hook_score_label": "हुक स्कोर",
+  "hook_drops": "⚠️ छोड़ने वाले बिंदु",
+  "hook_fixes": "✅ सुधार",
+  "hook_rewrite": "💡 दोबारा लिखी इंट्रो (बेहतर)",
+  "nav_region": "क्षेत्र",
+  "audience_intro": "अपना लक्ष्य (वैश्विक, क्षेत्र या देश) और भाषा चुनें: AI सर्वोत्तम समय, ट्रेंड, हैशटैग और विषय देता है।",
+  "audience_target": "लक्ष्य (देश / क्षेत्र / वैश्विक)",
+  "audience_target_ph": "जैसे अल्जीरिया, MENA, फ़्रांस, वैश्विक…",
+  "audience_worldwide": "वैश्विक",
+  "audience_niche": "निच / चैनल शैली",
+  "audience_niche_ph": "जैसे गेमिंग, कुकिंग, टेक, फुटबॉल…",
+  "audience_lang": "कंटेंट भाषा",
+  "audience_run": "इस ऑडियंस के लिए ऑप्टिमाइज़ करें",
+  "audience_times": "📅 पोस्ट करने का सर्वोत्तम समय",
+  "audience_trends": "📈 ट्रेंड और फॉर्मैट",
+  "audience_hashtags": "🏷️ स्थानीय हैशटैग",
+  "audience_topics": "💡 विषय आइडिया",
+  "audience_tips": "🎯 टिप्स",
+  "titles_section": "AI शीर्षक",
+  "td_title": "टाइटल डॉक्टर",
+  "td_run": "गहन AI निदान",
+  "td_need": "पहले एक शीर्षक टाइप करें",
+  "td_len": "लंबाई",
+  "td_num": "संख्या",
+  "td_emotion": "प्रभावी शब्द",
+  "td_hook": "हुक",
+  "td_punct": "विराम चिह्न",
+  "td_ai_score": "CTR स्कोर",
+  "td_missing": "⚠️ क्या कमी है",
+  "td_improved": "💡 बेहतर शीर्षक",
+  "td_tips": "✅ टिप्स",
+  "tdh_len": "आदर्श 40-70 अक्षर: पर्याप्त वर्णनात्मक, YouTube द्वारा कटे बिना।",
+  "tdh_num": "संख्या शीर्षक को ठोस बनाती है (जैसे 5 टिप्स, 2024) और ध्यान खींचती है।",
+  "tdh_emotion": "एक प्रभावी शब्द (अद्भुत, रहस्य, मुफ़्त, चौंकाने वाला…) क्लिक करवाता है।",
+  "tdh_hook": "शुरुआत में हुक (कैसे, क्यों, एक सवाल…) जिज्ञासा पैदा करता है।",
+  "tdh_punct": "? या ! भावना जोड़ता है और क्लिक करने का मन बनाता है।",
+  "h_titledoctor": "आपके शीर्षक को लाइव स्कोर करता है और ज़्यादा क्लिक के लिए ऑप्टिमाइज़्ड संस्करण सुझाता है।",
+  "h_titles": "5 ऑप्टिमाइज़्ड शीर्षक वैरिएंट बनाता है (SEO, CTR, वायरल, Shorts, ट्रेंडिंग)।",
+  "h_desc": "सब्सक्राइब CTA, हैशटैग और 15 SEO टैग के साथ पूरा विवरण बनाता है।",
+  "h_abtest": "2 शीर्षकों की तुलना: AI बताता है किसे ज़्यादा क्लिक मिलेंगे।",
+  "h_thumbab": "2 थंबनेल की तुलना: Vision AI बताता है किसे ज़्यादा क्लिक मिलेंगे और क्यों।",
+  "h_shorts": "वीडियो को काटने के सटीक क्लिप के साथ 3 Shorts आइडिया में बदलता है।",
+  "h_hook": "आपकी इंट्रो का विश्लेषण करता है और रिटेंशन + दर्शकों के छोड़ने की जगह बताता है।",
+  "h_audience": "आपके क्षेत्र और निच के लिए सर्वोत्तम समय, ट्रेंड, हैशटैग और विषय।",
+  "h_revenue": "आपके वीडियो के 7-दिन व्यू और AdSense आय का अनुमान।",
+  "h_channel": "असली चैनल आँकड़े + हेल्थ स्कोर और AI सिफारिशें।",
+  "h_comments": "कमेंट की भावना, अनुरोधों का सारांश और जवाब सुझाता है।",
+  "h_ideas": "आपके निच के अनुरूप 10 उच्च-संभावना वीडियो आइडिया सुझाता है।",
+  "desc_section": "पूरा विवरण",
+  "desc_intro": "शीर्षक + निच + क्षेत्र → सब्सक्राइब CTA, हैशटैग और टैग के साथ विवरण।",
+  "desc_title": "वीडियो शीर्षक",
+  "desc_title_ph": "आपका वीडियो शीर्षक…",
+  "desc_run": "पूरा विवरण बनाएं",
+  "desc_need": "पहले एक शीर्षक दर्ज करें",
+  "desc_ready": "✅ पेस्ट करने को तैयार विवरण",
+  "desc_copy": "विवरण कॉपी करें",
+  "desc_tags": "🏷️ SEO टैग",
+  "desc_copy_tags": "टैग कॉपी करें",
+  "chap_section": "चैप्टर",
+  "chap_intro": "विवरण में पेस्ट करने के लिए टाइमस्टैम्प चैप्टर (कैप्शन से) बनाएं।",
+  "chap_run": "चैप्टर बनाएं",
+  "chap_copy": "चैप्टर कॉपी करें",
+  "chap_none": "इस वीडियो के लिए कैप्शन उपलब्ध नहीं हैं।",
+  "nav_revenue": "आय",
+  "rev_intro": "अपने निच, ऑडियंस और सब्सक्राइबर के आधार पर 7-दिन व्यू और AdSense आय का अनुमान लगाएं।",
+  "rev_subs": "आपके चैनल के सब्सक्राइबर",
+  "rev_subs_ph": "जैसे 6m, 14k, 5000",
+  "rev_run": "व्यू और आय का अनुमान लगाएं",
+  "rev_views": "व्यू (D+7)",
+  "rev_income": "अनुमानित आय",
+  "rev_factors": "📊 मुख्य कारक",
+  "rev_tips": "💡 बढ़ाने के लिए",
+  "rev_disclaimer": "AI-आधारित अनुमान — वास्तविक परिणाम भिन्न हो सकते हैं।",
+  "nav_sponsor": "स्पॉन्सर",
+  "h_sponsor": "आपकी स्पॉन्सरशिप दर का अनुमान, ब्रांड पिच, मीडिया किट और एफिलिएट आइडिया बनाता है।",
+  "sp_intro": "अपनी स्पॉन्सरशिप कीमत का अनुमान लगाएं और डील पाने के लिए पिच + मीडिया किट बनाएं।",
+  "sp_subs_ph": "सब्सक्राइबर (जैसे 6m, 14k)",
+  "sp_views_ph": "औसत व्यू/वीडियो (जैसे 50k)",
+  "sp_run": "मेरी स्पॉन्सर किट बनाएं",
+  "sp_rate": "अनुमानित स्पॉन्सरशिप दर (प्रति वीडियो)",
+  "sp_pitch": "✉️ ब्रांड पिच संदेश",
+  "sp_copy_pitch": "पिच कॉपी करें",
+  "sp_mediakit": "📋 मीडिया किट (मुख्य बातें)",
+  "sp_brands": "🏢 उपयुक्त ब्रांड",
+  "sp_affiliate": "🔗 एफिलिएट आइडिया",
+  "sp_disclaimer": "AI अनुमान — अपने असली एंगेजमेंट के आधार पर मोलभाव करें।",
+  "nav_trends": "ट्रेंड",
+  "h_trends": "आपके निच में अभी क्या तेज़ी से बढ़ रहा है, यह पहचानता है (असली हालिया वीडियो) + AI विश्लेषण।",
+  "tre_intro": "आपके निच में अभी क्या छाया हुआ है: तेज़ी से बढ़ते वीडियो + उभरते ट्रेंड और कीवर्ड।",
+  "tre_run": "ट्रेंड पहचानें",
+  "tre_need": "पहले एक निच चुनें",
+  "tre_trends": "🔥 मौजूदा ट्रेंड",
+  "tre_keywords": "📈 उभरते कीवर्ड",
+  "tre_advice": "💡 इन्हें कैसे भुनाएं",
+  "tre_hot": "🚀 तेज़ी से बढ़ते वीडियो (हालिया)",
+  "tre_none": "कोई ट्रेंड नहीं मिला। व्यापक निच आज़माएं।",
+  "nav_planner": "प्लानर",
+  "h_planner": "नियमित पोस्टिंग के लिए आपके निच के अनुरूप 7-दिन कैलेंडर बनाता है।",
+  "plan_intro": "7-दिन की योजना बनाएं: हर दिन क्या पोस्ट करें + सर्वोत्तम समय स्लॉट।",
+  "plan_freq": "आवृत्ति (वैकल्पिक)",
+  "plan_run": "मेरी 7-दिन योजना बनाएं",
+  "tr_section": "स्थानीयकरण / अनुवाद",
+  "h_translate": "आपके शीर्षक, विवरण और टैग का दूसरी भाषा में अनुवाद और अनुकूलन करता है।",
+  "tr_intro": "वैश्विक ऑडियंस तक पहुँचने के लिए शीर्षक + विवरण + टैग का एक भाषा में अनुवाद करें।",
+  "tr_run": "अनुवाद करें",
+  "tr_title": "अनुवादित शीर्षक",
+  "tr_desc": "अनुवादित विवरण",
+  "tr_copy": "अनुवाद कॉपी करें",
+  "cp_section": "कम्युनिटी पोस्ट",
+  "h_community": "कम्युनिटी टैब के लिए पोल, सवाल और टीज़र बनाता है।",
+  "cp_intro": "वीडियो के बीच ऑडियंस को जोड़ने के लिए 5 पोस्ट (पोल, सवाल, टीज़र) बनाएं।",
+  "cp_run": "5 पोस्ट बनाएं",
+  "sc_section": "पूरी स्क्रिप्ट",
+  "h_script": "किसी विषय से संरचित स्क्रिप्ट (हुक, सेक्शन, CTA) लिखता है।",
+  "sc_intro": "एक विषय दें: AI पूरी स्क्रिप्ट लिखता है (हुक, इंट्रो, सेक्शन, CTA, आउट्रो)।",
+  "sc_topic_ph": "वीडियो विषय…",
+  "sc_dur": "अवधि",
+  "sc_run": "स्क्रिप्ट लिखें",
+  "sc_need": "पहले एक विषय दर्ज करें",
+  "sc_hook": "हुक (पहले 5 सेकंड)",
+  "sc_copy": "स्क्रिप्ट कॉपी करें",
+  "pc_section": "शीर्षक + थंबनेल जाँच",
+  "h_pair": "जाँचता है कि आपका शीर्षक और थंबनेल एक-दूसरे के पूरक हैं और TV व मोबाइल पर पढ़ने योग्य हैं।",
+  "pc_intro": "AI जाँचता है कि शीर्षक और थंबनेल एक-दूसरे के पूरक हैं (दोहराव बिना) और उनकी पठनीयता।",
+  "pc_run": "जोड़ी जाँचें",
+  "pc_complement": "पूरक",
+  "pc_issues": "⚠️ समस्याएं",
+  "pc_tips": "✅ टिप्स",
+  "pl_section": "प्लेलिस्ट ऑप्टिमाइज़र",
+  "h_playlists": "सेशन समय के लिए आपके वीडियो को ऑप्टिमाइज़्ड प्लेलिस्ट में समूहित करता है।",
+  "pl_intro": "AI आपके वीडियो को ऑप्टिमाइज़्ड प्लेलिस्ट में समूहित करता है (ज़्यादा वॉच टाइम)।",
+  "pl_run": "मेरी प्लेलिस्ट ऑप्टिमाइज़ करें",
+  "au_section": "1-क्लिक पूर्ण ऑडिट",
+  "h_audit": "SEO + थंबनेल + शीर्षक एक साथ चलाता है और प्राथमिकता वाली कार्य योजना देता है।",
+  "au_run": "पूर्ण ऑडिट चलाएं",
+  "au_global": "समग्र वीडियो स्कोर",
+  "au_plan": "🎯 प्राथमिकता कार्य योजना",
+  "ob_title": "VidSpark AI में आपका स्वागत है!",
+  "ob_sub": "आपके वीडियो को ऑप्टिमाइज़ करने के लिए 24 AI टूल। मुख्य बातें:",
+  "ob_audit": "1-क्लिक पूर्ण ऑडिट",
+  "ob_title2": "आपके शीर्षक के लिए लाइव CTR स्कोर",
+  "ob_thumb": "2 थंबनेल की तुलना करें",
+  "ob_shorts": "Shorts आइडिया + काटने वाले क्लिप",
+  "ob_sponsor": "अपनी स्पॉन्सरशिप आय का अनुमान लगाएं",
+  "ob_btn": "चलिए शुरू करें 🚀",
+  "nav_channel": "चैनल",
+  "chan_intro": "चैनल डैशबोर्ड: असली आँकड़े + हेल्थ स्कोर और AI सिफारिशें।",
+  "chan_run": "मेरा चैनल विश्लेषण करें",
+  "chan_subs": "सब्सक्राइबर",
+  "chan_views": "कुल व्यू",
+  "chan_vids": "वीडियो",
+  "chan_avg": "औसत व्यू",
+  "chan_eng": "एंगेजमेंट",
+  "chan_freq": "आवृत्ति",
+  "chan_ai_loading": "AI निदान जारी है…",
+  "chan_ai_fail": "AI निदान उपलब्ध नहीं",
+  "chan_health": "हेल्थ स्कोर",
+  "chan_strengths": "✅ मजबूत पक्ष",
+  "chan_weak": "⚠️ कमज़ोर पक्ष",
+  "chan_reco": "💡 सिफारिशें",
+  "nav_comments": "कमेंट",
+  "com_intro": "AI कमेंट पढ़ता है: भावना, ऑडियंस अनुरोध, वीडियो आइडिया और सुझाए गए जवाब।",
+  "com_run": "कमेंट विश्लेषण करें",
+  "com_none": "इस वीडियो पर कोई कमेंट नहीं मिला।",
+  "com_sentiment": "समग्र भावना",
+  "com_pos": "सकारात्मक",
+  "com_neu": "तटस्थ",
+  "com_neg": "नकारात्मक",
+  "com_requests": "🙋 ऑडियंस अनुरोध",
+  "com_ideas": "💡 अगले वीडियो आइडिया",
+  "com_replies": "✍️ सुझाए गए जवाब",
+  "com_copy": "कॉपी करें",
+  "nav_ideas": "आइडिया",
+  "idea_intro": "अपना निच, क्षेत्र और एक वैकल्पिक विषय चुनें: AI 10 उच्च-संभावना वीडियो आइडिया सुझाता है।",
+  "idea_topic_ph": "विषय या कीवर्ड (वैकल्पिक)…",
+  "idea_run": "10 आइडिया बनाएं",
+  "idea_copy": "शीर्षक कॉपी करें",
+  "kw_opportunity": "अवसर स्कोर",
+  "kw_difficulty": "कठिनाई",
+  "kw_demand": "मांग",
+  "kw_trend": "ट्रेंड",
+  "kw_best": "🎯 लक्ष्य करने योग्य कीवर्ड",
+  "kw_competition": "प्रतिस्पर्धा",
+  "seo_tab_analyse": "📊 विश्लेषण",
+  "seo_tab_optim": "🎯 ऑप्टिमाइज़ेशन",
+  "seo_tab_kw": "🔑 कीवर्ड",
+  "seo_tab_rec_kw": "अनुशंसित कीवर्ड",
+  "seo_tab_issues": "समस्याएं",
+  "seo_all_ok": "सभी मानदंड पूरे हुए!",
+  "example_label": "उदाहरण:",
+  "recommendation_label": "सिफारिश:",
+  "impact_pos_num": "सकारात्मक प्रभाव +8% अनुमानित CTR",
+  "impact_neg_num": "संख्या जोड़ने से CTR 15–40% बढ़ सकता है",
+  "viral_pos_hook": "शीर्षक की शुरुआत में CTR हुक",
+  "viral_pos_num": "शीर्षक में संख्या",
+  "viral_pos_em": "भावनात्मक शब्द मौजूद",
+  "viral_pos_desc": "पर्याप्त लंबा विवरण",
+  "viral_pos_len": "इष्टतम शीर्षक लंबाई",
+  "viral_neg_hook": "कोई CTR हुक नहीं — शुरुआत में सवाल या संख्या जोड़ें",
+  "viral_neg_num": "कोई संख्या नहीं — संख्या वाले शीर्षक +40% CTR पाते हैं",
+  "viral_neg_em": "कोई भावनात्मक शब्द नहीं — एक प्रभावी शब्द जोड़ें",
+  "viral_neg_desc_tpl": "छोटा विवरण (N अक्षर) — 500+ का लक्ष्य रखें",
+  "viral_neg_len_short": "शीर्षक बहुत छोटा",
+  "viral_neg_len_long": "शीर्षक बहुत लंबा",
+  "viral_potential_title": "वायरल संभावना स्कोर",
+  "btn_viral_ai": "✨ वायरल AI विश्लेषण"
+ },
+ "zh": {
+  "nav_abtest": "A/B 测试",
+  "abtest_intro": "比较两个标题：AI 预测哪个点击率更高。",
+  "abtest_a": "标题 A",
+  "abtest_b": "标题 B",
+  "abtest_run": "⚔️ 比较标题",
+  "abtest_winner": "获胜者",
+  "abtest_verdict": "AI 判定",
+  "abtest_improved": "💡 建议标题（更好）",
+  "abtest_ctr": "预估点击率",
+  "abtest_confidence": "置信度",
+  "abtest_use": "使用此标题",
+  "thumbab_title": "缩略图 A/B",
+  "thumbab_intro": "比较 2 张缩略图：Vision AI 告诉你哪张点击率更高及原因。",
+  "thumbab_a": "缩略图 A",
+  "thumbab_b": "缩略图 B",
+  "thumbab_run": "📸 比较缩略图",
+  "thumbab_tips": "💡 改进获胜者",
+  "thumbab_need2": "请先选择 2 张图片",
+  "thumbab_prompt_label": "🎨 创建改进缩略图的详细提示词：",
+  "thumbab_prompt_copy": "复制提示词",
+  "thumbab_prompt_hint": "将此提示词粘贴到图像 AI（Midjourney、DALL·E、ChatGPT、Leonardo…）以生成你的缩略图。",
+  "nav_shorts": "Shorts",
+  "shorts_intro": "把这个视频变成爆款 Shorts 创意（标题、钩子、脚本、标签）。",
+  "shorts_generate": "🎬 生成 Shorts",
+  "shorts_hook": "钩子（前 3 秒）",
+  "shorts_script": "脚本",
+  "shorts_duration": "时长",
+  "shorts_copy": "复制脚本",
+  "shorts_summary": "摘要",
+  "shorts_clips": "✂️ 待剪辑片段",
+  "shorts_estimated": "预估",
+  "shorts_real": "基于字幕",
+  "live_stats_title": "真实 YouTube 数据",
+  "live_stats_btn": "加载真实数据（观看/小时、标签…）",
+  "audit_title": "频道审计",
+  "audit_btn": "审计此频道",
+  "thumb_ai_title": "AI 缩略图分析",
+  "thumb_ai_btn": "分析我的缩略图（AI）",
+  "thumb_ideas_title": "生成缩略图概念",
+  "thumb_ideas_intro": "基于你标题的 3 个概念（文字、配色、布局、人脸），可直接执行。",
+  "thumb_ideas_btn": "生成 3 个概念",
+  "thumb_ideas_loading": "正在生成概念…",
+  "thumb_ideas_concept": "概念",
+  "thumb_ideas_emotion": "情绪",
+  "thumb_ideas_text": "文字",
+  "thumb_ideas_focal": "焦点",
+  "thumb_ideas_face": "人脸",
+  "thumb_ideas_bg": "背景",
+  "thumb_ideas_why": "原因",
+  "thumb_ideas_copy": "复制简报",
+  "thumb_ideas_locked_sub": "升级到 Pro 解锁全部 3 个概念",
+  "thumb_ideas_niche_ph": "领域（可选，如美食、游戏）",
+  "thumb_gen_btn": "🖼️ 生成背景",
+  "thumb_gen_loading": "正在生成背景…",
+  "thumb_gen_overlay_note": "AI 生成的背景 + 你叠加的文字（图像 AI 不擅长写文字，尤其是阿拉伯语）。",
+  "thumb_gen_text_ph": "图片上的标题文字…",
+  "thumb_gen_download": "下载图片",
+  "thumb_gen_downloaded": "图片已下载",
+  "thumb_gen_drag_note": "2 行：输入文字，拖动每一行，选择颜色/大小/字体，然后下载。",
+  "thumb_gen_line": "行",
+  "thumb_gen_color": "颜色",
+  "thumb_gen_font": "字体",
+  "thumb_gen_size": "大小",
+  "real_comp_title": "真实竞争对手",
+  "real_comp_btn": "查看正在火爆的真实视频",
+  "keywords_title": "关键词研究",
+  "keywords_ph": "如 鸡肉食谱",
+  "title_types": "标题类型",
+  "result_label": "结果",
+  "hook_title": "钩子分析器",
+  "hook_intro": "粘贴你的开场脚本（前 15-30 秒）：AI 预测留存率和观众流失点。",
+  "hook_ph": "在此粘贴你的开场文字…",
+  "hook_run": "分析留存率",
+  "hook_need": "至少粘贴你的开场",
+  "hook_retention": "预估留存率",
+  "hook_score_label": "钩子得分",
+  "hook_drops": "⚠️ 流失点",
+  "hook_fixes": "✅ 修正",
+  "hook_rewrite": "💡 重写的开场（更好）",
+  "nav_region": "地区",
+  "audience_intro": "选择目标（全球、地区或国家）和语言：AI 给出最佳时间、趋势、标签和主题。",
+  "audience_target": "目标（国家 / 地区 / 全球）",
+  "audience_target_ph": "如 阿尔及利亚、MENA、法国、全球…",
+  "audience_worldwide": "全球",
+  "audience_niche": "领域 / 频道风格",
+  "audience_niche_ph": "如 游戏、美食、科技、足球…",
+  "audience_lang": "内容语言",
+  "audience_run": "为此受众优化",
+  "audience_times": "📅 最佳发布时间",
+  "audience_trends": "📈 趋势与格式",
+  "audience_hashtags": "🏷️ 本地化标签",
+  "audience_topics": "💡 主题创意",
+  "audience_tips": "🎯 提示",
+  "titles_section": "AI 标题",
+  "td_title": "标题医生",
+  "td_run": "深度 AI 诊断",
+  "td_need": "请先输入一个标题",
+  "td_len": "长度",
+  "td_num": "数字",
+  "td_emotion": "有力词",
+  "td_hook": "钩子",
+  "td_punct": "标点",
+  "td_ai_score": "点击率得分",
+  "td_missing": "⚠️ 缺少什么",
+  "td_improved": "💡 改进标题",
+  "td_tips": "✅ 提示",
+  "tdh_len": "理想 40-70 字符：足够描述又不会被 YouTube 截断。",
+  "tdh_num": "数字让标题更具体（如 5 个技巧、2024）并吸引眼球。",
+  "tdh_emotion": "有力词（惊人、秘密、免费、震撼…）会促使点击。",
+  "tdh_hook": "开头的钩子（如何、为什么、一个问题…）能制造好奇。",
+  "tdh_punct": "一个 ? 或 ! 增加情绪并让人想点击。",
+  "h_titledoctor": "实时为你的标题打分，并建议更高点击率的优化版本。",
+  "h_titles": "生成 5 个优化标题变体（SEO、点击率、爆款、Shorts、趋势）。",
+  "h_desc": "创建带订阅 CTA、标签和 15 个 SEO 标签的完整描述。",
+  "h_abtest": "比较 2 个标题：AI 预测哪个点击率更高。",
+  "h_thumbab": "比较 2 张缩略图：Vision AI 告诉你哪张点击更多及原因。",
+  "h_shorts": "把视频变成 3 个 Shorts 创意，并附上要剪辑的精确片段。",
+  "h_hook": "分析你的开场并预测留存率 + 观众流失点。",
+  "h_audience": "针对你的地区和领域的最佳时间、趋势、标签和主题。",
+  "h_revenue": "估算你视频的 7 天观看量和 AdSense 收入。",
+  "h_channel": "真实频道数据 + 健康分和 AI 建议。",
+  "h_comments": "总结评论情绪和需求，并建议回复。",
+  "h_ideas": "为你的领域建议 10 个高潜力视频创意。",
+  "desc_section": "完整描述",
+  "desc_intro": "标题 + 领域 + 地区 → 带订阅 CTA、标签和标记的描述。",
+  "desc_title": "视频标题",
+  "desc_title_ph": "你的视频标题…",
+  "desc_run": "生成完整描述",
+  "desc_need": "请先输入标题",
+  "desc_ready": "✅ 可粘贴的描述",
+  "desc_copy": "复制描述",
+  "desc_tags": "🏷️ SEO 标签",
+  "desc_copy_tags": "复制标签",
+  "chap_section": "章节",
+  "chap_intro": "生成带时间戳的章节（来自字幕）以粘贴到描述中。",
+  "chap_run": "生成章节",
+  "chap_copy": "复制章节",
+  "chap_none": "此视频无可用字幕。",
+  "nav_revenue": "收入",
+  "rev_intro": "根据你的领域、受众和订阅者估算 7 天观看量和 AdSense 收入。",
+  "rev_subs": "你的频道订阅者",
+  "rev_subs_ph": "如 6m、14k、5000",
+  "rev_run": "估算观看量与收入",
+  "rev_views": "观看量（D+7）",
+  "rev_income": "预估收入",
+  "rev_factors": "📊 关键因素",
+  "rev_tips": "💡 如何提升",
+  "rev_disclaimer": "基于 AI 的估算 — 实际结果可能不同。",
+  "nav_sponsor": "赞助",
+  "h_sponsor": "估算你的赞助报价，生成品牌推介、媒体资料包和联盟创意。",
+  "sp_intro": "估算你的赞助价值，并生成推介 + 媒体资料包以拿下合作。",
+  "sp_subs_ph": "订阅者（如 6m、14k）",
+  "sp_views_ph": "每视频平均观看（如 50k）",
+  "sp_run": "生成我的赞助资料包",
+  "sp_rate": "预估赞助报价（每视频）",
+  "sp_pitch": "✉️ 品牌推介信息",
+  "sp_copy_pitch": "复制推介",
+  "sp_mediakit": "📋 媒体资料包（卖点）",
+  "sp_brands": "🏢 合适的品牌",
+  "sp_affiliate": "🔗 联盟创意",
+  "sp_disclaimer": "AI 估算 — 请根据你的真实互动进行谈判。",
+  "nav_trends": "趋势",
+  "h_trends": "检测你领域中正在爆发的内容（真实近期视频）+ AI 分析。",
+  "tre_intro": "你领域里现在最火的：爆发的视频 + 上升的趋势和关键词。",
+  "tre_run": "检测趋势",
+  "tre_need": "请先选择一个领域",
+  "tre_trends": "🔥 当前趋势",
+  "tre_keywords": "📈 上升关键词",
+  "tre_advice": "💡 如何借势",
+  "tre_hot": "🚀 爆发视频（近期）",
+  "tre_none": "未发现趋势。请尝试更宽泛的领域。",
+  "nav_planner": "规划器",
+  "h_planner": "为你的领域创建 7 天日历，帮助稳定发布。",
+  "plan_intro": "生成 7 天计划：每天发什么 + 最佳时间段。",
+  "plan_freq": "频率（可选）",
+  "plan_run": "生成我的 7 天计划",
+  "tr_section": "本地化 / 翻译",
+  "h_translate": "将你的标题、描述和标签翻译并适配为另一种语言。",
+  "tr_intro": "将标题 + 描述 + 标签翻译成一种语言，触达全球受众。",
+  "tr_run": "翻译",
+  "tr_title": "已翻译标题",
+  "tr_desc": "已翻译描述",
+  "tr_copy": "复制翻译",
+  "cp_section": "社区帖子",
+  "h_community": "为社区标签页生成投票、问题和预告。",
+  "cp_intro": "生成 5 条帖子（投票、问题、预告），在视频之间吸引受众。",
+  "cp_run": "生成 5 条帖子",
+  "sc_section": "完整脚本",
+  "h_script": "根据一个主题写出结构化脚本（钩子、段落、CTA）。",
+  "sc_intro": "给一个主题：AI 写出完整脚本（钩子、开场、段落、CTA、结尾）。",
+  "sc_topic_ph": "视频主题…",
+  "sc_dur": "时长",
+  "sc_run": "撰写脚本",
+  "sc_need": "请先输入一个主题",
+  "sc_hook": "钩子（前 5 秒）",
+  "sc_copy": "复制脚本",
+  "pc_section": "标题 + 缩略图检查",
+  "h_pair": "检查你的标题和缩略图是否互补，并在电视和手机上可读。",
+  "pc_intro": "AI 检查你的标题和缩略图是否互补（不重复）及其可读性。",
+  "pc_run": "检查这对组合",
+  "pc_complement": "互补",
+  "pc_issues": "⚠️ 问题",
+  "pc_tips": "✅ 提示",
+  "pl_section": "播放列表优化器",
+  "h_playlists": "将你的视频分组为优化的播放列表以提升会话时长。",
+  "pl_intro": "AI 将你的视频分组为优化的播放列表（更多观看时长）。",
+  "pl_run": "优化我的播放列表",
+  "au_section": "一键完整审计",
+  "h_audit": "一次性运行 SEO + 缩略图 + 标题，并给出优先级行动计划。",
+  "au_run": "运行完整审计",
+  "au_global": "视频综合得分",
+  "au_plan": "🎯 优先行动计划",
+  "ob_title": "欢迎使用 VidSpark AI！",
+  "ob_sub": "24 个优化视频的 AI 工具。以下是要点：",
+  "ob_audit": "一键完整审计",
+  "ob_title2": "标题的实时点击率得分",
+  "ob_thumb": "比较 2 张缩略图",
+  "ob_shorts": "Shorts 创意 + 要剪辑的片段",
+  "ob_sponsor": "估算你的赞助收入",
+  "ob_btn": "开始吧 🚀",
+  "nav_channel": "频道",
+  "chan_intro": "频道仪表盘：真实数据 + 健康分和 AI 建议。",
+  "chan_run": "分析我的频道",
+  "chan_subs": "订阅者",
+  "chan_views": "总观看量",
+  "chan_vids": "视频",
+  "chan_avg": "平均观看",
+  "chan_eng": "互动率",
+  "chan_freq": "频率",
+  "chan_ai_loading": "AI 诊断进行中…",
+  "chan_ai_fail": "AI 诊断不可用",
+  "chan_health": "健康分",
+  "chan_strengths": "✅ 优势",
+  "chan_weak": "⚠️ 弱点",
+  "chan_reco": "💡 建议",
+  "nav_comments": "评论",
+  "com_intro": "AI 阅读评论：情绪、受众需求、视频创意和建议回复。",
+  "com_run": "分析评论",
+  "com_none": "此视频未找到评论。",
+  "com_sentiment": "整体情绪",
+  "com_pos": "正面",
+  "com_neu": "中性",
+  "com_neg": "负面",
+  "com_requests": "🙋 受众需求",
+  "com_ideas": "💡 下一个视频创意",
+  "com_replies": "✍️ 建议回复",
+  "com_copy": "复制",
+  "nav_ideas": "创意",
+  "idea_intro": "选择你的领域、地区和可选主题：AI 建议 10 个高潜力视频创意。",
+  "idea_topic_ph": "主题或关键词（可选）…",
+  "idea_run": "生成 10 个创意",
+  "idea_copy": "复制标题",
+  "kw_opportunity": "机会得分",
+  "kw_difficulty": "难度",
+  "kw_demand": "需求",
+  "kw_trend": "趋势",
+  "kw_best": "🎯 值得瞄准的关键词",
+  "kw_competition": "竞争",
+  "seo_tab_analyse": "📊 分析",
+  "seo_tab_optim": "🎯 优化",
+  "seo_tab_kw": "🔑 关键词",
+  "seo_tab_rec_kw": "推荐关键词",
+  "seo_tab_issues": "问题",
+  "seo_all_ok": "所有标准均已通过！",
+  "example_label": "示例：",
+  "recommendation_label": "建议：",
+  "impact_pos_num": "正面影响 预估点击率 +8%",
+  "impact_neg_num": "添加数字可使点击率提升 15–40%",
+  "viral_pos_hook": "标题开头有点击率钩子",
+  "viral_pos_num": "标题含数字",
+  "viral_pos_em": "含情绪词",
+  "viral_pos_desc": "描述足够长",
+  "viral_pos_len": "标题长度最佳",
+  "viral_neg_hook": "无点击率钩子 — 在开头加一个问题或数字",
+  "viral_neg_num": "无数字 — 含数字的标题点击率 +40%",
+  "viral_neg_em": "无情绪词 — 加一个有力词",
+  "viral_neg_desc_tpl": "描述过短（N 字符）— 目标 500+",
+  "viral_neg_len_short": "标题过短",
+  "viral_neg_len_long": "标题过长",
+  "viral_potential_title": "爆款潜力得分",
+  "btn_viral_ai": "✨ 爆款 AI 分析"
+ },
+ "tr": {
+  "nav_abtest": "A/B Testi",
+  "abtest_intro": "İki başlığı karşılaştırın: Yapay zeka hangisinin daha çok tıklanacağını tahmin eder.",
+  "abtest_a": "Başlık A",
+  "abtest_b": "Başlık B",
+  "abtest_run": "⚔️ Başlıkları karşılaştır",
+  "abtest_winner": "Kazanan",
+  "abtest_verdict": "YZ Kararı",
+  "abtest_improved": "💡 Önerilen başlık (daha da iyi)",
+  "abtest_ctr": "Tahmini TO",
+  "abtest_confidence": "Güven",
+  "abtest_use": "Bu başlığı kullan",
+  "thumbab_title": "Küçük Resim A/B",
+  "thumbab_intro": "2 küçük resmi karşılaştırın: Vision YZ hangisinin daha çok TO aldığını ve nedenini söyler.",
+  "thumbab_a": "Küçük resim A",
+  "thumbab_b": "Küçük resim B",
+  "thumbab_run": "📸 Küçük resimleri karşılaştır",
+  "thumbab_tips": "💡 Kazananı iyileştirmek için",
+  "thumbab_need2": "Önce 2 görsel seçin",
+  "thumbab_prompt_label": "🎨 İyileştirilmiş küçük resmi oluşturmak için ayrıntılı komut:",
+  "thumbab_prompt_copy": "Komutu kopyala",
+  "thumbab_prompt_hint": "Bu komutu bir görsel YZ'ye (Midjourney, DALL·E, ChatGPT, Leonardo…) yapıştırarak küçük resmini oluştur.",
+  "nav_shorts": "Shorts",
+  "shorts_intro": "Bu videoyu viral Shorts fikirlerine dönüştür (başlık, kanca, senaryo, etiketler).",
+  "shorts_generate": "🎬 Shorts oluştur",
+  "shorts_hook": "Kanca (ilk 3 sn)",
+  "shorts_script": "Senaryo",
+  "shorts_duration": "Süre",
+  "shorts_copy": "Senaryoyu kopyala",
+  "shorts_summary": "Özet",
+  "shorts_clips": "✂️ Kesilecek klipler",
+  "shorts_estimated": "tahmini",
+  "shorts_real": "altyazılara göre",
+  "live_stats_title": "Gerçek YouTube istatistikleri",
+  "live_stats_btn": "Gerçek verileri yükle (görüntülenme/saat, etiketler…)",
+  "audit_title": "Kanal denetimi",
+  "audit_btn": "Bu kanalı denetle",
+  "thumb_ai_title": "YZ küçük resim analizi",
+  "thumb_ai_btn": "Küçük resmimi analiz et (YZ)",
+  "thumb_ideas_title": "Küçük resim konseptleri oluştur",
+  "thumb_ideas_intro": "Başlığına dayalı 3 konsept (metin, renkler, düzen, yüz), uygulamaya hazır.",
+  "thumb_ideas_btn": "3 konsept oluştur",
+  "thumb_ideas_loading": "Konseptler oluşturuluyor…",
+  "thumb_ideas_concept": "Konsept",
+  "thumb_ideas_emotion": "Duygu",
+  "thumb_ideas_text": "Metin",
+  "thumb_ideas_focal": "Odak noktası",
+  "thumb_ideas_face": "Yüz",
+  "thumb_ideas_bg": "Arka plan",
+  "thumb_ideas_why": "Neden",
+  "thumb_ideas_copy": "Brifingi kopyala",
+  "thumb_ideas_locked_sub": "3 konseptin tümünü açmak için Pro'ya yükselt",
+  "thumb_ideas_niche_ph": "Niş (isteğe bağlı, örn. yemek, oyun)",
+  "thumb_gen_btn": "🖼️ Arka plan oluştur",
+  "thumb_gen_loading": "Arka plan oluşturuluyor…",
+  "thumb_gen_overlay_note": "YZ ile oluşturulan arka plan + üzerine eklediğin metin (görsel YZ metni iyi yazamaz, özellikle Arapça).",
+  "thumb_gen_text_ph": "Görseldeki başlık metni…",
+  "thumb_gen_download": "Görseli indir",
+  "thumb_gen_downloaded": "Görsel indirildi",
+  "thumb_gen_drag_note": "2 satır: metnini yaz, her satırı sürükle, renk/boyut/yazı tipi seç, sonra indir.",
+  "thumb_gen_line": "Satır",
+  "thumb_gen_color": "Renk",
+  "thumb_gen_font": "Yazı tipi",
+  "thumb_gen_size": "Boyut",
+  "real_comp_title": "Gerçek rakipler",
+  "real_comp_btn": "Patlayan gerçek videoları gör",
+  "keywords_title": "Anahtar kelime araştırması",
+  "keywords_ph": "örn. tavuk tarifi",
+  "title_types": "Başlık türleri",
+  "result_label": "Sonuç",
+  "hook_title": "Kanca Analizörü",
+  "hook_intro": "Intro senaryonu yapıştır (ilk 15-30 sn): YZ tutmayı ve izleyicilerin nerede ayrıldığını tahmin eder.",
+  "hook_ph": "Intro metnini buraya yapıştır…",
+  "hook_run": "Tutmayı analiz et",
+  "hook_need": "En azından intronu yapıştır",
+  "hook_retention": "Tahmini tutma",
+  "hook_score_label": "Kanca puanı",
+  "hook_drops": "⚠️ Ayrılma noktaları",
+  "hook_fixes": "✅ Düzeltmeler",
+  "hook_rewrite": "💡 Yeniden yazılmış intro (daha iyi)",
+  "nav_region": "Bölge",
+  "audience_intro": "Hedefini (dünya geneli, bölge veya ülke) ve dili seç: YZ en iyi saatleri, trendleri, etiketleri ve konuları verir.",
+  "audience_target": "Hedef (ülke / bölge / dünya geneli)",
+  "audience_target_ph": "örn. Cezayir, MENA, Fransa, Dünya geneli…",
+  "audience_worldwide": "Dünya geneli",
+  "audience_niche": "Niş / kanal tarzı",
+  "audience_niche_ph": "örn. Oyun, Yemek, Tek, Futbol…",
+  "audience_lang": "İçerik dili",
+  "audience_run": "Bu kitle için optimize et",
+  "audience_times": "📅 En iyi paylaşım saatleri",
+  "audience_trends": "📈 Trendler ve formatlar",
+  "audience_hashtags": "🏷️ Yerelleştirilmiş etiketler",
+  "audience_topics": "💡 Konu fikirleri",
+  "audience_tips": "🎯 İpuçları",
+  "titles_section": "YZ Başlıkları",
+  "td_title": "Başlık Doktoru",
+  "td_run": "Derin YZ teşhisi",
+  "td_need": "Önce bir başlık yaz",
+  "td_len": "Uzunluk",
+  "td_num": "Sayı",
+  "td_emotion": "Güçlü kelime",
+  "td_hook": "Kanca",
+  "td_punct": "Noktalama",
+  "td_ai_score": "TO puanı",
+  "td_missing": "⚠️ Eksik olan",
+  "td_improved": "💡 İyileştirilmiş başlık",
+  "td_tips": "✅ İpuçları",
+  "tdh_len": "İdeal 40-70 karakter: YouTube tarafından kesilmeden yeterince açıklayıcı.",
+  "tdh_num": "Bir sayı başlığı somutlaştırır (örn. 5 ipucu, 2024) ve dikkat çeker.",
+  "tdh_emotion": "Güçlü bir kelime (inanılmaz, sır, ücretsiz, şok edici…) tıklamayı tetikler.",
+  "tdh_hook": "Baştaki bir kanca (Nasıl, Neden, bir soru…) merak uyandırır.",
+  "tdh_punct": "Bir ? veya ! duygu katar ve tıklama isteği yaratır.",
+  "h_titledoctor": "Başlığını canlı puanlar ve daha çok tıklama için optimize bir sürüm önerir.",
+  "h_titles": "5 optimize başlık çeşidi üretir (SEO, TO, viral, Shorts, trend).",
+  "h_desc": "Abone CTA'sı, etiketler ve 15 SEO etiketiyle tam bir açıklama oluşturur.",
+  "h_abtest": "2 başlığı karşılaştırır: YZ hangisinin daha çok tıklanacağını tahmin eder.",
+  "h_thumbab": "2 küçük resmi karşılaştırır: Vision YZ hangisinin daha çok tıklandığını ve nedenini söyler.",
+  "h_shorts": "Videoyu kesilecek tam kliplerle 3 Shorts fikrine dönüştürür.",
+  "h_hook": "Introyu analiz eder ve tutmayı + izleyicilerin nerede ayrıldığını tahmin eder.",
+  "h_audience": "Bölgen ve nişin için en iyi saatler, trendler, etiketler ve konular.",
+  "h_revenue": "Videonun 7 günlük görüntülenmesini ve AdSense gelirini tahmin eder.",
+  "h_channel": "Gerçek kanal istatistikleri + sağlık puanı ve YZ önerileri.",
+  "h_comments": "Yorum duygusunu ve istekleri özetler, yanıtlar önerir.",
+  "h_ideas": "Nişine uygun 10 yüksek potansiyelli video fikri önerir.",
+  "desc_section": "Tam açıklama",
+  "desc_intro": "Başlık + niş + bölge → abone CTA'sı, etiketler ve etiketlerle açıklama.",
+  "desc_title": "Video başlığı",
+  "desc_title_ph": "Video başlığın…",
+  "desc_run": "Tam açıklama oluştur",
+  "desc_need": "Önce bir başlık gir",
+  "desc_ready": "✅ Yapıştırmaya hazır açıklama",
+  "desc_copy": "Açıklamayı kopyala",
+  "desc_tags": "🏷️ SEO etiketleri",
+  "desc_copy_tags": "Etiketleri kopyala",
+  "chap_section": "Bölümler",
+  "chap_intro": "Açıklamana yapıştırmak için zaman damgalı bölümler (altyazılardan) oluştur.",
+  "chap_run": "Bölümleri oluştur",
+  "chap_copy": "Bölümleri kopyala",
+  "chap_none": "Bu video için altyazı yok.",
+  "nav_revenue": "Gelir",
+  "rev_intro": "Nişine, kitlene ve abonelerine göre 7 günlük görüntülenme ve AdSense gelirini tahmin et.",
+  "rev_subs": "Kanal abonelerin",
+  "rev_subs_ph": "örn. 6m, 14k, 5000",
+  "rev_run": "Görüntülenme ve geliri tahmin et",
+  "rev_views": "Görüntülenme (G+7)",
+  "rev_income": "Tahmini gelir",
+  "rev_factors": "📊 Anahtar faktörler",
+  "rev_tips": "💡 Artırmak için",
+  "rev_disclaimer": "YZ tabanlı tahmin — gerçek sonuçlar değişebilir.",
+  "nav_sponsor": "Sponsor",
+  "h_sponsor": "Sponsorluk ücretini tahmin eder, marka sunumu, medya kiti ve ortaklık fikirleri üretir.",
+  "sp_intro": "Sponsorluk değerini tahmin et ve anlaşma kapatmak için sunum + medya kiti oluştur.",
+  "sp_subs_ph": "Aboneler (örn. 6m, 14k)",
+  "sp_views_ph": "Video başına ort. görüntülenme (örn. 50k)",
+  "sp_run": "Sponsor kitimi oluştur",
+  "sp_rate": "Tahmini sponsorluk ücreti (video başına)",
+  "sp_pitch": "✉️ Marka sunum mesajı",
+  "sp_copy_pitch": "Sunumu kopyala",
+  "sp_mediakit": "📋 Medya kiti (satış noktaları)",
+  "sp_brands": "🏢 Uygun markalar",
+  "sp_affiliate": "🔗 Ortaklık fikirleri",
+  "sp_disclaimer": "YZ tahmini — gerçek etkileşimine göre pazarlık et.",
+  "nav_trends": "Trendler",
+  "h_trends": "Nişinde şu anda patlayanları algılar (gerçek güncel videolar) + YZ analizi.",
+  "tre_intro": "Nişinde ŞU AN gündemde olan: patlayan videolar + yükselen trendler ve anahtar kelimeler.",
+  "tre_run": "Trendleri algıla",
+  "tre_need": "Önce bir niş seç",
+  "tre_trends": "🔥 Güncel trendler",
+  "tre_keywords": "📈 Yükselen anahtar kelimeler",
+  "tre_advice": "💡 Nasıl yararlanılır",
+  "tre_hot": "🚀 Patlayan videolar (güncel)",
+  "tre_none": "Trend bulunamadı. Daha geniş bir niş dene.",
+  "nav_planner": "Planlayıcı",
+  "h_planner": "Düzenli paylaşım için nişine uygun 7 günlük takvim oluşturur.",
+  "plan_intro": "7 günlük plan oluştur: her gün ne paylaşılacak + en iyi zaman dilimi.",
+  "plan_freq": "Sıklık (isteğe bağlı)",
+  "plan_run": "7 günlük planımı oluştur",
+  "tr_section": "Yerelleştirme / Çeviri",
+  "h_translate": "Başlığını, açıklamanı ve etiketlerini başka bir dile çevirir ve uyarlar.",
+  "tr_intro": "Küresel kitleye ulaşmak için başlık + açıklama + etiketleri bir dile çevir.",
+  "tr_run": "Çevir",
+  "tr_title": "Çevrilen başlık",
+  "tr_desc": "Çevrilen açıklama",
+  "tr_copy": "Çeviriyi kopyala",
+  "cp_section": "Topluluk gönderileri",
+  "h_community": "Topluluk sekmesi için anketler, sorular ve teaser'lar üretir.",
+  "cp_intro": "Videolar arasında kitleni etkilemek için 5 gönderi (anket, soru, teaser) üret.",
+  "cp_run": "5 gönderi üret",
+  "sc_section": "Tam senaryo",
+  "h_script": "Bir konudan yapılandırılmış senaryo (kanca, bölümler, CTA) yazar.",
+  "sc_intro": "Bir konu ver: YZ tam senaryoyu yazar (kanca, intro, bölümler, CTA, kapanış).",
+  "sc_topic_ph": "Video konusu…",
+  "sc_dur": "Süre",
+  "sc_run": "Senaryoyu yaz",
+  "sc_need": "Önce bir konu gir",
+  "sc_hook": "Kanca (ilk 5 sn)",
+  "sc_copy": "Senaryoyu kopyala",
+  "pc_section": "Başlık + küçük resim kontrolü",
+  "h_pair": "Başlık ve küçük resmin birbirini tamamlayıp TV ve mobilde okunaklı olduğunu kontrol eder.",
+  "pc_intro": "YZ, başlık ve küçük resmin birbirini tamamladığını (tekrar olmadan) ve okunabilirliğini kontrol eder.",
+  "pc_run": "İkiliyi kontrol et",
+  "pc_complement": "Tamamlayıcı",
+  "pc_issues": "⚠️ Sorunlar",
+  "pc_tips": "✅ İpuçları",
+  "pl_section": "Oynatma listesi optimizasyonu",
+  "h_playlists": "Videolarını oturum süresi için optimize edilmiş oynatma listelerine gruplar.",
+  "pl_intro": "YZ videolarını optimize edilmiş oynatma listelerine gruplar (daha çok izlenme süresi).",
+  "pl_run": "Oynatma listelerimi optimize et",
+  "au_section": "Tek tıkla tam denetim",
+  "h_audit": "SEO + Küçük resim + Başlığı tek seferde çalıştırır ve öncelikli eylem planı verir.",
+  "au_run": "Tam denetimi çalıştır",
+  "au_global": "Genel video puanı",
+  "au_plan": "🎯 Öncelikli eylem planı",
+  "ob_title": "VidSpark AI'ya hoş geldin!",
+  "ob_sub": "Videolarını optimize etmek için 24 YZ aracı. İşte temel olanlar:",
+  "ob_audit": "tek tıkla tam denetim",
+  "ob_title2": "başlığın için canlı TO puanı",
+  "ob_thumb": "2 küçük resmi karşılaştır",
+  "ob_shorts": "Shorts fikirleri + kesilecek klipler",
+  "ob_sponsor": "sponsorluk gelirini tahmin et",
+  "ob_btn": "Hadi başlayalım 🚀",
+  "nav_channel": "Kanal",
+  "chan_intro": "Kanal panosu: gerçek istatistikler + sağlık puanı ve YZ önerileri.",
+  "chan_run": "Kanalımı analiz et",
+  "chan_subs": "Aboneler",
+  "chan_views": "Toplam görüntülenme",
+  "chan_vids": "Video",
+  "chan_avg": "Ort. görüntülenme",
+  "chan_eng": "Etkileşim",
+  "chan_freq": "Sıklık",
+  "chan_ai_loading": "YZ teşhisi sürüyor…",
+  "chan_ai_fail": "YZ teşhisi kullanılamıyor",
+  "chan_health": "Sağlık puanı",
+  "chan_strengths": "✅ Güçlü yönler",
+  "chan_weak": "⚠️ Zayıf yönler",
+  "chan_reco": "💡 Öneriler",
+  "nav_comments": "Yorumlar",
+  "com_intro": "YZ yorumları okur: duygu, kitle istekleri, video fikirleri ve önerilen yanıtlar.",
+  "com_run": "Yorumları analiz et",
+  "com_none": "Bu videoda yorum bulunamadı.",
+  "com_sentiment": "Genel duygu",
+  "com_pos": "Olumlu",
+  "com_neu": "Nötr",
+  "com_neg": "Olumsuz",
+  "com_requests": "🙋 Kitle istekleri",
+  "com_ideas": "💡 Sonraki video fikirleri",
+  "com_replies": "✍️ Önerilen yanıtlar",
+  "com_copy": "Kopyala",
+  "nav_ideas": "Fikirler",
+  "idea_intro": "Nişini, bölgeni ve isteğe bağlı bir konu seç: YZ 10 yüksek potansiyelli video fikri önerir.",
+  "idea_topic_ph": "Konu veya anahtar kelime (isteğe bağlı)…",
+  "idea_run": "10 fikir üret",
+  "idea_copy": "Başlığı kopyala",
+  "kw_opportunity": "Fırsat puanı",
+  "kw_difficulty": "Zorluk",
+  "kw_demand": "Talep",
+  "kw_trend": "Trend",
+  "kw_best": "🎯 Hedeflenecek anahtar kelimeler",
+  "kw_competition": "Rekabet",
+  "seo_tab_analyse": "📊 Analiz",
+  "seo_tab_optim": "🎯 Optimizasyon",
+  "seo_tab_kw": "🔑 Anahtar kelimeler",
+  "seo_tab_rec_kw": "Önerilen anahtar kelimeler",
+  "seo_tab_issues": "sorunlar",
+  "seo_all_ok": "Tüm kriterler sağlandı!",
+  "example_label": "Örnek:",
+  "recommendation_label": "ÖNERİ:",
+  "impact_pos_num": "Olumlu etki +8% tahmini TO",
+  "impact_neg_num": "Bir sayı eklemek TO'yu %15–40 artırabilir",
+  "viral_pos_hook": "Başlık başında TO kancası",
+  "viral_pos_num": "Başlıkta sayı",
+  "viral_pos_em": "Duygusal kelime mevcut",
+  "viral_pos_desc": "Açıklama yeterince uzun",
+  "viral_pos_len": "Optimal başlık uzunluğu",
+  "viral_neg_hook": "TO kancası yok — başa bir soru veya sayı ekle",
+  "viral_neg_num": "Sayı yok — sayılı başlıklar +%40 TO alır",
+  "viral_neg_em": "Duygusal kelime yok — güçlü bir kelime ekle",
+  "viral_neg_desc_tpl": "Kısa açıklama (N karakter) — 500+ hedefle",
+  "viral_neg_len_short": "Başlık çok kısa",
+  "viral_neg_len_long": "Başlık çok uzun",
+  "viral_potential_title": "Viral potansiyel puanı",
+  "btn_viral_ai": "✨ Viral YZ Analizi"
+ },
+ "nl": {
+  "nav_abtest": "A/B-test",
+  "abtest_intro": "Vergelijk twee titels: de AI voorspelt welke de meeste klikken krijgt.",
+  "abtest_a": "Titel A",
+  "abtest_b": "Titel B",
+  "abtest_run": "⚔️ Titels vergelijken",
+  "abtest_winner": "Winnaar",
+  "abtest_verdict": "AI-oordeel",
+  "abtest_improved": "💡 Voorgestelde titel (nog beter)",
+  "abtest_ctr": "Gesch. CTR",
+  "abtest_confidence": "Zekerheid",
+  "abtest_use": "Deze titel gebruiken",
+  "thumbab_title": "Thumbnail A/B",
+  "thumbab_intro": "Vergelijk 2 thumbnails: Vision AI zegt welke meer CTR krijgt en waarom.",
+  "thumbab_a": "Thumbnail A",
+  "thumbab_b": "Thumbnail B",
+  "thumbab_run": "📸 Thumbnails vergelijken",
+  "thumbab_tips": "💡 Om de winnaar te verbeteren",
+  "thumbab_need2": "Kies eerst 2 afbeeldingen",
+  "thumbab_prompt_label": "🎨 Gedetailleerde prompt om de verbeterde thumbnail te maken:",
+  "thumbab_prompt_copy": "Prompt kopiëren",
+  "thumbab_prompt_hint": "Plak deze prompt in een afbeeldings-AI (Midjourney, DALL·E, ChatGPT, Leonardo…) om je thumbnail te genereren.",
+  "nav_shorts": "Shorts",
+  "shorts_intro": "Maak van deze video virale Shorts-ideeën (titel, hook, script, hashtags).",
+  "shorts_generate": "🎬 Shorts genereren",
+  "shorts_hook": "Hook (eerste 3 sec)",
+  "shorts_script": "Script",
+  "shorts_duration": "Duur",
+  "shorts_copy": "Script kopiëren",
+  "shorts_summary": "Samenvatting",
+  "shorts_clips": "✂️ Te knippen clips",
+  "shorts_estimated": "geschat",
+  "shorts_real": "op basis van ondertitels",
+  "live_stats_title": "Echte YouTube-statistieken",
+  "live_stats_btn": "Echte data laden (weergaven/u, tags…)",
+  "audit_title": "Kanaalaudit",
+  "audit_btn": "Dit kanaal auditen",
+  "thumb_ai_title": "AI-thumbnailanalyse",
+  "thumb_ai_btn": "Mijn thumbnail analyseren (AI)",
+  "thumb_ideas_title": "Thumbnailconcepten genereren",
+  "thumb_ideas_intro": "3 concepten (tekst, kleuren, lay-out, gezicht) op basis van je titel, klaar om uit te voeren.",
+  "thumb_ideas_btn": "3 concepten genereren",
+  "thumb_ideas_loading": "Concepten genereren…",
+  "thumb_ideas_concept": "Concept",
+  "thumb_ideas_emotion": "Emotie",
+  "thumb_ideas_text": "Tekst",
+  "thumb_ideas_focal": "Focuspunt",
+  "thumb_ideas_face": "Gezicht",
+  "thumb_ideas_bg": "Achtergrond",
+  "thumb_ideas_why": "Waarom",
+  "thumb_ideas_copy": "Briefing kopiëren",
+  "thumb_ideas_locked_sub": "Upgrade naar Pro om alle 3 concepten te ontgrendelen",
+  "thumb_ideas_niche_ph": "Niche (optioneel, bijv. koken, gaming)",
+  "thumb_gen_btn": "🖼️ Achtergrond genereren",
+  "thumb_gen_loading": "Achtergrond genereren…",
+  "thumb_gen_overlay_note": "AI-gegenereerde achtergrond + je overlay-tekst (afbeeldings-AI schrijft tekst niet goed, vooral Arabisch).",
+  "thumb_gen_text_ph": "Titeltekst op de afbeelding…",
+  "thumb_gen_download": "Afbeelding downloaden",
+  "thumb_gen_downloaded": "Afbeelding gedownload",
+  "thumb_gen_drag_note": "2 regels: typ je tekst, sleep elke regel, kies kleur/grootte/lettertype en download.",
+  "thumb_gen_line": "Regel",
+  "thumb_gen_color": "Kleur",
+  "thumb_gen_font": "Lettertype",
+  "thumb_gen_size": "Grootte",
+  "real_comp_title": "Echte concurrenten",
+  "real_comp_btn": "Bekijk de echte topvideo's",
+  "keywords_title": "Zoekwoordonderzoek",
+  "keywords_ph": "bijv. kiprecept",
+  "title_types": "Titeltypes",
+  "result_label": "Resultaat",
+  "hook_title": "Hook-analyse",
+  "hook_intro": "Plak je intro-script (eerste 15-30 sec): de AI voorspelt de retentie en waar kijkers afhaken.",
+  "hook_ph": "Plak hier je introtekst…",
+  "hook_run": "Retentie analyseren",
+  "hook_need": "Plak ten minste je intro",
+  "hook_retention": "Gesch. retentie",
+  "hook_score_label": "Hook-score",
+  "hook_drops": "⚠️ Afhaakpunten",
+  "hook_fixes": "✅ Correcties",
+  "hook_rewrite": "💡 Herschreven intro (beter)",
+  "nav_region": "Regio",
+  "audience_intro": "Kies je doel (wereldwijd, regio of land) en de taal: de AI geeft beste tijden, trends, hashtags en onderwerpen.",
+  "audience_target": "Doel (land / regio / wereldwijd)",
+  "audience_target_ph": "bijv. Algerije, MENA, Frankrijk, Wereldwijd…",
+  "audience_worldwide": "Wereldwijd",
+  "audience_niche": "Niche / kanaalstijl",
+  "audience_niche_ph": "bijv. Gaming, Koken, Tech, Voetbal…",
+  "audience_lang": "Inhoudstaal",
+  "audience_run": "Optimaliseren voor dit publiek",
+  "audience_times": "📅 Beste posttijden",
+  "audience_trends": "📈 Trends en formats",
+  "audience_hashtags": "🏷️ Gelokaliseerde hashtags",
+  "audience_topics": "💡 Onderwerpideeën",
+  "audience_tips": "🎯 Tips",
+  "titles_section": "AI-titels",
+  "td_title": "Titeldokter",
+  "td_run": "Diepe AI-diagnose",
+  "td_need": "Typ eerst een titel",
+  "td_len": "Lengte",
+  "td_num": "Getal",
+  "td_emotion": "Krachtwoord",
+  "td_hook": "Hook",
+  "td_punct": "Interpunctie",
+  "td_ai_score": "CTR-score",
+  "td_missing": "⚠️ Wat ontbreekt",
+  "td_improved": "💡 Verbeterde titel",
+  "td_tips": "✅ Tips",
+  "tdh_len": "Ideaal 40-70 tekens: beschrijvend genoeg zonder door YouTube afgekapt te worden.",
+  "tdh_num": "Een getal maakt de titel concreet (bijv. 5 tips, 2024) en valt op.",
+  "tdh_emotion": "Een krachtwoord (geweldig, geheim, gratis, schokkend…) lokt de klik uit.",
+  "tdh_hook": "Een hook aan het begin (Hoe, Waarom, een vraag…) wekt nieuwsgierigheid.",
+  "tdh_punct": "Een ? of ! voegt emotie toe en maakt zin om te klikken.",
+  "h_titledoctor": "Scoort je titel live en stelt een geoptimaliseerde versie voor meer klikken voor.",
+  "h_titles": "Genereert 5 geoptimaliseerde titelvarianten (SEO, CTR, viraal, Shorts, trending).",
+  "h_desc": "Maakt een volledige beschrijving met abonneer-CTA, hashtags en 15 SEO-tags.",
+  "h_abtest": "Vergelijkt 2 titels: de AI voorspelt welke de meeste klikken krijgt.",
+  "h_thumbab": "Vergelijkt 2 thumbnails: Vision AI zegt welke meer klikken krijgt en waarom.",
+  "h_shorts": "Maakt van de video 3 Shorts-ideeën met de exacte te knippen clips.",
+  "h_hook": "Analyseert je intro en voorspelt de retentie + waar kijkers afhaken.",
+  "h_audience": "Beste tijden, trends, hashtags en onderwerpen voor je regio en niche.",
+  "h_revenue": "Schat de weergaven over 7 dagen en de AdSense-inkomsten van je video.",
+  "h_channel": "Echte kanaalstatistieken + gezondheidsscore en AI-aanbevelingen.",
+  "h_comments": "Vat het sentiment van reacties en verzoeken samen en stelt antwoorden voor.",
+  "h_ideas": "Stelt 10 video-ideeën met hoog potentieel voor je niche voor.",
+  "desc_section": "Volledige beschrijving",
+  "desc_intro": "Titel + niche + regio → beschrijving met abonneer-CTA, hashtags en tags.",
+  "desc_title": "Videotitel",
+  "desc_title_ph": "Je videotitel…",
+  "desc_run": "Volledige beschrijving genereren",
+  "desc_need": "Voer eerst een titel in",
+  "desc_ready": "✅ Kant-en-klare beschrijving om te plakken",
+  "desc_copy": "Beschrijving kopiëren",
+  "desc_tags": "🏷️ SEO-tags",
+  "desc_copy_tags": "Tags kopiëren",
+  "chap_section": "Hoofdstukken",
+  "chap_intro": "Genereer hoofdstukken met tijdstempels (uit ondertitels) om in je beschrijving te plakken.",
+  "chap_run": "Hoofdstukken genereren",
+  "chap_copy": "Hoofdstukken kopiëren",
+  "chap_none": "Ondertitels niet beschikbaar voor deze video.",
+  "nav_revenue": "Inkomsten",
+  "rev_intro": "Schat de weergaven over 7 dagen en de AdSense-inkomsten op basis van niche, publiek en abonnees.",
+  "rev_subs": "Abonnees van je kanaal",
+  "rev_subs_ph": "bijv. 6m, 14k, 5000",
+  "rev_run": "Weergaven & inkomsten schatten",
+  "rev_views": "Weergaven (D+7)",
+  "rev_income": "Gesch. inkomsten",
+  "rev_factors": "📊 Sleutelfactoren",
+  "rev_tips": "💡 Om te verhogen",
+  "rev_disclaimer": "AI-gebaseerde schatting — werkelijke resultaten kunnen variëren.",
+  "nav_sponsor": "Sponsor",
+  "h_sponsor": "Schat je sponsortarief, genereert een merkpitch, een mediakit en affiliate-ideeën.",
+  "sp_intro": "Schat je sponsorwaarde en genereer een pitch + mediakit om deals binnen te halen.",
+  "sp_subs_ph": "Abonnees (bijv. 6m, 14k)",
+  "sp_views_ph": "Gem. weergaven/video (bijv. 50k)",
+  "sp_run": "Mijn sponsorkit genereren",
+  "sp_rate": "Geschat sponsortarief (per video)",
+  "sp_pitch": "✉️ Merkpitchbericht",
+  "sp_copy_pitch": "Pitch kopiëren",
+  "sp_mediakit": "📋 Mediakit (verkooppunten)",
+  "sp_brands": "🏢 Passende merken",
+  "sp_affiliate": "🔗 Affiliate-ideeën",
+  "sp_disclaimer": "AI-schatting — onderhandel op basis van je echte betrokkenheid.",
+  "nav_trends": "Trends",
+  "h_trends": "Detecteert wat nu explodeert in je niche (echte recente video's) + AI-analyse.",
+  "tre_intro": "Wat NU hot is in je niche: explosieve video's + opkomende trends en zoekwoorden.",
+  "tre_run": "Trends detecteren",
+  "tre_need": "Kies eerst een niche",
+  "tre_trends": "🔥 Huidige trends",
+  "tre_keywords": "📈 Opkomende zoekwoorden",
+  "tre_advice": "💡 Hoe je erop inspeelt",
+  "tre_hot": "🚀 Explosieve video's (recent)",
+  "tre_none": "Geen trends gevonden. Probeer een bredere niche.",
+  "nav_planner": "Planner",
+  "h_planner": "Maakt een 7-daagse kalender op maat van je niche om consistent te posten.",
+  "plan_intro": "Genereer een 7-daags plan: wat elke dag te posten + het beste tijdslot.",
+  "plan_freq": "Frequentie (optioneel)",
+  "plan_run": "Mijn 7-daags plan genereren",
+  "tr_section": "Lokalisatie / Vertaling",
+  "h_translate": "Vertaalt en past je titel, beschrijving en tags aan naar een andere taal.",
+  "tr_intro": "Vertaal titel + beschrijving + tags naar een taal om een wereldwijd publiek te bereiken.",
+  "tr_run": "Vertalen",
+  "tr_title": "Vertaalde titel",
+  "tr_desc": "Vertaalde beschrijving",
+  "tr_copy": "Vertaling kopiëren",
+  "cp_section": "Communityposts",
+  "h_community": "Genereert polls, vragen en teasers voor het Community-tabblad.",
+  "cp_intro": "Genereer 5 posts (polls, vragen, teasers) om je publiek tussen video's te boeien.",
+  "cp_run": "5 posts genereren",
+  "sc_section": "Volledig script",
+  "h_script": "Schrijft een gestructureerd script (hook, secties, CTA) vanuit een onderwerp.",
+  "sc_intro": "Geef een onderwerp: de AI schrijft het volledige script (hook, intro, secties, CTA, outro).",
+  "sc_topic_ph": "Video-onderwerp…",
+  "sc_dur": "Duur",
+  "sc_run": "Het script schrijven",
+  "sc_need": "Voer eerst een onderwerp in",
+  "sc_hook": "Hook (eerste 5 sec)",
+  "sc_copy": "Script kopiëren",
+  "pc_section": "Titel + thumbnail check",
+  "h_pair": "Controleert of je titel en thumbnail elkaar aanvullen en leesbaar zijn op tv en mobiel.",
+  "pc_intro": "De AI controleert of je titel en thumbnail elkaar aanvullen (geen herhaling) en hun leesbaarheid.",
+  "pc_run": "Het paar controleren",
+  "pc_complement": "Aanvullend",
+  "pc_issues": "⚠️ Problemen",
+  "pc_tips": "✅ Tips",
+  "pl_section": "Afspeellijst-optimalisator",
+  "h_playlists": "Groepeert je video's in geoptimaliseerde afspeellijsten voor sessieduur.",
+  "pl_intro": "De AI groepeert je video's in geoptimaliseerde afspeellijsten (meer kijktijd).",
+  "pl_run": "Mijn afspeellijsten optimaliseren",
+  "au_section": "Volledige audit met 1 klik",
+  "h_audit": "Voert SEO + Thumbnail + Titel in één keer uit en geeft een geprioriteerd actieplan.",
+  "au_run": "Volledige audit uitvoeren",
+  "au_global": "Totale videoscore",
+  "au_plan": "🎯 Prioritair actieplan",
+  "ob_title": "Welkom bij VidSpark AI!",
+  "ob_sub": "24 AI-tools om je video's te optimaliseren. Dit is het belangrijkste:",
+  "ob_audit": "een volledige audit met 1 klik",
+  "ob_title2": "live CTR-score voor je titel",
+  "ob_thumb": "2 thumbnails vergelijken",
+  "ob_shorts": "Shorts-ideeën + te knippen clips",
+  "ob_sponsor": "schat je sponsorinkomsten",
+  "ob_btn": "We gaan ervoor 🚀",
+  "nav_channel": "Kanaal",
+  "chan_intro": "Kanaaldashboard: echte statistieken + gezondheidsscore en AI-aanbevelingen.",
+  "chan_run": "Mijn kanaal analyseren",
+  "chan_subs": "Abonnees",
+  "chan_views": "Totale weergaven",
+  "chan_vids": "Video's",
+  "chan_avg": "Gem. weergaven",
+  "chan_eng": "Betrokkenheid",
+  "chan_freq": "Frequentie",
+  "chan_ai_loading": "AI-diagnose bezig…",
+  "chan_ai_fail": "AI-diagnose niet beschikbaar",
+  "chan_health": "Gezondheidsscore",
+  "chan_strengths": "✅ Sterke punten",
+  "chan_weak": "⚠️ Zwakke punten",
+  "chan_reco": "💡 Aanbevelingen",
+  "nav_comments": "Reacties",
+  "com_intro": "De AI leest de reacties: sentiment, verzoeken van het publiek, video-ideeën en voorgestelde antwoorden.",
+  "com_run": "Reacties analyseren",
+  "com_none": "Geen reacties gevonden bij deze video.",
+  "com_sentiment": "Algemeen sentiment",
+  "com_pos": "Positief",
+  "com_neu": "Neutraal",
+  "com_neg": "Negatief",
+  "com_requests": "🙋 Verzoeken van het publiek",
+  "com_ideas": "💡 Ideeën voor de volgende video",
+  "com_replies": "✍️ Voorgestelde antwoorden",
+  "com_copy": "Kopiëren",
+  "nav_ideas": "Ideeën",
+  "idea_intro": "Kies je niche, regio en een optioneel onderwerp: de AI stelt 10 video-ideeën met hoog potentieel voor.",
+  "idea_topic_ph": "Onderwerp of zoekwoord (optioneel)…",
+  "idea_run": "10 ideeën genereren",
+  "idea_copy": "Titel kopiëren",
+  "kw_opportunity": "Kansscore",
+  "kw_difficulty": "Moeilijkheid",
+  "kw_demand": "Vraag",
+  "kw_trend": "Trend",
+  "kw_best": "🎯 Te richten zoekwoorden",
+  "kw_competition": "Concurrentie",
+  "seo_tab_analyse": "📊 Analyse",
+  "seo_tab_optim": "🎯 Optimalisatie",
+  "seo_tab_kw": "🔑 Zoekwoorden",
+  "seo_tab_rec_kw": "Aanbevolen zoekwoorden",
+  "seo_tab_issues": "problemen",
+  "seo_all_ok": "Alle criteria voldaan!",
+  "example_label": "Voorbeeld:",
+  "recommendation_label": "AANBEVELING:",
+  "impact_pos_num": "Positief effect +8% geschatte CTR",
+  "impact_neg_num": "Een getal toevoegen kan de CTR met 15–40% verhogen",
+  "viral_pos_hook": "CTR-hook aan het begin van de titel",
+  "viral_pos_num": "Getal in de titel",
+  "viral_pos_em": "Emotioneel woord aanwezig",
+  "viral_pos_desc": "Beschrijving lang genoeg",
+  "viral_pos_len": "Optimale titellengte",
+  "viral_neg_hook": "Geen CTR-hook — voeg een vraag of getal toe aan het begin",
+  "viral_neg_num": "Geen getal — titels met getallen krijgen +40% CTR",
+  "viral_neg_em": "Geen emotioneel woord — voeg een krachtwoord toe",
+  "viral_neg_desc_tpl": "Korte beschrijving (N tekens) — streef naar 500+",
+  "viral_neg_len_short": "Titel te kort",
+  "viral_neg_len_long": "Titel te lang",
+  "viral_potential_title": "Virale potentieelscore",
+  "btn_viral_ai": "✨ Virale AI-analyse"
+ }
+};
+Object.keys(FILL_I18N).forEach(l=>{ if(I18N[l]){ for(const k in FILL_I18N[l]){ if(!(k in I18N[l])) I18N[l][k]=FILL_I18N[l][k]; } } });
+
+/* ── REPORT_I18N : clés du rapport complet (résumé, fixes, top10, spinners) — 14 langues ── */
+const REPORT_I18N = {
+ fr:{ unit_char:"car.", viral_add_num:"Ajouter un chiffre", viral_add_em:"Ajouter un mot émotionnel", viral_add_hook:"Ajouter un hook CTR", act_add_punct:"Ajouter ? ou !", desc_richness:"Richesse de la description", top10_6:"Ajouter des timestamps", top10_7:"Améliorer la miniature", top10_8:"Ajouter un visage expressif", top10_9:"Publier 14h–17h", top10_10:"Répondre aux 10 premiers commentaires", report_fix_pre:"En corrigeant", report_fix_mid:"point(s), le score peut atteindre", report_pts:"pts", report_vp:"Potentiel viral", spin_thumb_ai:"🔍 Analyse de la miniature…", spin_pair:"🔗 Analyse de la paire…", spin_trends:"🔥 Détection des tendances…", spin_channel:"📊 Analyse de la chaîne…", spin_hook:"🪝 Analyse de la rétention…" },
+ en:{ unit_char:"chars", viral_add_num:"Add a number", viral_add_em:"Add an emotional word", viral_add_hook:"Add a CTR hook", act_add_punct:"Add ? or !", desc_richness:"Description richness", top10_6:"Add timestamps", top10_7:"Improve the thumbnail", top10_8:"Add an expressive face", top10_9:"Post 2–5 PM", top10_10:"Reply to the first 10 comments", report_fix_pre:"By fixing", report_fix_mid:"point(s), the score can reach", report_pts:"pts", report_vp:"Viral potential", spin_thumb_ai:"🔍 Analyzing the thumbnail…", spin_pair:"🔗 Analyzing the pair…", spin_trends:"🔥 Detecting trends…", spin_channel:"📊 Analyzing the channel…", spin_hook:"🪝 Analyzing retention…" },
+ ar:{ unit_char:"حرف", viral_add_num:"أضف رقمًا", viral_add_em:"أضف كلمة عاطفية", viral_add_hook:"أضف خطّاف CTR", act_add_punct:"أضف ؟ أو !", desc_richness:"غنى الوصف", top10_6:"أضف طوابع زمنية", top10_7:"حسّن الصورة المصغّرة", top10_8:"أضف وجهًا معبّرًا", top10_9:"انشر بين 14–17", top10_10:"ردّ على أول 10 تعليقات", report_fix_pre:"بتصحيح", report_fix_mid:"نقطة، يمكن أن تصل النتيجة إلى", report_pts:"نقطة", report_vp:"الإمكانات الفيروسية", spin_thumb_ai:"🔍 جارٍ تحليل الصورة المصغّرة…", spin_pair:"🔗 جارٍ تحليل الثنائي…", spin_trends:"🔥 جارٍ اكتشاف الاتجاهات…", spin_channel:"📊 جارٍ تحليل القناة…", spin_hook:"🪝 جارٍ تحليل الاحتفاظ…" },
+ es:{ unit_char:"car.", viral_add_num:"Añadir un número", viral_add_em:"Añadir una palabra emocional", viral_add_hook:"Añadir un gancho de CTR", act_add_punct:"Añadir ? o !", desc_richness:"Riqueza de la descripción", top10_6:"Añadir marcas de tiempo", top10_7:"Mejorar la miniatura", top10_8:"Añadir un rostro expresivo", top10_9:"Publicar 14–17 h", top10_10:"Responder a los 10 primeros comentarios", report_fix_pre:"Corrigiendo", report_fix_mid:"punto(s), la puntuación puede llegar a", report_pts:"pts", report_vp:"Potencial viral", spin_thumb_ai:"🔍 Analizando la miniatura…", spin_pair:"🔗 Analizando el par…", spin_trends:"🔥 Detectando tendencias…", spin_channel:"📊 Analizando el canal…", spin_hook:"🪝 Analizando la retención…" },
+ pt:{ unit_char:"car.", viral_add_num:"Adicionar um número", viral_add_em:"Adicionar uma palavra emocional", viral_add_hook:"Adicionar um gancho de CTR", act_add_punct:"Adicionar ? ou !", desc_richness:"Riqueza da descrição", top10_6:"Adicionar timestamps", top10_7:"Melhorar a miniatura", top10_8:"Adicionar um rosto expressivo", top10_9:"Publicar 14–17h", top10_10:"Responder aos 10 primeiros comentários", report_fix_pre:"Corrigindo", report_fix_mid:"ponto(s), a pontuação pode chegar a", report_pts:"pts", report_vp:"Potencial viral", spin_thumb_ai:"🔍 Analisando a miniatura…", spin_pair:"🔗 Analisando o par…", spin_trends:"🔥 Detectando tendências…", spin_channel:"📊 Analisando o canal…", spin_hook:"🪝 Analisando a retenção…" },
+ de:{ unit_char:"Z.", viral_add_num:"Eine Zahl hinzufügen", viral_add_em:"Ein emotionales Wort hinzufügen", viral_add_hook:"Einen CTR-Hook hinzufügen", act_add_punct:"? oder ! hinzufügen", desc_richness:"Beschreibungsumfang", top10_6:"Zeitstempel hinzufügen", top10_7:"Thumbnail verbessern", top10_8:"Ein ausdrucksstarkes Gesicht hinzufügen", top10_9:"14–17 Uhr posten", top10_10:"Auf die ersten 10 Kommentare antworten", report_fix_pre:"Durch das Beheben von", report_fix_mid:"Punkt(en) kann der Score erreichen", report_pts:"Pkt.", report_vp:"Virales Potenzial", spin_thumb_ai:"🔍 Thumbnail wird analysiert…", spin_pair:"🔗 Paar wird analysiert…", spin_trends:"🔥 Trends werden erkannt…", spin_channel:"📊 Kanal wird analysiert…", spin_hook:"🪝 Bindung wird analysiert…" },
+ it:{ unit_char:"car.", viral_add_num:"Aggiungere un numero", viral_add_em:"Aggiungere una parola emozionale", viral_add_hook:"Aggiungere un hook CTR", act_add_punct:"Aggiungere ? o !", desc_richness:"Ricchezza della descrizione", top10_6:"Aggiungere timestamp", top10_7:"Migliorare la miniatura", top10_8:"Aggiungere un volto espressivo", top10_9:"Pubblicare 14–17", top10_10:"Rispondere ai primi 10 commenti", report_fix_pre:"Correggendo", report_fix_mid:"punto/i, il punteggio può raggiungere", report_pts:"pt", report_vp:"Potenziale virale", spin_thumb_ai:"🔍 Analisi della miniatura…", spin_pair:"🔗 Analisi della coppia…", spin_trends:"🔥 Rilevamento dei trend…", spin_channel:"📊 Analisi del canale…", spin_hook:"🪝 Analisi della retention…" },
+ ru:{ unit_char:"симв.", viral_add_num:"Добавить число", viral_add_em:"Добавить эмоциональное слово", viral_add_hook:"Добавить CTR-хук", act_add_punct:"Добавить ? или !", desc_richness:"Насыщенность описания", top10_6:"Добавить таймкоды", top10_7:"Улучшить превью", top10_8:"Добавить выразительное лицо", top10_9:"Публиковать 14–17", top10_10:"Ответить на первые 10 комментариев", report_fix_pre:"Исправив", report_fix_mid:"пункт(ов), оценка может достичь", report_pts:"балл.", report_vp:"Вирусный потенциал", spin_thumb_ai:"🔍 Анализ превью…", spin_pair:"🔗 Анализ пары…", spin_trends:"🔥 Обнаружение трендов…", spin_channel:"📊 Анализ канала…", spin_hook:"🪝 Анализ удержания…" },
+ ja:{ unit_char:"文字", viral_add_num:"数字を追加", viral_add_em:"感情的な言葉を追加", viral_add_hook:"CTRフックを追加", act_add_punct:"? または ! を追加", desc_richness:"説明の充実度", top10_6:"タイムスタンプを追加", top10_7:"サムネイルを改善", top10_8:"表情豊かな顔を追加", top10_9:"14〜17時に投稿", top10_10:"最初の10件のコメントに返信", report_fix_pre:"修正すると", report_fix_mid:"点で、スコアは次に到達できます", report_pts:"点", report_vp:"バイラル潜在力", spin_thumb_ai:"🔍 サムネイルを分析中…", spin_pair:"🔗 ペアを分析中…", spin_trends:"🔥 トレンドを検出中…", spin_channel:"📊 チャンネルを分析中…", spin_hook:"🪝 維持率を分析中…" },
+ ko:{ unit_char:"자", viral_add_num:"숫자 추가", viral_add_em:"감정 단어 추가", viral_add_hook:"CTR 후크 추가", act_add_punct:"? 또는 ! 추가", desc_richness:"설명 풍부도", top10_6:"타임스탬프 추가", top10_7:"썸네일 개선", top10_8:"표정이 풍부한 얼굴 추가", top10_9:"오후 2~5시 게시", top10_10:"첫 10개 댓글에 답글", report_fix_pre:"수정하면", report_fix_mid:"개 항목으로 점수가 도달할 수 있습니다", report_pts:"점", report_vp:"바이럴 잠재력", spin_thumb_ai:"🔍 썸네일 분석 중…", spin_pair:"🔗 쌍 분석 중…", spin_trends:"🔥 트렌드 감지 중…", spin_channel:"📊 채널 분석 중…", spin_hook:"🪝 시청 지속률 분석 중…" },
+ hi:{ unit_char:"अक्षर", viral_add_num:"एक संख्या जोड़ें", viral_add_em:"एक भावनात्मक शब्द जोड़ें", viral_add_hook:"एक CTR हुक जोड़ें", act_add_punct:"? या ! जोड़ें", desc_richness:"विवरण की समृद्धि", top10_6:"टाइमस्टैम्प जोड़ें", top10_7:"थंबनेल सुधारें", top10_8:"एक भावपूर्ण चेहरा जोड़ें", top10_9:"दोपहर 2–5 बजे पोस्ट करें", top10_10:"पहले 10 कमेंट का जवाब दें", report_fix_pre:"सुधारने पर", report_fix_mid:"बिंदु, स्कोर पहुँच सकता है", report_pts:"अंक", report_vp:"वायरल संभावना", spin_thumb_ai:"🔍 थंबनेल विश्लेषण हो रहा है…", spin_pair:"🔗 जोड़ी विश्लेषण हो रहा है…", spin_trends:"🔥 ट्रेंड पहचाने जा रहे हैं…", spin_channel:"📊 चैनल विश्लेषण हो रहा है…", spin_hook:"🪝 रिटेंशन विश्लेषण हो रहा है…" },
+ zh:{ unit_char:"字符", viral_add_num:"添加一个数字", viral_add_em:"添加一个情绪词", viral_add_hook:"添加一个点击率钩子", act_add_punct:"添加 ? 或 !", desc_richness:"描述丰富度", top10_6:"添加时间戳", top10_7:"改进缩略图", top10_8:"添加一张有表情的脸", top10_9:"在下午2–5点发布", top10_10:"回复前10条评论", report_fix_pre:"修正", report_fix_mid:"个要点后，得分可达到", report_pts:"分", report_vp:"爆款潜力", spin_thumb_ai:"🔍 正在分析缩略图…", spin_pair:"🔗 正在分析组合…", spin_trends:"🔥 正在检测趋势…", spin_channel:"📊 正在分析频道…", spin_hook:"🪝 正在分析留存率…" },
+ tr:{ unit_char:"karakter", viral_add_num:"Bir sayı ekle", viral_add_em:"Duygusal bir kelime ekle", viral_add_hook:"Bir CTR kancası ekle", act_add_punct:"? veya ! ekle", desc_richness:"Açıklama zenginliği", top10_6:"Zaman damgaları ekle", top10_7:"Küçük resmi iyileştir", top10_8:"İfadeli bir yüz ekle", top10_9:"14–17 arası paylaş", top10_10:"İlk 10 yoruma yanıt ver", report_fix_pre:"Şunu düzelterek:", report_fix_mid:"nokta, puan şuna ulaşabilir", report_pts:"puan", report_vp:"Viral potansiyel", spin_thumb_ai:"🔍 Küçük resim analiz ediliyor…", spin_pair:"🔗 İkili analiz ediliyor…", spin_trends:"🔥 Trendler algılanıyor…", spin_channel:"📊 Kanal analiz ediliyor…", spin_hook:"🪝 Tutma analiz ediliyor…" },
+ nl:{ unit_char:"tekens", viral_add_num:"Een getal toevoegen", viral_add_em:"Een emotioneel woord toevoegen", viral_add_hook:"Een CTR-hook toevoegen", act_add_punct:"? of ! toevoegen", desc_richness:"Rijkdom van de beschrijving", top10_6:"Tijdstempels toevoegen", top10_7:"De thumbnail verbeteren", top10_8:"Een expressief gezicht toevoegen", top10_9:"Posten 14–17 uur", top10_10:"Reageer op de eerste 10 reacties", report_fix_pre:"Door te corrigeren", report_fix_mid:"punt(en), kan de score bereiken", report_pts:"ptn", report_vp:"Viraal potentieel", spin_thumb_ai:"🔍 Thumbnail wordt geanalyseerd…", spin_pair:"🔗 Paar wordt geanalyseerd…", spin_trends:"🔥 Trends detecteren…", spin_channel:"📊 Kanaal wordt geanalyseerd…", spin_hook:"🪝 Retentie wordt geanalyseerd…" }
+};
+Object.keys(REPORT_I18N).forEach(l=>{ if(I18N[l]){ for(const k in REPORT_I18N[l]){ if(!(k in I18N[l])) I18N[l][k]=REPORT_I18N[l][k]; } } });
+
+/* ── REPORT_I18N2 : en-tête Top 10 + tags concurrents (démo) — 14 langues ── */
+const REPORT_I18N2 = {
+ fr:{top10_title:"Top 10 actions",comp_why1:"Hook fort + miniature",comp_why2:"Chiffre + émotion",comp_why3:"Hook CTR fort"},
+ en:{top10_title:"Top 10 actions",comp_why1:"Strong hook + thumbnail",comp_why2:"Number + emotion",comp_why3:"Strong CTR hook"},
+ ar:{top10_title:"أفضل 10 إجراءات",comp_why1:"خطّاف قوي + صورة مصغّرة",comp_why2:"رقم + عاطفة",comp_why3:"خطّاف CTR قوي"},
+ es:{top10_title:"Top 10 acciones",comp_why1:"Gancho fuerte + miniatura",comp_why2:"Número + emoción",comp_why3:"Gancho de CTR fuerte"},
+ pt:{top10_title:"Top 10 ações",comp_why1:"Gancho forte + miniatura",comp_why2:"Número + emoção",comp_why3:"Gancho de CTR forte"},
+ de:{top10_title:"Top 10 Aktionen",comp_why1:"Starker Hook + Thumbnail",comp_why2:"Zahl + Emotion",comp_why3:"Starker CTR-Hook"},
+ it:{top10_title:"Top 10 azioni",comp_why1:"Hook forte + miniatura",comp_why2:"Numero + emozione",comp_why3:"Hook CTR forte"},
+ ru:{top10_title:"Топ-10 действий",comp_why1:"Сильный хук + превью",comp_why2:"Число + эмоция",comp_why3:"Сильный CTR-хук"},
+ ja:{top10_title:"トップ10アクション",comp_why1:"強いフック＋サムネイル",comp_why2:"数字＋感情",comp_why3:"強いCTRフック"},
+ ko:{top10_title:"상위 10개 작업",comp_why1:"강력한 후크 + 썸네일",comp_why2:"숫자 + 감정",comp_why3:"강력한 CTR 후크"},
+ hi:{top10_title:"शीर्ष 10 कार्य",comp_why1:"मज़बूत हुक + थंबनेल",comp_why2:"संख्या + भावना",comp_why3:"मज़बूत CTR हुक"},
+ zh:{top10_title:"前 10 项行动",comp_why1:"强钩子 + 缩略图",comp_why2:"数字 + 情绪",comp_why3:"强点击率钩子"},
+ tr:{top10_title:"İlk 10 eylem",comp_why1:"Güçlü kanca + küçük resim",comp_why2:"Sayı + duygu",comp_why3:"Güçlü CTR kancası"},
+ nl:{top10_title:"Top 10 acties",comp_why1:"Sterke hook + thumbnail",comp_why2:"Getal + emotie",comp_why3:"Sterke CTR-hook"}
+};
+Object.keys(REPORT_I18N2).forEach(l=>{ if(I18N[l]){ for(const k in REPORT_I18N2[l]){ if(!(k in I18N[l])) I18N[l][k]=REPORT_I18N2[l][k]; } } });
+
+/* ── FIX_I18N : textes auparavant codés en dur (checklist, stats, spinners, gate) ── */
+const FIX_I18N = {
+ fr:{ pts_seo:"points SEO", pts_viral:"points Viral", ex_guide:"Guide complet 2024", ex_em:"Incroyable", ex_hook:"Comment", ex_desc:"Ajouter : résumé (150 car.) + timestamps + mots-clés + CTA + liens", impact_em_ok:"Bon potentiel émotionnel", impact_em_no:"Les mots forts augmentent le CTR de 20%", impact_hook_ok:"Hook CTR efficace détecté", impact_hook_no:"Un hook en début de titre augmente les clics de 25%", impact_desc_ok:"Description bien optimisée", impact_desc_no:"Une description courte réduit le référencement", cl_punct_label:"Ponctuation CTR (? ou !)", kw_add_hint:"Ajouter ces mots-clés dans le titre ou la description peut améliorer la visibilité dans les recherches similaires.", stat_views:"Vues", stat_vph:"Vues/heure", stat_likes:"J'aime", stat_comments:"Commentaires", stat_engagement:"Engagement", stat_subs:"Abonnés", stat_avg_views:"Vues moy/vidéo", stat_freq:"Fréquence", stat_tagged:"Vidéos taguées", stat_total_vids:"Vidéos total", stat_tags_real:"Tags réels", no_tag:"Aucun tag public sur cette vidéo.", err_channel:"Chaîne introuvable", no_result:"Aucun résultat", no_sugg:"Aucune suggestion", no_sugg_more:"Aucune suggestion supplémentaire", spin_realstats:"📡 Chargement des vraies données…", spin_audit:"📊 Audit en cours…", spin_kw:"🔍 Analyse d'opportunité…", spin_playlists:"🎞️ Analyse des playlists…", spin_planner:"📅 Création du planning…", spin_community:"📣 Génération des posts…", spin_ideas:"💡 Génération des idées…", spin_sponsor:"💼 Génération du kit sponsor…", spin_audience:"🌍 Analyse de l'audience…", spin_abtest:"⚔️ Analyse IA en cours…", spin_thumbab:"📸 Analyse Vision en cours…", spin_desc:"📝 Génération de la description…", spin_shorts:"🎬 Génération des Shorts…", spin_shorts_real:"🎬 Génération (passages réels)…", reactivate_tip:"Changer de code / Réactiver", reactivate_confirm:"Libérer ce code de cet appareil et changer de code ? Le code pourra être réutilisé sur un autre PC.", analysis_done:"Analyse générée.", gate_feat1:"Correction prioritaire pour +15 pts", gate_feat2:"Optimisation SEO détaillée", gate_feat3:"Conseil miniature & hook viral", gate_unlock:"🔓 Débloque tout : corrections, vraies données YouTube, IA…" },
+ en:{ pts_seo:"SEO points", pts_viral:"Viral points", ex_guide:"Complete Guide 2024", ex_em:"Amazing", ex_hook:"How to", ex_desc:"Add: summary (150 chars) + timestamps + keywords + CTA + links", impact_em_ok:"Good emotional potential", impact_em_no:"Power words boost CTR by 20%", impact_hook_ok:"Effective CTR hook detected", impact_hook_no:"A hook at the title start boosts clicks by 25%", impact_desc_ok:"Well-optimized description", impact_desc_no:"A short description hurts SEO", cl_punct_label:"CTR Punctuation (? or !)", kw_add_hint:"Adding these keywords to the title or description can improve visibility in similar searches.", stat_views:"Views", stat_vph:"Views/hour", stat_likes:"Likes", stat_comments:"Comments", stat_engagement:"Engagement", stat_subs:"Subscribers", stat_avg_views:"Avg views/video", stat_freq:"Frequency", stat_tagged:"Tagged videos", stat_total_vids:"Total videos", stat_tags_real:"Real tags", no_tag:"No public tags on this video.", err_channel:"Channel not found", no_result:"No result", no_sugg:"No suggestion", no_sugg_more:"No further suggestions", spin_realstats:"📡 Loading real data…", spin_audit:"📊 Auditing…", spin_kw:"🔍 Analyzing opportunity…", spin_playlists:"🎞️ Analyzing playlists…", spin_planner:"📅 Building the plan…", spin_community:"📣 Generating posts…", spin_ideas:"💡 Generating ideas…", spin_sponsor:"💼 Generating sponsor kit…", spin_audience:"🌍 Analyzing the audience…", spin_abtest:"⚔️ AI analysis in progress…", spin_thumbab:"📸 Vision analysis in progress…", spin_desc:"📝 Generating the description…", spin_shorts:"🎬 Generating Shorts…", spin_shorts_real:"🎬 Generating (real clips)…", reactivate_tip:"Change code / Reactivate", reactivate_confirm:"Release this code from this device and change code? The code can be reused on another PC.", analysis_done:"Analysis generated.", gate_feat1:"Priority fix for +15 pts", gate_feat2:"Detailed SEO optimization", gate_feat3:"Thumbnail & viral hook advice", gate_unlock:"🔓 Unlock everything: fixes, real YouTube data, AI…" },
+ ar:{ pts_seo:"نقطة SEO", pts_viral:"نقطة فيروسية", ex_guide:"دليل كامل 2024", ex_em:"مذهل", ex_hook:"كيف", ex_desc:"أضف: ملخّص (150 حرف) + طوابع زمنية + كلمات مفتاحية + CTA + روابط", impact_em_ok:"إمكانات عاطفية جيدة", impact_em_no:"الكلمات القوية تزيد CTR بنسبة 20%", impact_hook_ok:"تم رصد خطّاف CTR فعّال", impact_hook_no:"خطّاف في بداية العنوان يزيد النقرات بنسبة 25%", impact_desc_ok:"وصف محسّن جيدًا", impact_desc_no:"الوصف القصير يضرّ بالـ SEO", cl_punct_label:"ترقيم CTR (؟ أو !)", kw_add_hint:"إضافة هذه الكلمات المفتاحية في العنوان أو الوصف قد يحسّن الظهور في عمليات البحث المشابهة.", stat_views:"المشاهدات", stat_vph:"مشاهدات/ساعة", stat_likes:"إعجابات", stat_comments:"التعليقات", stat_engagement:"التفاعل", stat_subs:"المشتركون", stat_avg_views:"متوسط المشاهدات/فيديو", stat_freq:"التكرار", stat_tagged:"فيديوهات موسومة", stat_total_vids:"إجمالي الفيديوهات", stat_tags_real:"وسوم حقيقية", no_tag:"لا توجد وسوم عامة على هذا الفيديو.", err_channel:"القناة غير موجودة", no_result:"لا نتائج", no_sugg:"لا اقتراحات", no_sugg_more:"لا اقتراحات إضافية", spin_realstats:"📡 جارٍ تحميل البيانات الحقيقية…", spin_audit:"📊 جارٍ التدقيق…", spin_kw:"🔍 جارٍ تحليل الفرص…", spin_playlists:"🎞️ جارٍ تحليل قوائم التشغيل…", spin_planner:"📅 جارٍ إنشاء الخطة…", spin_community:"📣 جارٍ توليد المنشورات…", spin_ideas:"💡 جارٍ توليد الأفكار…", spin_sponsor:"💼 جارٍ توليد حزمة الرعاية…", spin_audience:"🌍 جارٍ تحليل الجمهور…", spin_abtest:"⚔️ جارٍ تحليل الذكاء الاصطناعي…", spin_thumbab:"📸 جارٍ تحليل Vision…", spin_desc:"📝 جارٍ توليد الوصف…", spin_shorts:"🎬 جارٍ توليد Shorts…", spin_shorts_real:"🎬 جارٍ التوليد (مقاطع حقيقية)…", reactivate_tip:"تغيير الكود / إعادة التفعيل", reactivate_confirm:"تحرير هذا الكود من هذا الجهاز وتغيير الكود؟ يمكن إعادة استخدام الكود على جهاز آخر.", analysis_done:"تم توليد التحليل.", gate_feat1:"تصحيح ذو أولوية لـ +15 نقطة", gate_feat2:"تحسين SEO مفصّل", gate_feat3:"نصائح الصورة المصغّرة والخطّاف الفيروسي", gate_unlock:"🔓 افتح كل شيء: التصحيحات، بيانات يوتيوب الحقيقية، الذكاء الاصطناعي…" }
+};
+Object.keys(FIX_I18N).forEach(l=>{ if(I18N[l]){ for(const k in FIX_I18N[l]){ if(!(k in I18N[l])) I18N[l][k]=FIX_I18N[l][k]; } } });
+
+/* Panneau d'activation (1er écran vu par un nouvel utilisateur, avant tout chargement de langue stockée) */
+const ACT_I18N = {
+ fr:{ act_subtitle:"Entrez votre ID et Secret du dashboard", act_id_label:"ID d'activation", act_secret_label:"Code Secret", act_secret_placeholder:"Secret...", act_btn_activate:"Activer l'extension", act_btn_dashboard:"Obtenir l'ID et Secret", act_verifying:"Vérification...", act_err_missing:"Entrez l'ID et le Secret", act_err_generic:"Erreur", act_success:"Extension activée !" },
+ en:{ act_subtitle:"Enter your dashboard ID and Secret", act_id_label:"Activation ID", act_secret_label:"Secret Code", act_secret_placeholder:"Secret...", act_btn_activate:"Activate extension", act_btn_dashboard:"Get ID & Secret", act_verifying:"Verifying...", act_err_missing:"Enter the ID and Secret", act_err_generic:"Error", act_success:"Extension activated!" },
+ ar:{ act_subtitle:"أدخل معرّف والرمز السري من لوحة التحكم", act_id_label:"معرّف التفعيل", act_secret_label:"الرمز السري", act_secret_placeholder:"الرمز السري...", act_btn_activate:"تفعيل الإضافة", act_btn_dashboard:"الحصول على المعرّف والرمز السري", act_verifying:"جارٍ التحقق...", act_err_missing:"أدخل المعرّف والرمز السري", act_err_generic:"خطأ", act_success:"تم تفعيل الإضافة!" },
+ zh:{ act_subtitle:"输入您仪表盘的 ID 和密钥", act_id_label:"激活 ID", act_secret_label:"密钥", act_secret_placeholder:"密钥...", act_btn_activate:"激活扩展程序", act_btn_dashboard:"获取 ID 和密钥", act_verifying:"验证中...", act_err_missing:"请输入 ID 和密钥", act_err_generic:"错误", act_success:"扩展程序已激活！" },
+ hi:{ act_subtitle:"अपने डैशबोर्ड का ID और सीक्रेट दर्ज करें", act_id_label:"एक्टिवेशन ID", act_secret_label:"सीक्रेट कोड", act_secret_placeholder:"सीक्रेट...", act_btn_activate:"एक्सटेंशन सक्रिय करें", act_btn_dashboard:"ID और सीक्रेट प्राप्त करें", act_verifying:"सत्यापन हो रहा है...", act_err_missing:"ID और सीक्रेट दर्ज करें", act_err_generic:"त्रुटि", act_success:"एक्सटेंशन सक्रिय हो गया!" },
+ ja:{ act_subtitle:"ダッシュボードのIDとシークレットを入力してください", act_id_label:"アクティベーションID", act_secret_label:"シークレットコード", act_secret_placeholder:"シークレット...", act_btn_activate:"拡張機能を有効化", act_btn_dashboard:"IDとシークレットを取得", act_verifying:"確認中...", act_err_missing:"IDとシークレットを入力してください", act_err_generic:"エラー", act_success:"拡張機能が有効化されました！" },
+ ru:{ act_subtitle:"Введите ID и Секретный код из личного кабинета", act_id_label:"ID активации", act_secret_label:"Секретный код", act_secret_placeholder:"Секрет...", act_btn_activate:"Активировать расширение", act_btn_dashboard:"Получить ID и Секрет", act_verifying:"Проверка...", act_err_missing:"Введите ID и Секрет", act_err_generic:"Ошибка", act_success:"Расширение активировано!" },
+ es:{ act_subtitle:"Introduce tu ID y Secreto del panel", act_id_label:"ID de activación", act_secret_label:"Código secreto", act_secret_placeholder:"Secreto...", act_btn_activate:"Activar extensión", act_btn_dashboard:"Obtener ID y Secreto", act_verifying:"Verificando...", act_err_missing:"Introduce el ID y el Secreto", act_err_generic:"Error", act_success:"¡Extensión activada!" },
+ pt:{ act_subtitle:"Insira o seu ID e Código Secreto do painel", act_id_label:"ID de ativação", act_secret_label:"Código secreto", act_secret_placeholder:"Secreto...", act_btn_activate:"Ativar extensão", act_btn_dashboard:"Obter ID e Secreto", act_verifying:"Verificando...", act_err_missing:"Insira o ID e o Secreto", act_err_generic:"Erro", act_success:"Extensão ativada!" },
+ de:{ act_subtitle:"Gib deine ID und dein Secret aus dem Dashboard ein", act_id_label:"Aktivierungs-ID", act_secret_label:"Geheimcode", act_secret_placeholder:"Geheimcode...", act_btn_activate:"Erweiterung aktivieren", act_btn_dashboard:"ID & Geheimcode erhalten", act_verifying:"Wird überprüft...", act_err_missing:"Gib die ID und den Geheimcode ein", act_err_generic:"Fehler", act_success:"Erweiterung aktiviert!" },
+ ko:{ act_subtitle:"대시보드의 ID와 시크릿 코드를 입력하세요", act_id_label:"활성화 ID", act_secret_label:"시크릿 코드", act_secret_placeholder:"시크릿...", act_btn_activate:"확장 프로그램 활성화", act_btn_dashboard:"ID 및 시크릿 받기", act_verifying:"확인 중...", act_err_missing:"ID와 시크릿을 입력하세요", act_err_generic:"오류", act_success:"확장 프로그램이 활성화되었습니다!" },
+ tr:{ act_subtitle:"Panonuzdaki Kimlik ve Gizli Kodu girin", act_id_label:"Aktivasyon Kimliği", act_secret_label:"Gizli Kod", act_secret_placeholder:"Gizli kod...", act_btn_activate:"Uzantıyı etkinleştir", act_btn_dashboard:"Kimlik ve Gizli Kodu al", act_verifying:"Doğrulanıyor...", act_err_missing:"Kimlik ve Gizli Kodu girin", act_err_generic:"Hata", act_success:"Uzantı etkinleştirildi!" },
+ it:{ act_subtitle:"Inserisci il tuo ID e Codice segreto dalla dashboard", act_id_label:"ID di attivazione", act_secret_label:"Codice segreto", act_secret_placeholder:"Codice segreto...", act_btn_activate:"Attiva estensione", act_btn_dashboard:"Ottieni ID e Codice segreto", act_verifying:"Verifica in corso...", act_err_missing:"Inserisci ID e Codice segreto", act_err_generic:"Errore", act_success:"Estensione attivata!" },
+ nl:{ act_subtitle:"Voer je ID en Geheime code van het dashboard in", act_id_label:"Activatie-ID", act_secret_label:"Geheime code", act_secret_placeholder:"Geheime code...", act_btn_activate:"Extensie activeren", act_btn_dashboard:"ID en Geheime code ophalen", act_verifying:"Verifiëren...", act_err_missing:"Voer de ID en Geheime code in", act_err_generic:"Fout", act_success:"Extensie geactiveerd!" }
+};
+Object.keys(ACT_I18N).forEach(l=>{ if(I18N[l]){ for(const k in ACT_I18N[l]){ if(!(k in I18N[l])) I18N[l][k]=ACT_I18N[l][k]; } } });
+
+/* Erreurs d'activation renvoyées par l'API (backend en français) → traduites côté client
+   par mappage statut/flag/code, pour que l'utilisateur les voie dans SA langue. */
+const ACT_ERR_I18N = {
+ fr:{ act_err_invalid:"ID ou Secret invalide", act_err_expired:"Abonnement expiré", act_err_device:"Ce code est déjà actif sur un autre appareil. Libère-le (bouton 🔑) ou via le dashboard." },
+ en:{ act_err_invalid:"Invalid ID or Secret", act_err_expired:"Subscription expired", act_err_device:"This code is already active on another device. Release it (🔑 button) or from the dashboard." },
+ ar:{ act_err_invalid:"معرّف أو رمز سري غير صالح", act_err_expired:"انتهى الاشتراك", act_err_device:"هذا الكود مُفعّل بالفعل على جهاز آخر. حرّره (زر 🔑) أو من لوحة التحكم." },
+ zh:{ act_err_invalid:"ID 或密钥无效", act_err_expired:"订阅已过期", act_err_device:"此密钥已在另一台设备上激活。请释放它（🔑 按钮）或通过仪表盘操作。" },
+ hi:{ act_err_invalid:"अमान्य ID या सीक्रेट", act_err_expired:"सदस्यता समाप्त हो गई", act_err_device:"यह कोड पहले से किसी अन्य डिवाइस पर सक्रिय है। इसे रिलीज़ करें (🔑 बटन) या डैशबोर्ड से।" },
+ ja:{ act_err_invalid:"IDまたはシークレットが無効です", act_err_expired:"サブスクリプションの有効期限が切れています", act_err_device:"このコードは別のデバイスで既に有効です。解放してください（🔑ボタン）またはダッシュボードから。" },
+ ru:{ act_err_invalid:"Неверный ID или Секрет", act_err_expired:"Подписка истекла", act_err_device:"Этот код уже активен на другом устройстве. Освободите его (кнопка 🔑) или через личный кабинет." },
+ es:{ act_err_invalid:"ID o Secreto no válido", act_err_expired:"Suscripción caducada", act_err_device:"Este código ya está activo en otro dispositivo. Libéralo (botón 🔑) o desde el panel." },
+ pt:{ act_err_invalid:"ID ou Secreto inválido", act_err_expired:"Assinatura expirada", act_err_device:"Este código já está ativo noutro dispositivo. Liberte-o (botão 🔑) ou pelo painel." },
+ de:{ act_err_invalid:"Ungültige ID oder Geheimcode", act_err_expired:"Abo abgelaufen", act_err_device:"Dieser Code ist bereits auf einem anderen Gerät aktiv. Gib ihn frei (🔑-Schaltfläche) oder über das Dashboard." },
+ ko:{ act_err_invalid:"잘못된 ID 또는 시크릿", act_err_expired:"구독이 만료되었습니다", act_err_device:"이 코드는 이미 다른 기기에서 활성화되어 있습니다. 해제하세요(🔑 버튼) 또는 대시보드에서." },
+ tr:{ act_err_invalid:"Geçersiz Kimlik veya Gizli Kod", act_err_expired:"Abonelik süresi doldu", act_err_device:"Bu kod başka bir cihazda zaten etkin. Serbest bırakın (🔑 düğmesi) veya panodan." },
+ it:{ act_err_invalid:"ID o Codice segreto non valido", act_err_expired:"Abbonamento scaduto", act_err_device:"Questo codice è già attivo su un altro dispositivo. Liberalo (pulsante 🔑) o dalla dashboard." },
+ nl:{ act_err_invalid:"Ongeldige ID of Geheime code", act_err_expired:"Abonnement verlopen", act_err_device:"Deze code is al actief op een ander apparaat. Geef hem vrij (🔑-knop) of via het dashboard." }
+};
+Object.keys(ACT_ERR_I18N).forEach(l=>{ if(I18N[l]){ for(const k in ACT_ERR_I18N[l]){ if(!(k in I18N[l])) I18N[l][k]=ACT_ERR_I18N[l][k]; } } });
+
+
+
+
+/* Traduction courante — détectée depuis la langue du navigateur au 1er lancement
+   (avant qu'un éventuel echoLanguage stocké ne soit chargé, cf. bootstrap plus bas).
+   Corrige le panneau d'activation qui s'affichait toujours en français pour un
+   nouvel utilisateur non-francophone. */
+function detectBrowserLanguage(){
+  const supported = ["fr","en","ar","zh","hi","ja","ru","es","pt","de","ko","tr","it","nl"];
+  const primary = (navigator.language || navigator.userLanguage || "en").toLowerCase().split("-")[0];
+  return supported.includes(primary) ? primary : "en";
+}
+let currentLanguage = detectBrowserLanguage();
 function T(key) {
   const L = I18N[currentLanguage] || I18N.en;
   const v = L[key] !== undefined ? L[key] : (I18N.en[key] !== undefined ? I18N.en[key] : key);
@@ -1917,7 +5312,17 @@ let currentUserName = null;
 let panelMounted    = false;
 let panelCreating   = false; // Verrou anti-doublon
 let lastUrl         = location.href;
-let activeTab       = "overview";
+let activeTab       = "coach";
+let activeSection   = "coach";
+/* Regroupement des 17 onglets en 5 sections (réutilise les renderX existants) */
+const SECTIONS = [
+  { id:"coach",      icon:"🧠", key:"sec_coach",      tabs:["coach"] },
+  { id:"analyser",   icon:"🔍", key:"sec_analyser",   tabs:["overview","seo","viral","competitor","channel","comments"] },
+  { id:"creer",      icon:"✍️", key:"sec_creer",      tabs:["titles","abtest","shorts","tiktok","ideas","actions"] },
+  { id:"studio",     icon:"🎨", key:"sec_studio",     tabs:["thumbnail"] },
+  { id:"croissance", icon:"📈", key:"sec_croissance", tabs:["trends","planner","region","revenue","sponsor"] }
+];
+function sectionOf(tab){ const s=SECTIONS.find(x=>x.tabs.includes(tab)); return s?s.id:"coach"; }
 
 /* ══════════════════════════════════════════════════════════════
    UTILITAIRES
@@ -1934,14 +5339,31 @@ function showToast(msg){
 function scoreColor(n){ return n>=80?"#22c55e":n>=60?"#eab308":"#ef4444"; }
 
 function spinnerHTML(msg){
-  return `<div class="echo-loading"><div class="echo-spinner"></div><span>${msg||T("loading")}</span></div>`;
+  return `<div class="echo-ai-loader">
+    <div class="echo-ai-loader-ring"></div>
+    <div class="echo-ai-loader-text">
+      <span class="echo-ai-loader-title echo-ai-loader-dots">${esc(msg||T("loading"))}</span>
+    </div>
+  </div>`;
 }
 
 function errHTML(msg){ return `<div class="echo-error">⚠ ${esc(msg)}</div>`; }
 
 function setContent(id, html){
   const el=document.getElementById(id);
-  if(el) el.innerHTML=html;
+  if(!el) return;
+  el.innerHTML=html;
+  el.classList.remove("echo-reveal");
+  void el.offsetWidth; // force reflow so the animation replays every time
+  el.classList.add("echo-reveal");
+}
+
+function downloadText(filename, text, mime){
+  const blob=new Blob([text],{type:(mime||"text/plain")+";charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download=filename; document.body.appendChild(a); a.click();
+  a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
 function progressBar(pct, color){
@@ -1999,6 +5421,47 @@ function extractYouTubeChannelId(){
     return null;
   } catch (err) {
     console.error('[VidSpark] Error extracting channel ID:', err);
+    return null;
+  }
+}
+
+/* Détecter la chaîne du COMPTE CONNECTÉ (pas celle de la vidéo en cours).
+   Renvoie {id, name} ou null. */
+async function getMyChannelId(){
+  // Méthode 1 : page /account (authentifiée automatiquement par les cookies)
+  try {
+    const res = await fetch('https://www.youtube.com/account', { credentials: 'include' });
+    const html = await res.text();
+    const idMatch = html.match(/"channelId":"(UC[a-zA-Z0-9_-]{22})"/)
+                 || html.match(/"externalId":"(UC[a-zA-Z0-9_-]{22})"/)
+                 || html.match(/\/channel\/(UC[a-zA-Z0-9_-]{22})/);
+    if (idMatch) {
+      const nameMatch = html.match(/"accountName":\{"simpleText":"([^"]+)"/)
+                     || html.match(/"channelTitle":"([^"]+)"/)
+                     || html.match(/"title":"([^"]+)","navigationEndpoint"/);
+      return { id: idMatch[1], name: nameMatch ? nameMatch[1] : idMatch[1] };
+    }
+  } catch (e) { console.warn('[VidSpark] /account détection échouée:', e.message); }
+
+  // Méthode 2 : API interne account_menu (repli)
+  try {
+    const html = document.documentElement.innerHTML;
+    const key = (html.match(/"INNERTUBE_API_KEY":"([^"]+)"/) || [])[1];
+    const ver = (html.match(/"INNERTUBE_CONTEXT_CLIENT_VERSION":"([^"]+)"/) || [])[1] || '2.20240101.00.00';
+    if (!key) return null;
+    const res = await fetch('https://www.youtube.com/youtubei/v1/account/account_menu?key=' + key, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ context: { client: { clientName: 'WEB', clientVersion: ver, hl: 'fr', gl: 'US' } } })
+    });
+    const s = JSON.stringify(await res.json());
+    const idMatch = s.match(/"(?:externalChannelId|channelId|browseId)":"(UC[a-zA-Z0-9_-]{22})"/);
+    if (!idMatch) return null;
+    const nameMatch = s.match(/"accountName":\{"simpleText":"([^"]+)"/);
+    return { id: idMatch[1], name: nameMatch ? nameMatch[1] : idMatch[1] };
+  } catch (e) {
+    console.warn('[VidSpark] getMyChannelId échoué:', e.message);
     return null;
   }
 }
@@ -2094,8 +5557,8 @@ function buildChecklist(title,descLength){
      detail:lenOk?L.cl_len_ok(n):(n<45?L.cl_len_short(n):L.cl_len_long(n)),
      impact:lenOk?L.cl_len_impact_ok:L.cl_len_impact_fix(n),
      why:T("cl_len_why"),
-     gain:lenOk?null:"+12 points SEO",
-     example:lenOk?null:(n<45?`"${title} — Guide complet 2024"`:`"${title.slice(0,55)}…"`),
+     gain:lenOk?null:"+12 "+T("pts_seo"),
+     example:lenOk?null:(n<45?`"${title} — ${T("ex_guide")}"`:`"${title.slice(0,55)}…"`),
      suggestions:!lenOk&&n<45?[T("cl_len_s1"),T("cl_len_s2"),T("cl_len_s3")]:
                  !lenOk&&n>75?[T("cl_len_r1"),T("cl_len_r2"),T("cl_len_r3")]:[],
      weight:20},
@@ -2104,39 +5567,39 @@ function buildChecklist(title,descLength){
      detail:hasNum?L.cl_num_ok:L.cl_num_fix,
      impact:hasNum?T("impact_pos_num"):T("impact_neg_num"),
      why:T("cl_num_why"),
-     gain:hasNum?null:"+8 points Viral",
+     gain:hasNum?null:"+8 "+T("pts_viral"),
      example:!hasNum?`"5 ${title.split(' ').slice(0,4).join(' ')}…"`:null,
      suggestions:!hasNum?[T("cl_num_s1"),T("cl_num_s2"),T("cl_num_s3")]:[],
      weight:15},
     {status:hasEm?"ok":"fix",
      label:L.cl_em_label,
      detail:hasEm?L.cl_em_ok:L.cl_em_fix,
-     impact:hasEm?"Bon potentiel émotionnel":"Les mots forts augmentent le CTR de 20%",
+     impact:hasEm?T("impact_em_ok"):T("impact_em_no"),
      why:T("cl_em_why2"),
-     gain:hasEm?null:"+12 points Viral",
-     example:!hasEm?`"Incroyable : ${title.slice(0,40)}…"`:null,
+     gain:hasEm?null:"+12 "+T("pts_viral"),
+     example:!hasEm?`"${T("ex_em")} : ${title.slice(0,40)}…"`:null,
      suggestions:!hasEm?[T("cl_em_s1"),T("cl_em_s2"),T("cl_em_s3"),T("cl_em_s4")]:[],
      weight:15},
     {status:hasHk?"ok":"fix",
      label:L.cl_hk_label,
      detail:hasHk?L.cl_hk_ok:L.cl_hk_fix,
-     impact:hasHk?"Hook CTR efficace détecté":"Un hook en début de titre augmente les clics de 25%",
+     impact:hasHk?T("impact_hook_ok"):T("impact_hook_no"),
      why:T("cl_hk_why2"),
-     gain:hasHk?null:"+18 points Viral",
-     example:!hasHk?`"Comment ${title.slice(0,45)}…"`:null,
+     gain:hasHk?null:"+18 "+T("pts_viral"),
+     example:!hasHk?`"${T("ex_hook")} ${title.slice(0,45)}…"`:null,
      suggestions:!hasHk?[T("cl_hk_s1"),T("cl_hk_s2"),T("cl_hk_s3")]:[],
      weight:25},
     {status:descOk?"ok":"fix",
      label:L.cl_desc_label,
      detail:descOk?L.cl_desc_ok(d):L.cl_desc_fix(d),
-     impact:descOk?"Description bien optimisée":"Description courte réduit le référencement",
+     impact:descOk?T("impact_desc_ok"):T("impact_desc_no"),
      why:T("cl_desc_why"),
-     gain:descOk?null:"+10 points SEO",
-     example:!descOk?"Ajouter : résumé (150 car.) + timestamps + mots-clés + CTA + liens":null,
+     gain:descOk?null:"+10 "+T("pts_seo"),
+     example:!descOk?T("ex_desc"):null,
      suggestions:!descOk?[T("cl_desc_s1"),T("cl_desc_s2"),T("cl_desc_s3")]:[],
      weight:25},
     {status:hasPunct?"ok":"fix",
-     label:"Ponctuation CTR (? ou !)",
+     label:L.cl_punct_label||T("cl_punct_label"),
      detail:hasPunct?T("cl_punct_ok"):T("cl_punct_fix"),
      impact:hasPunct?T("cl_punct_ok"):T("cl_punct_fix"),
      why:T("cl_punct_why"),
@@ -2151,13 +5614,19 @@ function buildChecklist(title,descLength){
 /* ══════════════════════════════════════════════════════════════
    COMMUNICATION BACKGROUND
 ══════════════════════════════════════════════════════════════ */
+/* Après un rechargement de l'extension, d'anciens content scripts tournent encore
+   sur les onglets ouverts mais leur contexte est invalidé → on évite le spam d'erreurs. */
+function extAlive(){ try{ return !!(chrome.runtime && chrome.runtime.id); }catch(e){ return false; } }
 function sendBG(payload){
   return new Promise((resolve,reject)=>{
-    chrome.runtime.sendMessage({type:"ECHORANK_API_REQUEST",payload},r=>{
-      if(chrome.runtime.lastError)return reject(new Error(chrome.runtime.lastError.message));
-      if(r?.error)return reject(new Error(r.error));
-      resolve(r);
-    });
+    if(!extAlive()){ reject(new Error("ctx_invalidated")); return; }
+    try{
+      chrome.runtime.sendMessage({type:"ECHORANK_API_REQUEST",payload},r=>{
+        if(chrome.runtime.lastError)return reject(new Error(chrome.runtime.lastError.message));
+        if(r?.error)return reject(new Error(r.error));
+        resolve(r);
+      });
+    }catch(e){ reject(e); }
   });
 }
 
@@ -2236,12 +5705,12 @@ function showReportModal(data){
   const sc=scoreColor,gc=scoreColor(glob),ss=scoreColor(seo),sv=scoreColor(viral),st=scoreColor(thumb);
 
   const chk=[
-    {ok:tLen>=45&&tLen<=75, label:T("cl_len_label"), gain:18, fix:`${tLen} car. → 55–70`},
+    {ok:tLen>=45&&tLen<=75, label:T("cl_len_label"), gain:18, fix:`${tLen} ${T("unit_char")} → 55–70`},
     {ok:/\d/.test(data.title||""), label:T("cl_num_label"), gain:8, fix:T("viral_add_num")||"Ajouter un chiffre"},
     {ok:/amazing|best|free|secret|viral|gratuit|incroyable|ultime/.test((data.title||"").toLowerCase()), label:T("cl_em_label"), gain:12, fix:T("viral_add_em")||"Ajouter mot émotionnel"},
     {ok:/^(comment|pourquoi|why|how|\d)/i.test(data.title||"")||/[?]/.test(data.title||""), label:T("cl_hk_label"), gain:18, fix:T("viral_add_hook")||"Ajouter hook CTR"},
-    {ok:dLen>=300, label:T("cl_desc_label"), gain:10, fix:`${dLen} car. → 500+`},
-    {ok:/[?!]/.test(data.title||""), label:T("cl_punct_label"), gain:5, fix:"Ajouter ? ou !"},
+    {ok:dLen>=300, label:T("cl_desc_label"), gain:10, fix:`${dLen} ${T("unit_char")} → 500+`},
+    {ok:/[?!]/.test(data.title||""), label:T("cl_punct_label"), gain:5, fix:T("act_add_punct")},
   ];
   const okChk=chk.filter(c=>c.ok);
   const fixChk=chk.filter(c=>!c.ok);
@@ -2250,9 +5719,9 @@ function showReportModal(data){
   const missingKw=(T("missing_kw_list")||"tuto,gratuit,complet,2024,débutant,guide").split(",").filter(w=>w&&!(data.title||"").toLowerCase().includes(w.toLowerCase()));
   const viralLevel=viral>=70?T("viral_high"):viral>=45?T("viral_medium"):T("viral_low");
   const fakeComp=[
-    {title:(data.title||"").slice(0,30)+" — Guide Complet",views:"2.4M",score:78,kw:["guide","complet"],why:"Hook fort + miniature"},
-    {title:"5 "+(data.title||"").slice(0,25),views:"890K",score:71,kw:["5","astuces"],why:"Chiffre + émotion"},
-    {title:"Comment "+(data.title||"").slice(0,25),views:"340K",score:65,kw:["comment","tuto"],why:"CTR hook fort"},
+    {title:(data.title||"").slice(0,30)+" — Guide Complet",views:"2.4M",score:78,kw:["guide","complet"],why:T("comp_why1")},
+    {title:"5 "+(data.title||"").slice(0,25),views:"890K",score:71,kw:["5","astuces"],why:T("comp_why2")},
+    {title:"Comment "+(data.title||"").slice(0,25),views:"340K",score:65,kw:["comment","tuto"],why:T("comp_why3")},
   ];
 
   const modal=document.createElement("div");
@@ -2315,8 +5784,8 @@ function showReportModal(data){
               </div>`).join("")}
             </div>
             <div class="erm-exec-summary">
-              <strong>Score ${glob}/100</strong> — Potentiel viral <strong>${viralLevel}</strong>.
-              ${fixChk.length>0?`En corrigeant ${fixChk.length} point(s), le score peut atteindre <strong>${globPot}/100</strong> (+${globPot-glob} pts), CTR : <strong>${ctr}% → ${ctrPot}%</strong>.`:`${T("seo_all_ok")||"Tous les critères validés."}` }
+              <strong>Score ${glob}/100</strong> — ${T("report_vp")} <strong>${viralLevel}</strong>.
+              ${fixChk.length>0?`${T("report_fix_pre")} ${fixChk.length} ${T("report_fix_mid")} <strong>${globPot}/100</strong> (+${globPot-glob} ${T("report_pts")}), CTR : <strong>${ctr}% → ${ctrPot}%</strong>.`:`${T("seo_all_ok")}`}
             </div>
             <div class="erm-3cols">
               <div class="erm-col ok">
@@ -2438,7 +5907,7 @@ function showReportModal(data){
 
           <!-- Top 10 Actions -->
           <div class="erm-section">
-            <div class="erm-section-title">🚀 Top 10 Actions</div>
+            <div class="erm-section-title">🚀 ${T("top10_title")}</div>
             <div class="erm-top10">
               ${[...fixChk.map(c=>c.fix),
                 T("top10_6")||"Ajouter des timestamps",
@@ -2487,6 +5956,8 @@ ${fixChk.map((c,i)=>`${i+1}. ${c.fix}`).join("\n")}`;
 ══════════════════════════════════════════════════════════════ */
 
 /* ─── OVERVIEW ─────────────────────────────────────────────── */
+function fmtNum(n){ n=+n||0; if(n>=1e6) return (n/1e6).toFixed(1).replace('.0','')+'M'; if(n>=1e3) return (n/1e3).toFixed(1).replace('.0','')+'K'; return ''+n; }
+
 function renderOverview(data,scores,checklist){
   const sc=scoreColor(scores.seo);
   const vc=scoreColor(scores.viral);
@@ -2499,6 +5970,11 @@ function renderOverview(data,scores,checklist){
   const totalGain=checklist.filter(c=>c.status==="fix"&&c.gain).map(c=>parseInt(c.gain)||0).reduce((a,b)=>a+b,0);
 
   return `
+    <div class="echo-card">
+      <div class="echo-card-head">⚡ ${T("au_section")} <span class="echo-badge echo-badge-ai">IA</span>${help(T("h_audit"))}</div>
+      <button class="echo-action-btn purple" id="btnFullAudit">⚡ ${T("au_run")}</button>
+      <div id="card-audit1-result"></div>
+    </div>
     <!-- SCORE GLOBAL -->
     <div class="echo-global-score-wrap">
       <svg viewBox="0 0 80 80" width="80" height="80">
@@ -2552,11 +6028,15 @@ function renderOverview(data,scores,checklist){
         </div>`).join("")}
     </div>
 
-    ${currentPlan==="free"?`
-    <div class="echo-upgrade-bar">
-      <span>${T("upgrade_msg")}</span>
-      <button class="echo-upgrade-btn">${T("upgrade_btn")}</button>
-    </div>`:""}
+    <div class="echo-card" id="card-realstats">
+      <div class="echo-card-head">📊 ${T("live_stats_title")} <span class="echo-badge" style="background:rgba(255,0,0,.15);color:#ff5252">● LIVE</span></div>
+      <button class="echo-action-btn blue" id="btnRealStats">📡 ${T("live_stats_btn")}</button>
+    </div>
+
+    <div class="echo-card" id="card-audit">
+      <div class="echo-card-head">📈 ${T("audit_title")} <span class="echo-badge" style="background:rgba(255,0,0,.15);color:#ff5252">● LIVE</span></div>
+      <button class="echo-action-btn purple" id="btnChannelAudit">📊 ${T("audit_btn")}</button>
+    </div>
 
     <button class="echo-full-report-btn" id="btnFullReport">${T("act_full_report")}</button>
   `;
@@ -2698,7 +6178,7 @@ function renderSEO(data,scores,checklist){
       <div class="echo-card">
         <div class="echo-card-head">${T("comp_missing")} <span class="echo-badge echo-badge-red">${missingKw.length}</span></div>
         <div class="echo-tag-cloud">${missingKw.map(w=>`<span class="echo-kw-tag missing">${esc(w)}</span>`).join("")}</div>
-        <div style="margin-top:8px;font-size:11px;color:#888">Ajouter ces mots-clés dans le titre ou la description peut améliorer la visibilité dans les recherches similaires.</div>
+        <div style="margin-top:8px;font-size:11px;color:#888">${T("kw_add_hint")}</div>
       </div>`:``}
 
       <!-- Mots-clés recommandés -->
@@ -2711,7 +6191,7 @@ function renderSEO(data,scores,checklist){
               <div class="echo-kw-bars">
                 <div class="echo-kw-bar" style="width:${Math.floor(40+Math.random()*55)}%;background:#7c6dfa"></div>
               </div>
-              <span class="echo-kw-impact echo-badge echo-badge-amber">${["Élevé","Moyen","Très élevé"][Math.floor(Math.random()*3)]}</span>
+              <span class="echo-kw-impact echo-badge echo-badge-amber">${[T("impact_high"),T("impact_medium"),T("impact_very_high")][Math.floor(Math.random()*3)]}</span>
             </div>`).join("")}
         </div>
       </div>
@@ -2764,6 +6244,24 @@ function renderThumbnail(data,scores){
       <div class="echo-score-hero-num" style="color:${tc}">${scores.thumb}/100</div>
       <div class="echo-score-hero-label">${T("thumb_score")}</div>
     </div>
+    <div class="echo-card" id="card-thumb-ai">
+      <div class="echo-card-head">🎨 ${T("thumb_ai_title")} <span class="echo-badge echo-badge-ai">Vision</span></div>
+      <button class="echo-action-btn purple" id="btnThumbAI">🔍 ${T("thumb_ai_btn")}</button>
+    </div>
+    <div class="echo-card" id="card-thumb-ideas">
+      <div class="echo-card-head">🎨 ${T("thumb_ideas_title")||"Générer des concepts de miniature"} <span class="echo-badge echo-badge-ai">IA</span></div>
+      <div style="font-size:12px;color:#888;margin-bottom:8px;">${T("thumb_ideas_intro")||"3 concepts (texte, couleurs, layout, visage) basés sur ton titre, prêts à exécuter."}</div>
+      <input id="thumbIdeaNiche" placeholder="${T("thumb_ideas_niche_ph")}" style="width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;margin-bottom:8px;">
+      <button class="echo-action-btn purple" id="btnThumbIdeas">🎨 ${T("thumb_ideas_btn")||"Générer 3 concepts"}</button>
+      <div id="card-thumb-ideas-result"></div>
+    </div>
+    <div class="echo-card">
+      <div class="echo-card-head">🔗 ${T("pc_section")} <span class="echo-badge echo-badge-ai">Vision</span>${help(T("h_pair"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:8px;">${T("pc_intro")}</div>
+      <button class="echo-action-btn blue" id="btnPairCheck">🔗 ${T("pc_run")}</button>
+      <div id="card-pair-result"></div>
+    </div>
+    ${renderThumbABSection()}
     <div class="echo-card">
       <div class="echo-card-head">${T("thumb_preview")}</div>
       <img src="${data.thumb}" onerror="this.src='${thumbHD}'" class="echo-thumb-full">
@@ -2872,7 +6370,7 @@ function renderViral(data,scores){
         </div>`).join("")}
     </div>
     <div class="echo-card">
-      <div class="echo-card-head">Score viral potentiel</div>
+      <div class="echo-card-head">${T("viral_potential_title")}</div>
       <div class="echo-potential-row">
         <div class="echo-potential-block">
           <div class="echo-potential-val" style="color:${vc}">${scores.viral}</div>
@@ -2893,6 +6391,13 @@ function renderViral(data,scores){
       <div class="echo-card-head">${T("viral_prediction")} <span class="echo-badge echo-badge-ai">IA</span></div>
       <button class="echo-action-btn purple" id="btnViralAI">${T("btn_viral_ai")}</button>
     </div>
+    <div class="echo-card">
+      <div class="echo-card-head">🪝 ${T("hook_title")} <span class="echo-badge echo-badge-ai">IA</span>${help(T("h_hook"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:8px;">${T("hook_intro")}</div>
+      <textarea id="hookScript" rows="4" placeholder="${T("hook_ph")}" style="width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:13px;resize:vertical;margin-bottom:8px;"></textarea>
+      <button class="echo-action-btn blue" id="btnHookAnalyze">🪝 ${T("hook_run")}</button>
+      <div id="card-hook-result"></div>
+    </div>
   `;
 }
 
@@ -2900,7 +6405,20 @@ function renderViral(data,scores){
 function renderCompetitor(data,scores){
   const keywords=(data.title||"").split(/\s+/).filter(w=>w.length>3);
   const missing=T("missing_kw_list").split(",").filter(w=>w&&!data.title.toLowerCase().includes(w.toLowerCase()));
-  return `
+  const __c = `
+    <div class="echo-card" id="card-real-comp">
+      <div class="echo-card-head">🏆 ${T("real_comp_title")} <span class="echo-badge" style="background:rgba(255,0,0,.15);color:#ff5252">● LIVE</span></div>
+      <button class="echo-action-btn blue" id="btnRealComp">📡 ${T("real_comp_btn")}</button>
+      <div id="realCompResults"></div>
+    </div>
+    <div class="echo-card" id="card-keywords">
+      <div class="echo-card-head">🔑 ${T("keywords_title")}</div>
+      <div style="display:flex;gap:6px;margin-bottom:6px;">
+        <input id="kwInput" placeholder="${T("keywords_ph")}" style="flex:1;padding:8px;border-radius:8px;border:1px solid #2a2a35;background:#0f0f1a;color:#fff;font-size:12px;box-sizing:border-box;">
+        <button class="echo-action-btn blue" id="btnKeywords" style="white-space:nowrap;">🔍</button>
+      </div>
+      <div id="kwResults"></div>
+    </div>
     <div class="echo-card">
       <div class="echo-card-head">${T("comp_position")}</div>
       <div class="echo-comp-scores">
@@ -2913,11 +6431,10 @@ function renderCompetitor(data,scores){
       <div class="echo-card-head">${T("comp_keywords")}</div>
       <div class="echo-tag-cloud">${keywords.map(w=>`<span class="echo-kw-tag">${esc(w)}</span>`).join("")}</div>
     </div>
-    ${missing.length>0?`
-    <div class="echo-card">
-      <div class="echo-card-head">${T("comp_missing")}</div>
-      <div class="echo-tag-cloud">${missing.map(w=>`<span class="echo-kw-tag missing">${esc(w)}</span>`).join("")}</div>
-    </div>`:""}
+    <div class="echo-card" id="card-missing-kw">
+      <div class="echo-card-head">🔑 ${T("comp_missing")} <span class="echo-badge" style="background:rgba(255,0,0,.15);color:#ff5252">● LIVE</span></div>
+      <div id="missingKwBody" style="color:#888;font-size:12px;">⏳ Analyse des mots-clés réels…</div>
+    </div>
     <div class="echo-card">
       <div class="echo-card-head">${T("comp_opportunities")}</div>
       ${[
@@ -2931,33 +6448,460 @@ function renderCompetitor(data,scores){
           <div class="echo-rec-body"><div class="echo-rec-text">${o}</div></div>
         </div>`).join("")}
     </div>
-    <div class="echo-card">
-      <div class="echo-card-head">${T("comp_note")}</div>
-      <div class="echo-info-box">${T("comp_pro_note")}</div>
-    </div>
   `;
+  return __c;
+}
+
+/* Enveloppe une fonctionnalité Pro dans un teaser FLOUTÉ + cadenas (utilisateurs Free) */
+function lockedFeature(html, label){
+  return `
+    <div class="echo-locked">
+      <div class="echo-locked-blur">${html}</div>
+      <div class="echo-locked-overlay">
+        <div class="echo-locked-icon">🔒</div>
+        <div class="echo-locked-title">${label}</div>
+        <div class="echo-locked-sub">${T("upgrade_msg")}</div>
+        <button class="echo-locked-btn">⭐ ${T("upgrade_btn")}</button>
+      </div>
+    </div>`;
 }
 
 /* ─── TITLES TAB ────────────────────────────────────────────── */
-function renderTitles(){
-  return `
+function renderTitles(data){
+  const orig = esc((data&&data.title)||"");
+  const html = `
+    <div class="echo-card">
+      <div class="echo-card-head">🩺 ${T("td_title")} <span class="echo-badge echo-badge-ai">Live + IA</span>${help(T("h_titledoctor"))}</div>
+      <input id="tdInput" value="${orig}" placeholder="${T("desc_title_ph")}" style="width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:13px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <div style="flex:1;height:10px;background:#1a1a1a;border-radius:5px;overflow:hidden;"><div id="tdBar" style="height:100%;width:0;background:#888;transition:width .2s,background .2s;"></div></div>
+        <span id="tdScore" style="font-size:16px;font-weight:800;color:#888;width:34px;text-align:right;">0</span>
+      </div>
+      <div id="tdChecks" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+      <button class="echo-action-btn purple" id="btnTitleDoctor" style="margin-top:8px;">🩺 ${T("td_run")}</button>
+      <div id="card-td-result"></div>
+    </div>
     <div class="echo-card" id="card-titles-content">
-      <div class="echo-card-head">${T("nav_titles")} <span class="echo-badge echo-badge-ai">IA</span></div>
+      <div class="echo-card-head">${T("titles_section")} <span class="echo-badge echo-badge-ai">IA</span>${help(T("h_titles"))}</div>
       <button class="echo-action-btn blue" id="btnLoadTitles">${T("titles_generate")}</button>
     </div>
     <div class="echo-card" id="card-titles-types">
-      <div class="echo-card-head">Types de titres</div>
-      <div class="echo-title-types">
+      <div class="echo-card-head">${T("title_types")}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
         ${[
           {key:"titles_seo",icon:"📈"},
           {key:"titles_ctr",icon:"🎯"},
           {key:"titles_viral",icon:"🔥"},
           {key:"titles_shorts",icon:"📱"},
           {key:"titles_trending",icon:"✨"},
-        ].map(t=>`<div class="echo-title-type-pill">${t.icon} ${T(t.key)}</div>`).join("")}
+        ].map(t=>`<div class="echo-title-type-pill" style="text-align:center;">${t.icon} ${T(t.key)}</div>`).join("")}
       </div>
     </div>
+    <div class="echo-card" id="card-desc-pack">
+      <div class="echo-card-head">📝 ${T("desc_section")} <span class="echo-badge echo-badge-ai">IA</span>${help(T("h_desc"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:8px;">${T("desc_intro")}</div>
+      <label style="font-size:11px;color:#aaa;display:block;margin-bottom:3px;">${T("desc_title")}</label>
+      <input id="descTitle" value="${orig}" placeholder="${T("desc_title_ph")}" style="width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:13px;margin-bottom:8px;">
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
+        ${selectHTML("descNiche",NICHE_OPTIONS,T("audience_niche"),"flex:1;min-width:0;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;")}
+        ${regionSelectHTML("descRegion",T("audience_target"),"flex:1;min-width:0;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;")}
+      </div>
+      <button class="echo-action-btn purple" id="btnDescPack">📝 ${T("desc_run")}</button>
+      <div id="card-desc-result"></div>
+    </div>
+    <div class="echo-card">
+      <div class="echo-card-head">🌐 ${T("tr_section")} <span class="echo-badge echo-badge-ai">IA</span>${help(T("h_translate"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:8px;">${T("tr_intro")}</div>
+      <select id="trLang" class="echo-lang-select" style="width:100%;box-sizing:border-box;padding:8px;margin-bottom:8px;">${LANG_LIST.map(l=>`<option value="${l.code}">${l.label}</option>`).join("")}</select>
+      <button class="echo-action-btn blue" id="btnTranslate">🌐 ${T("tr_run")}</button>
+      <div id="card-translate-result"></div>
+    </div>
   `;
+  return html;
+}
+
+/* ─── A/B TEST TAB ──────────────────────────────────────────── */
+function renderABTest(data){
+  const orig = esc(data.title||"");
+  return `
+    <div class="echo-card">
+      <div class="echo-card-head">⚔️ A/B Test <span class="echo-badge echo-badge-ai">IA</span>${help(T("h_abtest"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;">${T("abtest_intro")}</div>
+      <label style="font-size:11px;color:#aaa;display:block;margin-bottom:3px;">${T("abtest_a")}</label>
+      <textarea id="abTitleA" class="echo-ab-input" rows="2" placeholder="${T("abtest_a")}" style="width:100%;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:13px;resize:vertical;margin-bottom:8px;">${orig}</textarea>
+      <label style="font-size:11px;color:#aaa;display:block;margin-bottom:3px;">${T("abtest_b")}</label>
+      <textarea id="abTitleB" class="echo-ab-input" rows="2" placeholder="${T("abtest_b")}" style="width:100%;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:13px;resize:vertical;margin-bottom:10px;"></textarea>
+      <button class="echo-action-btn blue" id="btnRunABTest">${T("abtest_run")}</button>
+    </div>
+    <div id="card-abtest-result"></div>
+  `;
+}
+
+/* Bloc A/B de miniatures (affiché dans l'onglet Miniature) */
+function renderThumbABSection(){
+  return `
+    <div class="echo-card">
+      <div class="echo-card-head">📸 ${T("thumbab_title")} <span class="echo-badge echo-badge-ai">Vision</span>${help(T("h_thumbab"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;">${T("thumbab_intro")}</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <label style="flex:1;cursor:pointer;border:1px dashed #2a2a35;border-radius:8px;padding:10px;text-align:center;font-size:11px;color:#aaa;" id="lblThumbA">
+          <div id="prevThumbA">⬆️ ${T("thumbab_a")}</div>
+          <input type="file" id="fileThumbA" accept="image/*" style="display:none;">
+        </label>
+        <label style="flex:1;cursor:pointer;border:1px dashed #2a2a35;border-radius:8px;padding:10px;text-align:center;font-size:11px;color:#aaa;" id="lblThumbB">
+          <div id="prevThumbB">⬆️ ${T("thumbab_b")}</div>
+          <input type="file" id="fileThumbB" accept="image/*" style="display:none;">
+        </label>
+      </div>
+      <button class="echo-action-btn purple" id="btnRunThumbAB">${T("thumbab_run")}</button>
+    </div>
+    <div id="card-thumbab-result"></div>
+  `;
+}
+
+/* Redimensionne une image (File) en base64 JPEG (max 640px de large) */
+function fileToScaledBase64(file, maxW=640){
+  return new Promise((resolve,reject)=>{
+    const img=new Image(), url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const scale=Math.min(1, maxW/img.width);
+      const w=Math.round(img.width*scale), h=Math.round(img.height*scale);
+      const cv=document.createElement("canvas"); cv.width=w; cv.height=h;
+      cv.getContext("2d").drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      resolve(cv.toDataURL("image/jpeg",0.85).replace(/^data:image\/jpeg;base64,/,""));
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(url); reject(new Error("Image illisible")); };
+    img.src=url;
+  });
+}
+
+/* ─── SHORTS TAB ────────────────────────────────────────────── */
+function renderShorts(data){
+  return `
+    <div class="echo-card" id="card-shorts-content">
+      <div class="echo-card-head">🎬 ${T("nav_shorts")} <span class="echo-badge echo-badge-ai">IA</span>${help(T("h_shorts"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;">${T("shorts_intro")}</div>
+      <button class="echo-action-btn blue" id="btnGenShorts">${T("shorts_generate")}</button>
+    </div>
+    <div id="card-shorts-result"></div>
+  `;
+}
+
+/* ─── RÉGION / AUDIENCE TAB ─────────────────────────────────── */
+function renderAudience(){
+  const langOpts=LANG_LIST.map(l=>`<option value="${l.code}" ${l.code===currentLanguage?"selected":""}>${l.label}</option>`).join("");
+  return `
+    <div class="echo-card">
+      <div class="echo-card-head">🌍 ${T("nav_region")} <span class="echo-badge echo-badge-ai">IA</span>${help(T("h_audience"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;">${T("audience_intro")}</div>
+      <label style="font-size:11px;color:#aaa;display:block;margin-bottom:3px;">${T("audience_target")}</label>
+      ${regionSelectHTML("audTarget",T("audience_target"),"width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:13px;margin-bottom:8px;")}
+      <label style="font-size:11px;color:#aaa;display:block;margin-bottom:3px;">${T("audience_niche")}</label>
+      ${selectHTML("audNiche",NICHE_OPTIONS,T("audience_niche"),"width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:13px;margin-bottom:8px;")}
+      <label style="font-size:11px;color:#aaa;display:block;margin-bottom:3px;">${T("audience_lang")}</label>
+      <select id="audLang" class="echo-lang-select" style="width:100%;margin-bottom:10px;padding:8px;">${langOpts}</select>
+      <button class="echo-action-btn blue" id="btnAudience">🌍 ${T("audience_run")}</button>
+      <div id="card-audience-result"></div>
+    </div>
+  `;
+}
+
+/* ─── SPONSOR / MONÉTISATION TAB ────────────────────────────── */
+function renderSponsor(){
+  const inp="flex:1;min-width:0;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;";
+  return `
+    <div class="echo-card">
+      <div class="echo-card-head">💼 ${T("nav_sponsor")} <span class="echo-badge echo-badge-ai">IA</span>${help(T("h_sponsor"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;">${T("sp_intro")}</div>
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
+        ${selectHTML("spNiche",NICHE_OPTIONS,T("audience_niche"),inp)}
+        ${regionSelectHTML("spRegion",T("audience_target"),inp)}
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <input id="spSubs" type="text" placeholder="${T("sp_subs_ph")}" style="${inp}">
+        <input id="spViews" type="text" placeholder="${T("sp_views_ph")}" style="${inp}">
+      </div>
+      <button class="echo-action-btn green" id="btnSponsor">💼 ${T("sp_run")}</button>
+      <div id="card-sponsor-result"></div>
+    </div>
+  `;
+}
+
+/* ─── REVENUS TAB ───────────────────────────────────────────── */
+function renderRevenue(data){
+  const orig=esc((data&&data.title)||"");
+  return `
+    <div class="echo-card">
+      <div class="echo-card-head">💰 ${T("nav_revenue")} <span class="echo-badge echo-badge-ai">IA</span>${help(T("h_revenue"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;">${T("rev_intro")}</div>
+      <input id="revTitle" value="${orig}" placeholder="${T("desc_title_ph")}" style="width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:13px;margin-bottom:8px;">
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
+        ${selectHTML("revNiche",NICHE_OPTIONS,T("audience_niche"),"flex:1;min-width:0;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;")}
+        ${regionSelectHTML("revRegion",T("audience_target"),"flex:1;min-width:0;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;")}
+      </div>
+      <label style="font-size:11px;color:#aaa;display:block;margin-bottom:3px;">${T("rev_subs")}</label>
+      <input id="revSubs" type="text" placeholder="${T("rev_subs_ph")}" style="width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:13px;margin-bottom:10px;">
+      <button class="echo-action-btn green" id="btnRevenue">💰 ${T("rev_run")}</button>
+      <div id="card-revenue-result"></div>
+    </div>
+  `;
+}
+
+/* ─── CHAÎNE (tableau de bord) TAB ──────────────────────────── */
+function renderChannel(){
+  return `
+    <div class="echo-card">
+      <div class="echo-card-head">📊 ${T("nav_channel")} <span class="echo-badge" style="background:rgba(255,0,0,.15);color:#ff5252">● LIVE</span>${help(T("h_channel"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;">${T("chan_intro")}</div>
+      <button class="echo-action-btn purple" id="btnChannelDash">📊 ${T("chan_run")}</button>
+      <div id="card-channel-result"></div>
+    </div>
+    <div class="echo-card">
+      <div class="echo-card-head">🎞️ ${T("pl_section")} <span class="echo-badge echo-badge-ai">IA</span>${help(T("h_playlists"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:8px;">${T("pl_intro")}</div>
+      <button class="echo-action-btn blue" id="btnPlaylists">🎞️ ${T("pl_run")}</button>
+      <div id="card-playlists-result"></div>
+    </div>
+  `;
+}
+
+/* ─── COMMENTAIRES TAB ──────────────────────────────────────── */
+function renderComments(){
+  return `
+    <div class="echo-card">
+      <div class="echo-card-head">💬 ${T("nav_comments")} <span class="echo-badge echo-badge-ai">IA</span>${help(T("h_comments"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;">${T("com_intro")}</div>
+      <button class="echo-action-btn purple" id="btnComments">💬 ${T("com_run")}</button>
+      <div id="card-comments-result"></div>
+    </div>
+  `;
+}
+
+/* Récupère la transcription YouTube DEPUIS la page (cookies/session présents) → "[m:ss] texte" */
+async function getYouTubeTranscript(videoId){
+  const fmt=s=>{const mn=Math.floor(s/60),x=s%60;return mn+":"+String(x).padStart(2,"0");};
+  const build=segs=>{ // segs: [{start, text}]
+    let last=-100, lines=[];
+    segs.forEach(s=>{
+      const text=(s.text||"").replace(/\s+/g," ").trim();
+      if(!text) return;
+      if(s.start-last>=12){ lines.push("["+fmt(s.start)+"] "+text); last=s.start; }
+      else if(lines.length) lines[lines.length-1]+=" "+text;
+    });
+    let t=lines.join("\n");
+    return t.length>6000 ? t.slice(0,6000) : t;
+  };
+  /* 0) Panneau "Transcription" de YouTube (DOM) — la voie la plus fiable :
+     les URLs timedtext sont désormais protégées par des jetons (réponses vides),
+     mais le panneau transcription de la page contient tout, horodaté. */
+  /* Cherche tous les éléments matchant un sélecteur, en perçant les Shadow DOM
+     (les composants ytd-* de YouTube rendent souvent leur contenu dans un shadowRoot,
+     invisible à un querySelectorAll classique depuis le document). */
+  const deepQueryAll=(sel,root=document)=>{
+    let out=[...root.querySelectorAll(sel)];
+    const all=root.querySelectorAll("*");
+    for(const el of all){ if(el.shadowRoot) out=out.concat(deepQueryAll(sel,el.shadowRoot)); }
+    return out;
+  };
+  const deepQueryOne=(sel,root=document)=>deepQueryAll(sel,root)[0]||null;
+  const scrapePanel=()=>{
+    const nodes=deepQueryAll("ytd-transcript-segment-renderer");
+    if(!nodes.length) return "";
+    const toSec=t=>{const p=String(t).trim().split(":").map(Number);return p.length===3?p[0]*3600+p[1]*60+p[2]:(p[0]||0)*60+(p[1]||0);};
+    const segs=nodes.map(n=>{
+      const root=n.shadowRoot||n;
+      const ts=(root.querySelector(".segment-timestamp,[class*='timestamp']")||n.querySelector(".segment-timestamp,[class*='timestamp']"))?.textContent||"0:00";
+      const tx=(root.querySelector(".segment-text,yt-formatted-string.segment-text,[class*='segment-text']")||n.querySelector(".segment-text,yt-formatted-string.segment-text,[class*='segment-text']"))?.textContent||"";
+      return {start:toSec(ts), text:tx};
+    }).filter(s=>s.text.trim());
+    return build(segs);
+  };
+  try{
+    if(location.href.includes("v="+videoId)){
+      let out=scrapePanel();
+      if(out) return out;
+      // Panneau fermé/en chargement → tenter de l'ouvrir automatiquement puis relire (jusqu'à ~12s)
+      const btn=deepQueryOne("ytd-video-description-transcript-section-renderer button")
+             || deepQueryOne("button[aria-label*='ranscript']")
+             || deepQueryOne("button[aria-label*='ranscription']");
+      if(btn){
+        btn.click();
+        for(let i=0;i<24;i++){
+          await new Promise(r=>setTimeout(r,500));
+          out=scrapePanel();
+          if(out) return out;
+        }
+      }
+    }
+  }catch(e){ /* on tente les méthodes réseau ci-dessous */ }
+  try{
+    // 1) captionTracks depuis la page actuelle (tokens valides) sinon re-fetch
+    let html = (location.href.includes("v="+videoId)) ? document.documentElement.innerHTML : "";
+    let m = html && html.match(/"captionTracks":(\[.*?\])/);
+    if(!m){
+      const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`, { credentials:"include" });
+      html = await res.text();
+      m = html.match(/"captionTracks":(\[.*?\])/);
+    }
+    if(!m) return "";
+    const tracks = JSON.parse(m[1].replace(/\\u0026/g,"&"));
+    if(!tracks.length) return "";
+    const track = tracks.find(t=>t.kind!=="asr") || tracks[0];
+    const base = track.baseUrl.replace(/\\u0026/g,"&");
+
+    // 2) Essayer plusieurs formats : json3, puis XML (souvent OK quand json3 est vide)
+    const candidates = [
+      base + (/[?&]fmt=/.test(base) ? "" : "&fmt=json3"),
+      base.replace(/&fmt=\w+/,"") // XML par défaut
+    ];
+    for(const url of candidates){
+      try{
+        const cr = await fetch(url, { credentials:"include" });
+        const txt = await cr.text();
+        if(!txt || txt.length<20) continue;
+        // json3 ?
+        if(txt.trim().startsWith("{")){
+          const cj = JSON.parse(txt);
+          if(cj.events){
+            const segs = cj.events.filter(e=>e.segs).map(e=>({start:Math.round((e.tStartMs||0)/1000), text:e.segs.map(s=>s.utf8).join("")}));
+            const out = build(segs); if(out) return out;
+          }
+        } else {
+          // XML <text start="..">…</text>
+          const xml = new DOMParser().parseFromString(txt, "text/xml");
+          const nodes = [...xml.querySelectorAll("text")];
+          if(nodes.length){
+            const ta=document.createElement("textarea");
+            const segs = nodes.map(n=>{ ta.innerHTML=n.textContent||""; return {start:Math.round(parseFloat(n.getAttribute("start")||"0")), text:ta.value}; });
+            const out = build(segs); if(out) return out;
+          }
+        }
+      }catch(e){ /* format suivant */ }
+    }
+    return "";
+  }catch(e){ return ""; }
+}
+
+/* ─── TENDANCES TAB ─────────────────────────────────────────── */
+function renderTrends(){
+  const inp="flex:1;min-width:0;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;";
+  return `
+    <div class="echo-card">
+      <div class="echo-card-head">🔥 ${T("nav_trends")} <span class="echo-badge" style="background:rgba(255,0,0,.15);color:#ff5252">● LIVE</span>${help(T("h_trends"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;">${T("tre_intro")}</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        ${selectHTML("treNiche",NICHE_OPTIONS,T("audience_niche"),inp)}
+        ${regionSelectHTML("treRegion",T("audience_target"),inp)}
+      </div>
+      <button class="echo-action-btn purple" id="btnTrends">🔥 ${T("tre_run")}</button>
+      <div id="card-trends-result"></div>
+    </div>
+  `;
+}
+
+/* ─── PLANIFICATEUR TAB ─────────────────────────────────────── */
+function renderPlanner(){
+  const inp="flex:1;min-width:0;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;";
+  const freqOpts=["3 vidéos/semaine","1 vidéo/jour","2 Shorts/jour","Vidéo + Shorts"].map(f=>`<option value="${f}">${esc(optLabel(f))}</option>`).join("");
+  return `
+    <div class="echo-card">
+      <div class="echo-card-head">📅 ${T("nav_planner")} <span class="echo-badge echo-badge-ai">IA</span>${help(T("h_planner"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;">${T("plan_intro")}</div>
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
+        ${selectHTML("plNiche",NICHE_OPTIONS,T("audience_niche"),inp)}
+        ${regionSelectHTML("plRegion",T("audience_target"),inp)}
+      </div>
+      <select id="plFreq" style="width:100%;box-sizing:border-box;${inp};margin-bottom:10px;"><option value="">${T("plan_freq")}</option>${freqOpts}</select>
+      <button class="echo-action-btn blue" id="btnPlanner">📅 ${T("plan_run")}</button>
+      <div id="card-planner-result"></div>
+    </div>
+  `;
+}
+
+/* ─── IDÉES DE VIDÉOS TAB ───────────────────────────────────── */
+function renderTikTok(){
+  return `
+    <div class="echo-card">
+      <div class="echo-card-head">🎵 TikTok SEO <span class="echo-badge echo-badge-ai">IA</span></div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;">${T("tk_intro")}</div>
+      <input id="tkTopic" placeholder="${T("tk_topic_ph")}" style="width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:13px;margin-bottom:8px;">
+      ${selectHTML("tkNiche",NICHE_OPTIONS,T("audience_niche"),"width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;margin-bottom:8px;")}
+      <input id="tkDesc" placeholder="${T("tk_desc_ph")}" style="width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:13px;margin-bottom:10px;">
+      <button class="echo-action-btn blue" id="btnTikTok">🎵 ${T("tk_run")}</button>
+      <div id="card-tiktok-result"></div>
+    </div>
+    <div class="echo-card">
+      <div class="echo-card-head">♻️ ${T("tkr_title")} <span class="echo-badge echo-badge-ai">IA</span></div>
+      <div style="font-size:12px;color:#888;margin-bottom:8px;">${T("tkr_intro")}</div>
+      <button class="echo-action-btn purple" id="btnTkRepurpose">♻️ ${T("tkr_run")}</button>
+      <div id="card-tkrep-result"></div>
+    </div>
+    <div class="echo-card">
+      <div class="echo-card-head">🔥 ${T("tki_title")} <span class="echo-badge echo-badge-ai">IA</span></div>
+      ${selectHTML("tkiNiche",NICHE_OPTIONS,T("audience_niche"),"width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;margin-bottom:8px;")}
+      <input id="tkiTopic" placeholder="${T("tk_topic_ph")}" style="width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:13px;margin-bottom:10px;">
+      <button class="echo-action-btn blue" id="btnTkIdeas">🔥 ${T("tki_run")}</button>
+      <div id="card-tkideas-result"></div>
+    </div>
+    <div class="echo-card">
+      <div class="echo-card-head">🪝 ${T("tkh_title")} <span class="echo-badge echo-badge-ai">IA</span></div>
+      <input id="tkhTopic" placeholder="${T("tk_topic_ph")}" style="width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:13px;margin-bottom:8px;">
+      ${selectHTML("tkhNiche",NICHE_OPTIONS,T("audience_niche"),"width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;margin-bottom:10px;")}
+      <button class="echo-action-btn blue" id="btnTkHooks">🪝 ${T("tkh_run")}</button>
+      <div id="card-tkhooks-result"></div>
+    </div>
+    <div class="echo-card">
+      <div class="echo-card-head">📅 ${T("tkc_title")} <span class="echo-badge echo-badge-ai">IA</span></div>
+      ${selectHTML("tkcNiche",NICHE_OPTIONS,T("audience_niche"),"width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;margin-bottom:8px;")}
+      <input id="tkcFreq" placeholder="${T("tkc_freq_ph")}" style="width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:13px;margin-bottom:10px;">
+      <button class="echo-action-btn blue" id="btnTkCal">📅 ${T("tkc_run")}</button>
+      <div id="card-tkcal-result"></div>
+    </div>`;
+}
+
+function renderIdeas(){
+  return `
+    <div class="echo-card">
+      <div class="echo-card-head">💡 ${T("nav_ideas")} <span class="echo-badge echo-badge-ai">IA</span>${help(T("h_ideas"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:10px;">${T("idea_intro")}</div>
+      <div style="display:flex;gap:6px;margin-bottom:8px;">
+        ${selectHTML("ideaNiche",NICHE_OPTIONS,T("audience_niche"),"flex:1;min-width:0;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;")}
+        ${regionSelectHTML("ideaRegion",T("audience_target"),"flex:1;min-width:0;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;")}
+      </div>
+      <input id="ideaTopic" placeholder="${T("idea_topic_ph")}" style="width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:13px;margin-bottom:10px;">
+      <button class="echo-action-btn blue" id="btnIdeas">💡 ${T("idea_run")}</button>
+      <div id="card-ideas-result"></div>
+    </div>
+    <div class="echo-card">
+      <div class="echo-card-head">📣 ${T("cp_section")} <span class="echo-badge echo-badge-ai">IA</span>${help(T("h_community"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:8px;">${T("cp_intro")}</div>
+      <button class="echo-action-btn purple" id="btnCommunity">📣 ${T("cp_run")}</button>
+      <div id="card-community-result"></div>
+    </div>
+    <div class="echo-card">
+      <div class="echo-card-head">📝 ${T("sc_section")} <span class="echo-badge echo-badge-ai">IA</span>${help(T("h_script"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:8px;">${T("sc_intro")}</div>
+      <input id="scTopic" placeholder="${T("sc_topic_ph")}" style="width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:13px;margin-bottom:8px;">
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        ${selectHTML("scNiche",NICHE_OPTIONS,T("audience_niche"),"flex:1;min-width:0;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;")}
+        <select id="scDur" style="flex:1;min-width:0;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;"><option value="">${T("sc_dur")}</option><option value="Short (<60s)">Short</option><option value="5-10 min">5-10 min</option><option value="10-20 min">10-20 min</option><option value="20+ min">20+ min</option></select>
+      </div>
+      <button class="echo-action-btn blue" id="btnScript">📝 ${T("sc_run")}</button>
+      <div id="card-script-result"></div>
+    </div>
+  `;
+}
+
+/* Identifiant d'appareil persistant (verrouillage anti-revente) */
+function getDeviceId(){
+  return new Promise(resolve=>{
+    chrome.storage.local.get("device_id",r=>{
+      if(r.device_id) return resolve(r.device_id);
+      const id="dev_"+(crypto.randomUUID?crypto.randomUUID():Date.now()+"_"+Math.random().toString(36).slice(2));
+      chrome.storage.local.set({device_id:id},()=>resolve(id));
+    });
+  });
 }
 
 /* ─── ACTIONS TAB ───────────────────────────────────────────── */
@@ -2982,7 +6926,34 @@ function renderActions(data){
 /* ══════════════════════════════════════════════════════════════
    CRÉATION DU PANEL
 ══════════════════════════════════════════════════════════════ */
+/* Limite quotidienne du plan Gratuit (3 analyses/jour) */
+let freeLimitReached = false;
+async function isFreeLimitReached(videoId){
+  if(currentPlan!=="free") return false;
+  try{
+    const today=new Date().toISOString().slice(0,10);
+    const {freeUsage}=await new Promise(r=>chrome.storage.local.get("freeUsage",r));
+    let u=freeUsage;
+    if(!u||u.date!==today) u={date:today,videos:[]};
+    if(u.videos.includes(videoId)) return false;       // vidéo déjà comptée aujourd'hui → autorisée
+    if(u.videos.length>=3) return true;                // 3 analyses déjà faites → bloqué
+    u.videos.push(videoId);
+    await new Promise(r=>chrome.storage.local.set({freeUsage:u},r));
+    return false;
+  }catch(e){ return false; }                            // en cas d'erreur, on n'empêche pas (fail-open)
+}
+function renderFreeLimitPanel(){
+  return `
+    <div style="text-align:center;padding:30px 18px;">
+      <div style="font-size:40px;margin-bottom:10px;">⏳</div>
+      <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:6px;">Limite quotidienne atteinte (3/3)</div>
+      <div style="font-size:12px;color:#b8b8c8;margin-bottom:16px;">Le plan Gratuit permet 3 analyses par jour.<br>Passe à Pro pour des analyses <b>illimitées</b>.</div>
+      <button class="echo-locked-btn">⭐ ${T("upgrade_btn")}</button>
+    </div>`;
+}
+
 async function createPanel(){
+  if(!extAlive())return;   // extension rechargée → on n'essaie pas d'appeler chrome.*
   if(panelCreating)return; // Empêcher les appels simultanés
   if(!isVideoPage()){
     const old=document.getElementById("echo-rank-panel");
@@ -2993,53 +6964,31 @@ async function createPanel(){
   if(!data)return;
   if(panelMounted&&data.videoId===currentVideoId)return;
 
+  // Limite quotidienne du plan Gratuit
+  freeLimitReached = await isFreeLimitReached(data.videoId);
+
   panelCreating=true; // Verrouiller
   const old=document.getElementById("echo-rank-panel");
   if(old)old.remove();
   panelMounted=false;
 
   const target=document.querySelector("#secondary-inner")||document.querySelector("#secondary");
-  if(!target){setTimeout(createPanel,2000);return;}
+  // Les Shorts n'ont pas de #secondary : le panneau se place dans <body> (echo-shorts-mode).
+  if(!target && !data.isShort){setTimeout(createPanel,2000);return;}
 
-  /* ── Vérifier si l'utilisateur est connecté ── */
+  /* ── Pas encore activé → afficher le panneau de saisie du CODE (ID/Secret) ── */
   if(!currentUserToken || !currentUserEmail){
-    // Afficher un banner de connexion styled avec BOUTON
-    const banner=document.createElement("div");
-    banner.id="echo-rank-panel";
-    banner.style.cssText="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border:2px solid #7c6dfa;border-radius:12px;padding:24px;text-align:center;margin-bottom:12px;box-shadow:0 8px 24px rgba(124,109,250,0.2)";
-    banner.innerHTML=`
-      <div style="margin-bottom:16px">
-        <div style="font-size:32px;margin-bottom:8px">🔐</div>
-        <h2 style="color:#7c6dfa;margin:0 0 8px;font-size:18px;font-weight:800">VidSpark AI</h2>
-        <p style="color:#aaa;margin:0;font-size:13px">Connectez-vous pour analyser vos vidéos</p>
-      </div>
-      <button id="loginBtn" style="background:#7c6dfa;color:white;padding:12px 32px;border:none;border-radius:8px;font-weight:bold;font-size:14px;cursor:pointer;width:100%;transition:all 0.2s">
-        🔑 Se connecter avec Google
-      </button>
-    `;
-
-    // Ajouter event listener au bouton
-    const loginBtn = banner.querySelector('#loginBtn');
-    loginBtn.addEventListener('click', () => {
-      window.open('https://vidsparkpro.com/dashboard.html','_blank');
-    });
-    loginBtn.addEventListener('mouseover', () => {
-      loginBtn.style.background = '#a78bfa';
-      loginBtn.style.transform = 'scale(1.02)';
-    });
-    loginBtn.addEventListener('mouseout', () => {
-      loginBtn.style.background = '#7c6dfa';
-      loginBtn.style.transform = 'scale(1)';
-    });
-
-    target.prepend(banner);
+    const existing = document.getElementById('echo-rank-panel');
+    if (existing) existing.remove();
+    showActivationPanel();
     panelMounted=true;
     panelCreating=false; // Déverrouiller
     return;
   }
 
-  // 🔒 VÉRIFIER LA CHAÎNE YOUTUBE AUTORISÉE (comparaison locale)
-  if (currentUserToken) {
+  // ✅ Modèle vidIQ / TubeBuddy : une fois activée (compte valide), l'extension fonctionne
+  //    sur TOUTES les vidéos. Plus de blocage par chaîne — le PLAN gère les fonctionnalités.
+  if (false) {
     const storage = await new Promise(resolve => chrome.storage.local.get("authorizedChannelIds", resolve));
     const authorizedIds = storage.authorizedChannelIds || [];
 
@@ -3062,12 +7011,23 @@ async function createPanel(){
             <h2 style="color:#fa6d6d;margin:0 0 8px;font-size:18px;font-weight:800">Chaîne non autorisée</h2>
             <p style="color:#aaa;margin:0;font-size:13px">Cette chaîne YouTube n'est pas connectée à votre compte VidSpark AI.</p>
           </div>
-          <button id="manageBtn" style="background:#fa6d6d;color:white;padding:12px 32px;border:none;border-radius:8px;font-weight:bold;font-size:14px;cursor:pointer;width:100%;transition:all 0.2s">
+          <button id="manageBtn" style="background:#fa6d6d;color:white;padding:12px 32px;border:none;border-radius:8px;font-weight:bold;font-size:14px;cursor:pointer;width:100%;transition:all 0.2s;margin-bottom:8px">
             ⚙️ Gérer mes chaînes
+          </button>
+          <button id="reenterCodeBtn" style="background:transparent;color:#fa6d6d;padding:10px 32px;border:1px solid #fa6d6d;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer;width:100%;transition:all 0.2s">
+            🔑 Entrer un autre code
           </button>
         `;
         blockedBanner.querySelector('#manageBtn').addEventListener('click', () => {
-          window.open('https://vidspark-site.pages.dev/dashboard', '_blank');
+          window.open('https://vidsparkpro.com/dashboard', '_blank');
+        });
+        blockedBanner.querySelector('#reenterCodeBtn').addEventListener('click', () => {
+          // Effacer l'activation actuelle puis recharger : l'extension réaffiche
+          // proprement le panneau de saisie du code (sans conflit avec le rafraîchissement auto)
+          chrome.storage.local.remove(
+            ['activation_id','activation_secret','subscription_expiry','authorizedChannelIds','lockedChannelName','userToken','userEmail','userPlan'],
+            () => { location.reload(); }
+          );
         });
 
         target.prepend(blockedBanner);
@@ -3077,7 +7037,52 @@ async function createPanel(){
         return;
       }
     } else {
-      // Aucune chaîne enregistrée → demander à l'utilisateur de coller l'URL de SA chaîne
+      // Aucune chaîne ajoutée → inviter à gérer ses chaînes sur le DASHBOARD
+      const existingNC = document.getElementById('echo-rank-panel');
+      if (existingNC) existingNC.remove();
+      const noChanBanner = document.createElement('div');
+      noChanBanner.id = 'echo-rank-panel';
+      noChanBanner.style.cssText = 'background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border:2px solid #7c6dfa;border-radius:12px;padding:24px;text-align:center;margin-bottom:12px;box-shadow:0 8px 24px rgba(124,109,250,0.2)';
+      noChanBanner.innerHTML = `
+        <div style="font-size:32px;margin-bottom:8px">📺</div>
+        <h2 style="color:#7c6dfa;margin:0 0 6px;font-size:17px;font-weight:800">Ajoute ta chaîne</h2>
+        <p style="color:#aaa;margin:0 0 14px;font-size:12px">Va sur ton dashboard pour ajouter la (ou les) chaîne(s) où l'extension doit fonctionner.</p>
+        <button id="goDashBtn" style="background:#7c6dfa;color:white;padding:11px 24px;border:none;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer;width:100%;margin-bottom:8px;">⚙️ Gérer mes chaînes</button>
+        <button id="reenterCodeBtn2" style="background:transparent;color:#7c6dfa;padding:9px 24px;border:1px solid #7c6dfa;border-radius:8px;font-weight:bold;font-size:12px;cursor:pointer;width:100%;">🔑 Entrer un autre code</button>
+      `;
+      noChanBanner.querySelector('#goDashBtn').addEventListener('click', () => window.open('https://vidsparkpro.com/dashboard','_blank'));
+      noChanBanner.querySelector('#reenterCodeBtn2').addEventListener('click', () => {
+        chrome.storage.local.remove(['activation_id','activation_secret','subscription_expiry','authorizedChannelIds','lockedChannelName','userToken','userEmail','userPlan'], () => location.reload());
+      });
+      target.prepend(noChanBanner);
+      panelMounted = true;
+      currentVideoId = data.videoId;
+      panelCreating = false;
+      return;
+
+      // ── Ancien flux (détection auto + formulaire) désactivé : gestion désormais sur le dashboard ──
+      const auto = await getMyChannelId();
+      if (auto && auto.id) {
+        try {
+          const creds = await new Promise(r => chrome.storage.local.get(['activation_id','activation_secret'], r));
+          const r = await fetch('https://vidspark-ai-production-9ac7.up.railway.app/api/activation/bind-channel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ activation_id: creds.activation_id, activation_secret: creds.activation_secret, channel_id: auto.id, channel_name: auto.name })
+          });
+          const b = await r.json().catch(() => ({}));
+          if (r.ok || r.status === 409) {
+            const lockedId = b.channel_id || auto.id;
+            await chrome.storage.local.set({ authorizedChannelIds: [lockedId], lockedChannelName: b.channel_name || auto.name });
+            console.log('[VidSpark] 🔒 Chaîne auto-connectée:', b.channel_name || auto.name);
+            panelMounted = false; panelCreating = false;
+            setTimeout(createPanel, 300);
+            return;
+          }
+        } catch (e) { console.warn('[VidSpark] Auto-bind échoué, passage en manuel:', e.message); }
+      }
+
+      // Sinon (détection impossible) → demander à l'utilisateur de coller l'URL de SA chaîne
       const existingPanel = document.getElementById('echo-rank-panel');
       if (existingPanel) existingPanel.remove();
 
@@ -3143,17 +7148,31 @@ async function createPanel(){
         }
 
         try {
-          const res = await fetch('https://vidspark-ai-production-9ac7.up.railway.app/api/channels/select', {
+          // 🔒 Verrouiller la chaîne sur l'ID d'activation (1 ID = 1 chaîne, côté serveur)
+          const creds = await new Promise(r => chrome.storage.local.get(['activation_id','activation_secret'], r));
+          const res = await fetch('https://vidspark-ai-production-9ac7.up.railway.app/api/activation/bind-channel', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentUserToken}` },
-            body: JSON.stringify({ channels: [{ youtube_channel_id: channelId, channel_name: channelName }] })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              activation_id: creds.activation_id,
+              activation_secret: creds.activation_secret,
+              channel_id: channelId,
+              channel_name: channelName
+            })
           });
           const body = await res.json();
           if (res.ok) {
             connectStatus.style.color = '#4ade80';
-            connectStatus.textContent = '✅ Chaîne enregistrée ! Rechargement...';
-            await chrome.storage.local.set({ authorizedChannelIds: [channelId] });
+            connectStatus.textContent = '🔒 Chaîne verrouillée ! Rechargement...';
+            await chrome.storage.local.set({ authorizedChannelIds: [body.channel_id || channelId], lockedChannelName: body.channel_name || channelName });
             setTimeout(() => { panelMounted = false; panelCreating = false; createPanel(); }, 1500);
+          } else if (res.status === 409) {
+            // Déjà verrouillé sur une autre chaîne → appliquer la chaîne du serveur
+            connectStatus.style.color = '#fa6d6d';
+            connectStatus.textContent = '⛔ ID déjà lié à : ' + (body.channel_name || body.channel_id);
+            if (body.channel_id) await chrome.storage.local.set({ authorizedChannelIds: [body.channel_id], lockedChannelName: body.channel_name || body.channel_id });
+            connectBtn.disabled = false;
+            connectBtn.textContent = '✅ Enregistrer ma chaîne';
           } else {
             connectStatus.style.color = '#fa6d6d';
             connectStatus.textContent = body.error || 'Erreur serveur';
@@ -3192,7 +7211,7 @@ async function createPanel(){
     `<option value="${l.code}" ${l.code===currentLanguage?"selected":""}>${l.label}</option>`
   ).join("");
 
-  const TABS=["overview","seo","thumbnail","viral","competitor","titles","actions"];
+  const TABS=["coach","overview","channel","seo","thumbnail","viral","competitor","titles","abtest","shorts","comments","ideas","trends","planner","region","revenue","sponsor","actions"];
 
   const panel=document.createElement("div");
   panel.id="echo-rank-panel";
@@ -3206,6 +7225,7 @@ async function createPanel(){
       </div>
       <div class="echo-header-right">
         <span class="echo-plan-badge ${currentPlan}">${T("plan_"+currentPlan)}</span>
+        <button id="btnReactivate" title="${T('reactivate_tip')}"style="background:transparent;border:none;cursor:pointer;font-size:14px;padding:0 4px;">🔑</button>
         <select class="echo-lang-select" id="echoLangSelect">${langOpts}</select>
         ${currentUserAvatar?`<img class="echo-user-avatar" src="${currentUserAvatar}" alt="${currentUserName}" title="${currentUserName}">`:
           `<a href="https://vidsparkpro.com/dashboard.html" target="_blank" class="echo-login-link" title="Se connecter">👤</a>`}
@@ -3215,11 +7235,11 @@ async function createPanel(){
     <img class="echo-thumb" src="${data.thumb}" alt="">
 
     <div class="echo-tab-bar-wrap">
-      <div class="echo-tab-bar" id="echoTabBar">
-        ${TABS.map(tab=>`
-          <button class="echo-tab-btn ${tab===activeTab?"active":""}" data-tab="${tab}">
-            ${T("nav_"+tab)}
-          </button>`).join("")}
+      <div class="echo-tab-bar" id="echoSectionBar">
+        ${SECTIONS.map(s=>`<button class="echo-tab-btn ${s.id===activeSection?"active":""}" data-section="${s.id}">${s.icon} ${T(s.key)}</button>`).join("")}
+      </div>
+      <div class="echo-tab-bar echo-subtab-bar" id="echoSubTabBar" style="${activeSection==='coach'?'display:none;':''}">
+        ${(SECTIONS.find(s=>s.id===activeSection)?.tabs||[]).filter(t=>t!=="coach").map(tab=>`<button class="echo-tab-btn echo-subtab ${tab===activeTab?"active":""}" data-tab="${tab}">${T("nav_"+tab)}</button>`).join("")}
       </div>
     </div>
 
@@ -3250,31 +7270,164 @@ async function createPanel(){
   bindPanelEvents(panel,data,scores,checklist);
 }
 
+/* ─── 🧠 COACH IA : plan d'action priorisé (moteur de règles 100% local) ─── */
+function renderCoach(data,scores){
+  const seo=Math.round(scores.seo||0), viral=Math.round(scores.viral||0), thumb=Math.round(scores.thumb||0);
+  const global=Math.round(scores.global||((seo+viral+thumb)/3));
+  const dot=c=>c==="r"?"🔴":c==="o"?"🟠":"🟡";
+  const col=g=>g>=15?"r":g>=8?"o":"y";
+  const edge=c=>c==="r"?"#ef4444":c==="o"?"#f5b301":"#facc15";
+
+  const A=[];
+  if(seo<78){ const g=Math.max(3,Math.round((92-seo)*0.45)); A.push({g,c:col(g),icon:"✍️",title:T("coach_a_title"),why:(data.title||"").length>70?T("coach_w_title_long"):T("coach_w_title_kw"),goto:"titles",run:"btnTitleDoctor"}); }
+  if(thumb<78){ const g=Math.max(3,Math.round((92-thumb)*0.40)); A.push({g,c:col(g),icon:"🎨",title:T("coach_a_thumb"),why:T("coach_w_thumb"),goto:"thumbnail",run:"btnThumbIdeas"}); }
+  if(viral<78){ const g=Math.max(3,Math.round((92-viral)*0.25)); A.push({g,c:col(g),icon:"📱",title:T("coach_a_short"),why:T("coach_w_short"),goto:"shorts",run:"btnGenShorts"}); }
+  A.sort((a,b)=>b.g-a.g);
+
+  const totalGain=A.reduce((s,a)=>s+a.g,0);
+  const reachable=Math.min(96,global+totalGain);
+  const pct=Math.max(4,Math.round((global/Math.max(reachable,1))*100));
+
+  const good=[];
+  if(seo>=78) good.push(T("coach_ok_title"));
+  if(thumb>=78) good.push(T("coach_ok_thumb"));
+  if(viral>=78) good.push(T("coach_ok_viral"));
+
+  const cards=A.map(a=>`
+    <div class="echo-card" style="margin-bottom:10px;border-left:3px solid ${edge(a.c)};">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <span style="font-weight:700;font-size:14px;">${dot(a.c)} ${a.icon} ${esc(a.title)}</span>
+        <span dir="ltr" style="font-weight:800;color:#22c55e;white-space:nowrap;">+${a.g} ↑</span>
+      </div>
+      <div style="font-size:12px;color:#aaa;margin:5px 0 8px;">${esc(a.why)}</div>
+      <button class="echo-action-btn blue coach-goto" data-goto="${a.goto}" data-run="${a.run||''}">${T("coach_fix")} →</button>
+    </div>`).join("");
+
+  const goodBlock=good.length?`<div style="font-size:12px;color:#888;margin-top:8px;text-align:center;">${good.map(g=>"✅ "+esc(g)).join(" &nbsp; ")}</div>`:"";
+  const empty=A.length?"":`<div class="echo-card" style="text-align:center;"><div style="font-size:15px;font-weight:700;margin-bottom:8px;">🎉 ${T("coach_all_good")}</div><button class="echo-action-btn blue coach-goto" data-goto="trends">🔥 ${T("coach_grow")} →</button></div>`;
+
+  return `
+    <div class="echo-card" style="text-align:center;background:linear-gradient(135deg,#141418,#1d1530);">
+      <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.5px;">${T("coach_potential")}</div>
+      <div dir="ltr" style="font-size:30px;font-weight:900;margin:4px 0;">${global} <span style="color:#666;">→</span> <span style="color:#22c55e;">${reachable}</span></div>
+      <div style="height:8px;background:#0e0e12;border-radius:6px;overflow:hidden;margin:8px 0 6px;"><div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#f7941d,#22c55e);"></div></div>
+      ${A.length?`<div dir="ltr" style="font-size:12px;color:#bbb;">+${totalGain} pts · ${A.length} ${T("coach_actions")}</div>`:""}
+    </div>
+    ${cards}${empty}${goodBlock}
+  `;
+}
+
 function renderTabContent(tab,data,scores,checklist){
+  const free = currentPlan==="free";
+  if(free && freeLimitReached) return renderFreeLimitPanel();
   switch(tab){
-    case "overview":   return renderOverview(data,scores,checklist);
-    case "seo":        return renderSEO(data,scores,checklist);
-    case "thumbnail":  return renderThumbnail(data,scores);
-    case "viral":      return renderViral(data,scores);
-    case "competitor": return renderCompetitor(data,scores);
-    case "titles":     return renderTitles();
-    case "actions":    return renderActions(data);
-    default:           return renderOverview(data,scores,checklist);
+    case "coach":      return renderCoach(data,scores);
+    case "overview":   return free ? renderOverviewFree(data,scores) : renderOverview(data,scores,checklist);
+    case "seo":        return free ? lockedFeature(renderSEO(data,scores,checklist),"🔍 "+T("nav_seo")) : renderSEO(data,scores,checklist);
+    case "thumbnail":  return free ? lockedFeature(renderThumbnail(data,scores),"🖼️ "+T("nav_thumbnail")) : renderThumbnail(data,scores);
+    case "viral":      return free ? lockedFeature(renderViral(data,scores),"🔥 "+T("nav_viral")) : renderViral(data,scores);
+    case "competitor": return free ? lockedFeature(renderCompetitor(data,scores),"📊 "+T("nav_competitor")) : renderCompetitor(data,scores);
+    case "titles":     return renderTitles(data);
+    case "abtest":     return free ? lockedFeature(renderABTest(data),"⚔️ A/B Test") : renderABTest(data);
+    case "shorts":     return renderShorts(data);
+    case "region":     return free ? lockedFeature(renderAudience(),"🌍 "+T("nav_region")) : renderAudience();
+    case "revenue":    return free ? lockedFeature(renderRevenue(data),"💰 "+T("nav_revenue")) : renderRevenue(data);
+    case "sponsor":    return free ? lockedFeature(renderSponsor(),"💼 "+T("nav_sponsor")) : renderSponsor();
+    case "channel":    return free ? lockedFeature(renderChannel(),"📊 "+T("nav_channel")) : renderChannel();
+    case "comments":   return free ? lockedFeature(renderComments(),"💬 "+T("nav_comments")) : renderComments();
+    case "ideas":      return free ? lockedFeature(renderIdeas(),"💡 "+T("nav_ideas")) : renderIdeas();
+    case "tiktok":     return free ? lockedFeature(renderTikTok(),"🎵 TikTok") : renderTikTok();
+    case "planner":    return free ? lockedFeature(renderPlanner(),"📅 "+T("nav_planner")) : renderPlanner();
+    case "trends":     return free ? lockedFeature(renderTrends(),"🔥 "+T("nav_trends")) : renderTrends();
+    case "actions":    return free ? lockedFeature(renderActions(data),"⚡ "+T("nav_actions")) : renderActions(data);
+    default:           return free ? renderOverviewFree(data,scores) : renderOverview(data,scores,checklist);
   }
+}
+
+/* Aperçu GRATUIT : score global + sous-scores visibles, corrections verrouillées */
+function renderOverviewFree(data,scores){
+  const global=scores.global||Math.round((scores.seo+scores.viral+scores.thumb)/3);
+  const gc=scoreColor(global), sc=scoreColor(scores.seo), vc=scoreColor(scores.viral), tc=scoreColor(scores.thumb);
+  const ctr=scores.ctr||computeCTR(scores.seo,scores.viral,scores.thumb);
+  return `
+    <div class="echo-global-score-wrap">
+      <svg viewBox="0 0 80 80" width="80" height="80">
+        <circle cx="40" cy="40" r="32" fill="none" stroke="#1a1a1a" stroke-width="6"/>
+        <circle cx="40" cy="40" r="32" fill="none" stroke="${gc}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${Math.round(global*2.01)} 201" stroke-dashoffset="50" transform="rotate(-90 40 40)"/>
+        <text x="40" y="37" text-anchor="middle" font-size="16" font-weight="800" fill="${gc}">${global}</text>
+        <text x="40" y="50" text-anchor="middle" font-size="8" fill="#555">/ 100</text>
+      </svg>
+      <div class="echo-global-info">
+        <div class="echo-global-label">${T("score_global")}</div>
+        <div class="echo-global-ctr">${T("overview_ctr_label")} : <span style="color:#7c6dfa;font-weight:700">${ctr}%</span></div>
+      </div>
+    </div>
+    <div class="echo-scores-row">
+      <div class="echo-score-pill" style="border-color:${sc}"><div class="echo-score-num" style="color:${sc}">${scores.seo}</div><div class="echo-score-pill-label">${T("score_seo")}</div></div>
+      <div class="echo-score-pill" style="border-color:${vc}"><div class="echo-score-num" style="color:${vc}">${scores.viral}</div><div class="echo-score-pill-label">${T("score_viral")}</div></div>
+      <div class="echo-score-pill" style="border-color:${tc}"><div class="echo-score-num" style="color:${tc}">${scores.thumb}</div><div class="echo-score-pill-label">${T("score_thumb")}</div></div>
+    </div>
+    ${lockedFeature(`
+      <div class="echo-card">
+        <div class="echo-card-head">${T("checklist_title")}</div>
+        <div class="echo-check-row"><span class="echo-check-dot fix"></span><div style="flex:1"><span class="echo-check-text">${T("gate_feat1")}</span></div></div>
+        <div class="echo-check-row"><span class="echo-check-dot fix"></span><div style="flex:1"><span class="echo-check-text">${T("gate_feat2")}</span></div></div>
+        <div class="echo-check-row"><span class="echo-check-dot ok"></span><div style="flex:1"><span class="echo-check-text">${T("gate_feat3")}</span></div></div>
+      </div>`, T("gate_unlock"))}
+  `;
 }
 
 function switchTab(tab,data,scores,checklist){
   activeTab=tab;
+  activeSection=sectionOf(tab);
+  rebuildNav(data,scores,checklist);
   const content=document.getElementById("echoTabContent");
-  if(content) content.innerHTML=renderTabContent(tab,data,scores,checklist);
-  document.querySelectorAll(".echo-tab-btn").forEach(b=>{
-    b.classList.toggle("active",b.dataset.tab===tab);
-  });
-  bindTabEvents(tab,data,scores,checklist);
+  if(content){
+    content.classList.add("echo-fading");
+    setTimeout(()=>{
+      content.innerHTML=renderTabContent(tab,data,scores,checklist);
+      bindTabEvents(tab,data,scores,checklist);
+      content.classList.remove("echo-fading");
+    },90);
+  }
+}
+function switchSection(sid,data,scores,checklist){
+  const s=SECTIONS.find(x=>x.id===sid);
+  if(s) switchTab(s.tabs[0],data,scores,checklist);
+}
+/* Reconstruit les 2 barres (sections + sous-onglets) et rebinde leurs clics */
+function rebuildNav(data,scores,checklist){
+  const sb=document.getElementById("echoSectionBar");
+  const tb=document.getElementById("echoSubTabBar");
+  if(sb){
+    sb.innerHTML=SECTIONS.map(s=>`<button class="echo-tab-btn ${s.id===activeSection?"active":""}" data-section="${s.id}">${s.icon} ${T(s.key)}</button>`).join("");
+    sb.querySelectorAll("[data-section]").forEach(b=>b.addEventListener("click",()=>switchSection(b.dataset.section,data,scores,checklist)));
+  }
+  if(tb){
+    const subs=(SECTIONS.find(s=>s.id===activeSection)?.tabs||[]).filter(t=>t!=="coach");
+    tb.innerHTML=subs.map(tab=>`<button class="echo-tab-btn echo-subtab ${tab===activeTab?"active":""}" data-tab="${tab}">${T("nav_"+tab)}</button>`).join("");
+    tb.style.display=subs.length?"":"none";
+    tb.querySelectorAll("[data-tab]").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab,data,scores,checklist)));
+  }
 }
 
 /* ── Bind global panel events ── */
 function bindPanelEvents(panel,data,scores,checklist){
+  /* 🔑 Changer de code / réactiver (efface l'activation et recharge) */
+  panel.querySelector("#btnReactivate")?.addEventListener("click",async()=>{
+    if(!confirm(T("reactivate_confirm"))) return;
+    // 🔓 Libérer le code côté serveur (débloque l'appareil)
+    try{
+      const st=await chrome.storage.local.get(['activation_id','activation_secret','device_id']);
+      if(st.activation_id && st.activation_secret){
+        await fetch('https://vidspark-ai-production-9ac7.up.railway.app/api/activation/release',{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({activation_id:st.activation_id,activation_secret:st.activation_secret,device_id:st.device_id})
+        });
+      }
+    }catch(e){ /* on déconnecte quand même localement */ }
+    chrome.storage.local.remove(['activation_id','activation_secret','subscription_expiry','authorizedChannelIds','lockedChannelName','userToken','userEmail','userPlan'],()=>location.reload());
+  });
   /* langue */
   panel.querySelector("#echoLangSelect").addEventListener("change",function(){
     currentLanguage=this.value;
@@ -3284,12 +7437,38 @@ function bindPanelEvents(panel,data,scores,checklist){
     showToast(T("lang_changed")+" : "+LANG_LIST.find(l=>l.code===currentLanguage)?.label);
   });
 
-  /* onglets */
-  panel.querySelectorAll(".echo-tab-btn").forEach(btn=>{
-    btn.addEventListener("click",()=>switchTab(btn.dataset.tab,data,scores,checklist));
-  });
+  /* nav à 2 niveaux : 5 sections + sous-onglets */
+  rebuildNav(data,scores,checklist);
 
   bindTabEvents(activeTab,data,scores,checklist);
+  showOnboarding();
+}
+
+/* Visite guidée au 1er lancement (une seule fois) */
+function showOnboarding(){
+  if(document.getElementById("echo-onboard")) return;
+  chrome.storage.local.get("vidspark_onboarded",r=>{
+    if(r.vidspark_onboarded) return;
+    const rtl=currentLanguage==="ar";
+    const ov=document.createElement("div");
+    ov.id="echo-onboard";
+    ov.style.cssText="position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;";
+    ov.innerHTML=`<div dir="${rtl?'rtl':'ltr'}" style="background:#0e0e12;border:1px solid #2a2a35;border-radius:14px;max-width:340px;width:90%;padding:20px;color:#e8e8f0;font-family:system-ui,sans-serif;">
+      <div style="font-size:18px;font-weight:800;margin-bottom:4px;">👋 ${esc(T("ob_title"))}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:14px;">${esc(T("ob_sub"))}</div>
+      <div style="display:flex;flex-direction:column;gap:9px;font-size:12px;line-height:1.4;">
+        <div>⚡ <b>${esc(T("au_section"))}</b> — ${esc(T("ob_audit"))}</div>
+        <div>🩺 <b>${esc(T("td_title"))}</b> — ${esc(T("ob_title2"))}</div>
+        <div>📸 <b>${esc(T("thumbab_title"))}</b> — ${esc(T("ob_thumb"))}</div>
+        <div>🎬 <b>${esc(T("nav_shorts"))}</b> — ${esc(T("ob_shorts"))}</div>
+        <div>💼 <b>${esc(T("nav_sponsor"))}</b> — ${esc(T("ob_sponsor"))}</div>
+      </div>
+      <button id="echo-ob-close" class="echo-action-btn purple" style="margin-top:16px;">${esc(T("ob_btn"))}</button>
+    </div>`;
+    document.body.appendChild(ov);
+    ov.addEventListener("click",e=>{ if(e.target===ov){ chrome.storage.local.set({vidspark_onboarded:true}); ov.remove(); } });
+    ov.querySelector("#echo-ob-close").addEventListener("click",()=>{ chrome.storage.local.set({vidspark_onboarded:true}); ov.remove(); });
+  });
 }
 
 /* ── Bind events spécifiques à chaque onglet ── */
@@ -3297,13 +7476,335 @@ function bindTabEvents(tab,data,scores,checklist){
   const content=document.getElementById("echoTabContent");
   if(!content)return;
 
+  /* 🧠 Coach : deep-links vers les outils existants (pré-remplissage en Phase 2) */
+  content.querySelectorAll(".coach-goto").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      switchTab(btn.dataset.goto,data,scores,checklist);
+      const run=btn.dataset.run;
+      if(run) setTimeout(()=>document.getElementById(run)?.click(),150);
+    });
+  });
+
   /* Rapport complet (overview + actions) */
   content.querySelector("#btnFullReport")?.addEventListener("click",openFullReport);
   content.querySelector("#btnFullReport2")?.addEventListener("click",openFullReport);
 
+  /* 📊 Stats réelles YouTube (vraies données via API v3) */
+  content.querySelector("#btnRealStats")?.addEventListener("click",async()=>{
+    setContent("card-realstats",spinnerHTML(T("spin_realstats")));
+    try{
+      const r=await sendBG({action:"yt_video",videoId:data.videoId});
+      const cell=(v,l)=>`<div class="echo-rs-cell"><b>${v}</b><span>${l}</span></div>`;
+      const tags=(r.tags&&r.tags.length)?`<div class="echo-card-head" style="margin-top:10px">🏷️ ${T("stat_tags_real")} (${r.tags.length})</div><div class="echo-tag-cloud">${r.tags.slice(0,18).map(t=>`<span class="echo-kw-tag">${esc(t)}</span>`).join("")}</div>`:`<div style="color:#888;font-size:12px;margin-top:8px">${T("no_tag")}</div>`;
+      setContent("card-realstats",`
+        <div class="echo-card-head">📊 ${T("live_stats_title")} <span class="echo-badge" style="background:rgba(255,0,0,.15);color:#ff5252">● LIVE</span></div>
+        <div class="echo-rs-grid">
+          ${cell(fmtNum(r.views),T("stat_views"))}
+          ${cell(fmtNum(r.views_per_hour)+"/h",T("stat_vph"))}
+          ${cell(fmtNum(r.likes),T("stat_likes"))}
+          ${cell(fmtNum(r.comments),T("stat_comments"))}
+          ${cell(r.engagement_rate+"%",T("stat_engagement"))}
+          ${cell(fmtNum(r.channel_subs),T("stat_subs"))}
+        </div>
+        ${tags}`);
+    }catch(e){setContent("card-realstats",errHTML(e.message));}
+  });
+
+  /* 📈 Audit de chaîne */
+  content.querySelector("#btnChannelAudit")?.addEventListener("click",async()=>{
+    setContent("card-audit",spinnerHTML(T("spin_audit")));
+    try{
+      let cid=extractYouTubeChannelId();
+      if(!cid){ const v=await sendBG({action:"yt_video",videoId:data.videoId}); cid=v&&v.channel_id; }
+      if(!cid) throw new Error(T("err_channel"));
+      const a=await sendBG({action:"channel_audit",channelId:cid});
+      const cell=(v,l)=>`<div class="echo-rs-cell"><b>${v}</b><span>${l}</span></div>`;
+      setContent("card-audit",`
+        <div class="echo-card-head">📈 ${T("audit_title")} : ${esc((a.channel||"").slice(0,30))} <span class="echo-badge" style="background:rgba(255,0,0,.15);color:#ff5252">● LIVE</span></div>
+        <div class="echo-rs-grid">
+          ${cell(fmtNum(a.subs),T("stat_subs"))}
+          ${cell(fmtNum(a.avg_views),T("stat_avg_views"))}
+          ${cell((a.avg_engagement||0)+"%",T("stat_engagement"))}
+          ${cell(a.upload_freq_days?a.upload_freq_days+"j":"—",T("stat_freq"))}
+          ${cell((a.tags_usage_pct||0)+"%",T("stat_tagged"))}
+          ${cell(fmtNum(a.total_videos),T("stat_total_vids"))}
+        </div>
+        ${a.best_video?`<div style="margin-top:8px;font-size:11px;color:#22c55e">🏆 ${esc(a.best_video.title.slice(0,45))} — ${fmtNum(a.best_video.views)} vues</div>`:""}`);
+    }catch(e){setContent("card-audit",errHTML(e.message));}
+  });
+
+  /* 🏆 Vrais concurrents */
+  content.querySelector("#btnRealComp")?.addEventListener("click",async()=>{
+    setContent("realCompResults",spinnerHTML("📡 Recherche..."));
+    try{
+      // Requête courte : 1ère partie du titre (avant | - séparateurs) + 6 premiers mots
+      const q=(data.title||"").split(/[|\-–—:•]/)[0].trim().split(/\s+/).slice(0,6).join(" ")||data.title;
+      const r=await sendBG({action:"yt_competitors",query:q});
+      const rows=(r.videos||[]).slice(0,6).map(v=>`
+        <div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #1a1a1a;">
+          <div style="flex:1;overflow:hidden;"><div style="font-size:12px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(v.title)}</div><div style="font-size:10px;color:#888;">${esc(v.channel)}</div></div>
+          <div style="text-align:right;font-size:11px;white-space:nowrap;"><b style="color:#ff5252">${fmtNum(v.views_per_hour)}/h</b><br><span style="color:#888">${fmtNum(v.views)} vues</span></div>
+        </div>`).join("");
+      setContent("realCompResults",`<div style="margin-top:6px">${rows||"<div style='color:#888'>"+T("no_result")+"</div>"}</div>`);
+    }catch(e){setContent("realCompResults",errHTML(e.message));}
+  });
+
+  /* 🔑 Mots-clés */
+  content.querySelector("#btnKeywords")?.addEventListener("click",async()=>{
+    const q=(content.querySelector("#kwInput")?.value||data.title||"").trim();
+    if(!q)return;
+    setContent("kwResults",spinnerHTML(T("spin_kw")));
+    try{
+      const k=await sendBG({action:"keywords",query:q,opportunity:true,language:currentLanguage});
+      const color=k.competition==="faible"?"#22c55e":k.competition==="moyenne"?"#f5b301":"#ff5252";
+      const sugg=(k.suggestions||[]).map(s=>`<span class="echo-kw-tag">${esc(s)}</span>`).join("");
+      const o=k.opportunity;
+      const diffColor=d=>d==="facile"?"#22c55e":d==="moyen"?"#f5b301":"#ff5252";
+      let oppHTML="";
+      if(o){
+        const oc=scoreColor(o.score||50);
+        const chip=(label,val,c)=>`<div style="flex:1;text-align:center;"><div style="font-size:10px;color:#888;">${label}</div><div style="font-size:12px;font-weight:700;color:${c};">${esc(val||"—")}</div></div>`;
+        const best=(o.best_keywords||[]).map(b=>`
+          <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;padding:4px 0;border-bottom:1px solid #1a1a1a;">
+            <span style="font-size:12px;color:#e8e8f0;flex:1;">${esc(b.keyword||"")}</span>
+            <span class="echo-badge" style="background:${diffColor(b.difficulty)}22;color:${diffColor(b.difficulty)};white-space:nowrap;">${esc(b.difficulty||"")}</span>
+          </div>`).join("");
+        oppHTML=`
+          <div class="echo-card" style="margin:8px 0;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <div style="font-size:26px;font-weight:800;color:${oc}">${o.score??"—"}</div>
+              <div><div style="font-size:11px;color:#aaa;">${T("kw_opportunity")}</div><div style="font-size:12px;color:#e8e8f0;">${esc(o.verdict||"")}</div></div>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:8px;">
+              ${chip(T("kw_difficulty"),o.difficulty,diffColor(o.difficulty))}
+              ${chip(T("kw_demand"),o.demand,"#3b82f6")}
+              ${chip(T("kw_trend"),o.trend,"#7c6dfa")}
+            </div>
+            ${best?`<div style="font-size:11px;color:#22c55e;font-weight:700;margin-bottom:2px;">${T("kw_best")}</div>${best}`:""}
+          </div>`;
+      }
+      setContent("kwResults",`
+        ${oppHTML}
+        <div style="margin:6px 0;font-size:12px;">${T("kw_competition")} : <b style="color:${color}">${k.competition}</b> ${k.top_avg_views?`(top ~${fmtNum(k.top_avg_views)} vues)`:""}</div>
+        <div class="echo-tag-cloud">${sugg||"<span style='color:#888'>"+T("no_sugg")+"</span>"}</div>`);
+    }catch(e){setContent("kwResults",errHTML(e.message));}
+  });
+
+  /* 🔑 Mots-clés suggérés DYNAMIQUES (auto sur l'onglet Concurrence) */
+  if(document.getElementById("missingKwBody")){
+    (async()=>{
+      try{
+        const k=await sendBG({action:"keywords",query:data.title});
+        const tl=(data.title||"").toLowerCase();
+        const sugg=(k.suggestions||[]).filter(s=>s && !tl.includes(s.toLowerCase())).slice(0,10);
+        const el=document.getElementById("missingKwBody");
+        if(el) el.innerHTML = sugg.length
+          ? `<div class="echo-tag-cloud">${sugg.map(s=>`<span class="echo-kw-tag missing">${esc(s)}</span>`).join("")}</div>`
+          : "<span style='color:#888'>"+T("no_sugg_more")+"</span>";
+      }catch(e){ const el=document.getElementById("missingKwBody"); if(el) el.innerHTML="<span style='color:#888'>Indisponible</span>"; }
+    })();
+  }
+
+  /* 🎨 Analyse miniature IA */
+  content.querySelector("#btnThumbAI")?.addEventListener("click",async()=>{
+    setContent("card-thumb-ai",spinnerHTML(T("spin_thumb_ai")));
+    try{
+      const t=await sendBG({action:"thumbnail",videoId:data.videoId,title:data.title,language:currentLanguage});
+      const tips=(t.tips||[]).map(x=>`<div class="echo-suggestion">💡 ${esc(x)}</div>`).join("");
+      const strong=(t.strengths||[]).map(x=>`<div class="echo-suggestion" style="border-left-color:#22c55e">✅ ${esc(x)}</div>`).join("");
+      setContent("card-thumb-ai",`
+        <div class="echo-card-head">🎨 ${T("thumb_ai_title")} <span class="echo-badge echo-badge-ai">Vision</span></div>
+        <div style="font-size:24px;font-weight:800;color:${scoreColor(t.score||70)};margin:4px 0">${t.score!==undefined?t.score:"—"}/100</div>
+        ${strong}${tips}`);
+    }catch(e){setContent("card-thumb-ai",errHTML(e.message));}
+  });
+
+  /* 🎨 Générateur de concepts de miniature */
+  content.querySelector("#btnThumbIdeas")?.addEventListener("click",async()=>{
+    setContent("card-thumb-ideas-result",spinnerHTML("🎨 "+(T("thumb_ideas_loading")||"Génération des concepts…")));
+    try{
+      const niche=(content.querySelector("#thumbIdeaNiche")?.value||"").trim();
+      const r=await sendBG({action:"thumbnail_ideas",title:data.title,niche,language:currentLanguage});
+      const concepts=r.concepts||[];
+      const cards=concepts.map((c,i)=>{
+        const pal=(c.palette||[]).slice(0,3);
+        const c0=pal[0]||"#7c6dfa", c1=pal[1]||"#ef4444", c2=pal[2]||"#ffffff";
+        const place=(c.face&&c.face.placement)||"";
+        const justify=place.indexOf("gauche")>=0?"flex-end":place.indexOf("droite")>=0?"flex-start":"center";
+        const swatches=pal.map(h=>`<span style="display:inline-block;width:22px;height:22px;border-radius:5px;border:1px solid #2a2a35;background:${esc(h)};" title="${esc(h)}"></span>`).join(" ");
+        const brief=`${T("thumb_ideas_emotion")||"Émotion"}: ${c.emotion||""}\n${T("thumb_ideas_text")||"Texte"}: ${c.text||""}\nPalette: ${pal.join(", ")}\n${T("thumb_ideas_focal")||"Point focal"}: ${c.focal_point||""}\n${T("thumb_ideas_face")||"Visage"}: ${(c.face&&c.face.expression)||""} (${place})\nStyle: ${c.style||""}\n${T("thumb_ideas_bg")||"Fond"}: ${c.background||""}\nImage prompt: ${c.image_prompt||""}\n${T("thumb_ideas_why")||"Pourquoi"}: ${c.justification||""}`;
+        return `
+          <div class="echo-card" data-copy="${esc(brief)}" style="margin-top:8px;">
+            <div class="echo-card-head" style="display:flex;justify-content:space-between;align-items:center;">
+              <span>🎨 ${T("thumb_ideas_concept")||"Concept"} #${i+1}</span>
+              <span class="echo-badge echo-badge-purple">${esc(c.emotion||"")}</span>
+            </div>
+            <div style="position:relative;height:84px;border-radius:8px;overflow:hidden;margin-bottom:8px;background:linear-gradient(135deg,${esc(c0)},${esc(c1)});display:flex;align-items:center;justify-content:${justify};padding:0 12px;">
+              <div style="font-weight:900;font-size:18px;color:${esc(c2)};text-shadow:0 2px 6px rgba(0,0,0,.6);line-height:1.1;max-width:72%;">${esc((c.text||"").toUpperCase())}</div>
+            </div>
+            <div style="margin-bottom:6px;">${swatches}</div>
+            <div style="font-size:12px;color:#ccc;margin:3px 0;">📝 <b>${T("thumb_ideas_text")||"Texte"}:</b> ${esc(c.text||"")}</div>
+            <div style="font-size:12px;color:#ccc;margin:3px 0;">🎯 <b>${T("thumb_ideas_focal")||"Point focal"}:</b> ${esc(c.focal_point||"")}</div>
+            <div style="font-size:12px;color:#ccc;margin:3px 0;">🙂 <b>${T("thumb_ideas_face")||"Visage"}:</b> ${esc((c.face&&c.face.expression)||"")} — ${esc(place)}</div>
+            <div style="font-size:12px;color:#ccc;margin:3px 0;">🖼️ <b>${T("thumb_ideas_bg")||"Fond"}:</b> ${esc(c.background||"")}</div>
+            <div style="font-size:11px;color:#22c55e;margin-top:6px;">✅ ${esc(c.justification||"")}</div>
+            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+              <button class="echo-copy-mini echo-copy-brief" style="width:auto;padding:4px 10px;">⧉ ${T("thumb_ideas_copy")||"Copier le brief"}</button>
+              <button class="echo-copy-mini echo-gen-bg" data-imgprompt="${esc(c.image_prompt||c.background||c.text||"")}" data-text="${esc(c.text||"")}" data-place="${esc(place)}" data-color="${esc(c2)}" style="width:auto;padding:4px 10px;background:#7c6dfa;color:#fff;">${T("thumb_gen_btn")}</button>
+            </div>
+            <div class="echo-genbg-result" style="margin-top:8px;"></div>
+          </div>`;
+      }).join("");
+      let lockedBlock="";
+      if(r.preview && r.locked>0){
+        lockedBlock=`
+          <div style="position:relative;margin-top:8px;border-radius:12px;overflow:hidden;">
+            <div style="filter:blur(6px);opacity:.6;pointer-events:none;" class="echo-card">
+              <div class="echo-card-head">🎨 ${T("thumb_ideas_concept")||"Concept"} Pro</div>
+              <div style="font-size:12px;">Palette · texte · layout · justification CTR…</div>
+            </div>
+            <div class="echo-locked-overlay" style="position:absolute;inset:0;">
+              <div class="echo-locked-icon">🔒</div>
+              <div class="echo-locked-title">+${r.locked} ${T("thumb_ideas_concept")||"concepts"}</div>
+              <div class="echo-locked-sub">${T("thumb_ideas_locked_sub")||"Passe à Pro pour débloquer les 3 concepts"}</div>
+              <button class="echo-locked-btn" id="btnUnlockThumbIdeas">⭐ ${T("upgrade_btn")}</button>
+            </div>
+          </div>`;
+      }
+      setContent("card-thumb-ideas-result",cards+lockedBlock || `<div style="color:#888">${T("error_generic")}</div>`);
+      content.querySelectorAll(".echo-copy-brief").forEach(b=>{
+        b.addEventListener("click",()=>{const c=b.closest("[data-copy]");navigator.clipboard.writeText(c.dataset.copy||"");showToast(T("copied_title"));});
+      });
+      content.querySelectorAll(".echo-gen-bg").forEach(b=>{
+        b.addEventListener("click",async()=>{
+          const out=b.closest(".echo-card").querySelector(".echo-genbg-result");
+          out.innerHTML=spinnerHTML("🖼️ "+(T("thumb_gen_loading")||"Génération du fond…"));
+          try{
+            const g=await sendBG({action:"thumbnail_gen",title:data.title,prompt:b.dataset.imgprompt||"",no_text:true});
+            if(g&&g.image){
+              const src=`data:${g.mime||'image/jpeg'};base64,${g.image}`;
+              const pl=b.dataset.place||"";
+              const c0=b.dataset.color||"#ffffff";
+              const baseCol=/^#[0-9a-fA-F]{6}$/.test(c0)?c0:"#ffffff";
+              const baseX=pl.indexOf("gauche")>=0?28:pl.indexOf("droite")>=0?72:50;
+              const layers=[
+                { text:(b.dataset.text||""), color:baseCol,    fontPx:32, fontFam:"Arial Black", posX:baseX, posY:40 },
+                { text:"",                    color:"#ffde59", fontPx:22, fontFam:"Impact",      posX:baseX, posY:62 }
+              ];
+              const fonts=["Arial Black","Impact","Tahoma","Verdana","Georgia","Trebuchet MS"];
+              const fontOpts=(sel)=>fonts.map(f=>`<option value="${f}" ${f===sel?"selected":""}>${f}</option>`).join("");
+              const rowCtl=(i)=>`
+                <div style="border:1px solid #1b2330;border-radius:8px;padding:6px;margin-bottom:6px;">
+                  <input class="eg-text" data-i="${i}" value="${esc(layers[i].text)}" placeholder="${(T("thumb_gen_line")||"Ligne")+" "+(i+1)}" style="width:100%;box-sizing:border-box;background:#141418;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:13px;margin-bottom:5px;">
+                  <div style="display:flex;gap:6px;align-items:center;">
+                    <input type="color" class="eg-color" data-i="${i}" value="${layers[i].color}" title="${T("thumb_gen_color")||"Couleur"}" style="width:34px;height:28px;padding:0;border:1px solid #2a2a35;border-radius:6px;background:#141418;">
+                    <select class="eg-font" data-i="${i}" title="${T("thumb_gen_font")||"Police"}" style="flex:1;min-width:0;background:#141418;border:1px solid #2a2a35;border-radius:6px;color:#e8e8f0;padding:6px;font-size:12px;">${fontOpts(layers[i].fontFam)}</select>
+                    <input type="range" class="eg-size" data-i="${i}" min="12" max="64" value="${layers[i].fontPx}" title="${T("thumb_gen_size")||"Taille"}" style="width:64px;">
+                  </div>
+                </div>`;
+              out.innerHTML=`
+                ${rowCtl(0)}${rowCtl(1)}
+                <div class="eg-stage" style="position:relative;border-radius:8px;overflow:hidden;border:1px solid #2a2a35;touch-action:none;">
+                  <img src="${src}" draggable="false" style="width:100%;display:block;pointer-events:none;">
+                  ${layers.map((l,i)=>`<div class="eg-txt" data-i="${i}" style="position:absolute;left:${l.posX}%;top:${l.posY}%;transform:translate(-50%,-50%);font-family:'${l.fontFam}';font-weight:900;font-size:${l.fontPx}px;color:${l.color};text-shadow:0 3px 10px rgba(0,0,0,.85),0 0 4px rgba(0,0,0,.7);line-height:1.05;text-align:center;white-space:nowrap;cursor:move;">${esc((l.text||"").toUpperCase())}</div>`).join("")}
+                </div>
+                <button class="echo-action-btn green eg-dl" style="margin-top:8px;">⬇ ${T("thumb_gen_download")||"Télécharger l'image"}</button>
+                <div style="font-size:11px;color:#888;margin-top:5px;">${T("thumb_gen_drag_note")||"2 lignes : tape ton texte, glisse chaque ligne, choisis couleur/taille/police, puis télécharge."}</div>`;
+              const stage=out.querySelector(".eg-stage");
+              const txtEls=[...out.querySelectorAll(".eg-txt")];
+              function applyOne(i){ const el=txtEls[i],l=layers[i]; el.textContent=(l.text||"").toUpperCase(); el.style.left=l.posX+"%"; el.style.top=l.posY+"%"; el.style.color=l.color; el.style.fontSize=l.fontPx+"px"; el.style.fontFamily="'"+l.fontFam+"'"; el.style.display=l.text?"":"none"; }
+              function applyAll(){ layers.forEach((_,i)=>applyOne(i)); }
+              applyAll();
+              out.querySelectorAll(".eg-text").forEach(inp=>inp.addEventListener("input",()=>{layers[+inp.dataset.i].text=inp.value;applyOne(+inp.dataset.i);}));
+              out.querySelectorAll(".eg-color").forEach(ci=>ci.addEventListener("input",()=>{layers[+ci.dataset.i].color=ci.value;applyOne(+ci.dataset.i);}));
+              out.querySelectorAll(".eg-size").forEach(si=>si.addEventListener("input",()=>{layers[+si.dataset.i].fontPx=+si.value;applyOne(+si.dataset.i);}));
+              out.querySelectorAll(".eg-font").forEach(fs=>fs.addEventListener("change",()=>{layers[+fs.dataset.i].fontFam=fs.value;applyOne(+fs.dataset.i);}));
+              let dragIdx=-1;
+              txtEls.forEach((el,i)=>{
+                el.addEventListener("pointerdown",e=>{dragIdx=i;try{el.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();});
+                el.addEventListener("pointermove",e=>{ if(dragIdx!==i)return; const r=stage.getBoundingClientRect(); layers[i].posX=Math.max(2,Math.min(98,(e.clientX-r.left)/r.width*100)); layers[i].posY=Math.max(4,Math.min(96,(e.clientY-r.top)/r.height*100)); applyOne(i); });
+                el.addEventListener("pointerup",()=>{dragIdx=-1;});
+              });
+              out.querySelector(".eg-dl").addEventListener("click",()=>{
+                const im=new Image();
+                im.onload=()=>{
+                  const cv=document.createElement("canvas"); cv.width=im.naturalWidth||1280; cv.height=im.naturalHeight||720;
+                  const cx=cv.getContext("2d"); cx.drawImage(im,0,0,cv.width,cv.height);
+                  const sw=stage.getBoundingClientRect().width||360;
+                  cx.textAlign="center"; cx.textBaseline="middle";
+                  cx.shadowColor="rgba(0,0,0,.85)"; cx.shadowBlur=cv.width*0.012; cx.shadowOffsetY=cv.height*0.006;
+                  layers.forEach(l=>{
+                    const t=(l.text||"").toUpperCase(); if(!t)return;
+                    const fs=Math.round(l.fontPx*(cv.width/sw));
+                    cx.font=`900 ${fs}px '${l.fontFam}', Arial, sans-serif`;
+                    cx.fillStyle=l.color;
+                    cx.direction=/[؀-ۿ]/.test(t)?"rtl":"ltr";
+                    cx.fillText(t, cv.width*l.posX/100, cv.height*l.posY/100, cv.width*0.92);
+                  });
+                  const a=document.createElement("a"); a.href=cv.toDataURL("image/png"); a.download="vidspark-thumbnail.png"; a.click();
+                  showToast(T("thumb_gen_downloaded")||"Image téléchargée");
+                };
+                im.onerror=()=>showToast(T("error_generic"));
+                im.src=src;
+              });
+            }
+            else { out.innerHTML=`<div style="color:#888;font-size:12px;">${T("error_generic")}</div>`; }
+          }catch(e){ out.innerHTML=errHTML(e.message); }
+        });
+      });
+      document.getElementById("btnUnlockThumbIdeas")?.addEventListener("click",()=>window.open("https://vidsparkpro.com/billing","_blank"));
+    }catch(e){setContent("card-thumb-ideas-result",errHTML(e.message));}
+  });
+
+  /* 🔗 Vérif Titre + Miniature (paire) */
+  content.querySelector("#btnPairCheck")?.addEventListener("click",async()=>{
+    setContent("card-pair-result",spinnerHTML(T("spin_pair")));
+    try{
+      const r=await sendBG({action:"pair_check",videoId:data.videoId,title:data.title,language:currentLanguage});
+      const yn=b=>b?'<span style="color:#22c55e">✓</span>':'<span style="color:#ef4444">✗</span>';
+      const list=(arr,ic,c)=>(arr||[]).map(x=>`<div style="font-size:12px;color:${c};margin:2px 0;">${ic} ${esc(x)}</div>`).join("");
+      setContent("card-pair-result",`
+        <div class="echo-card" style="margin-top:8px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <div style="font-size:24px;font-weight:800;color:${scoreColor(r.match_score||50)}">${r.match_score??"—"}</div>
+            <div style="font-size:12px;color:#e8e8f0;flex:1;">${esc(r.verdict||"")}</div>
+          </div>
+          <div style="font-size:11px;color:#aaa;margin-bottom:6px;">📺 TV ${yn(r.tv_readable)} &nbsp; 📱 Mobile ${yn(r.mobile_readable)} &nbsp; 🔗 ${T("pc_complement")} ${yn(r.complement)}</div>
+          ${r.issues?.length?`<div style="font-size:11px;color:#ef4444;font-weight:700;">${T("pc_issues")}</div>${list(r.issues,"✗","#e69f9f")}`:""}
+          ${r.tips?.length?`<div style="font-size:11px;color:#22c55e;font-weight:700;margin-top:6px;">${T("pc_tips")}</div>${list(r.tips,"→","#ccc")}`:""}
+        </div>`);
+    }catch(e){setContent("card-pair-result",errHTML(e.message));}
+  });
+
+  /* 🎞️ Optimiseur de playlists */
+  content.querySelector("#btnPlaylists")?.addEventListener("click",async()=>{
+    setContent("card-playlists-result",spinnerHTML(T("spin_playlists")));
+    try{
+      let cid=extractYouTubeChannelId();
+      if(!cid){ const v=await sendBG({action:"yt_video",videoId:data.videoId}); cid=v&&v.channel_id; }
+      if(!cid) throw new Error(T("err_channel"));
+      const r=await sendBG({action:"playlists",channelId:cid,language:currentLanguage});
+      const pls=(r.playlists||[]).map(p=>`
+        <div class="echo-card" data-txt="${esc((p.name||"")+"\n"+(p.description||"")+"\n- "+(p.videos||[]).join("\n- "))}" style="margin-top:8px;">
+          <div style="font-size:13px;font-weight:700;color:#fff;">🎞️ ${esc(p.name||"")}</div>
+          <div style="font-size:11px;color:#888;margin-bottom:4px;">${esc(p.description||"")}</div>
+          ${(p.videos||[]).map(v=>`<div style="font-size:11px;color:#ccc;">• ${esc(v)}</div>`).join("")}
+          <button class="echo-copy-mini echo-copy-pl" style="margin-top:6px;width:auto;padding:4px 10px;">⧉ ${T("com_copy")}</button>
+        </div>`).join("");
+      setContent("card-playlists-result",pls||`<div style="color:#888;font-size:12px;">${T("error_generic")}</div>`);
+      content.querySelectorAll(".echo-copy-pl").forEach(b=>b.addEventListener("click",()=>{navigator.clipboard.writeText(b.closest("[data-txt]").dataset.txt);showToast(T("copied_title"));}));
+    }catch(e){setContent("card-playlists-result",errHTML(e.message));}
+  });
+
+  /* 🖼️ Génération de miniature IA */
   /* Bouton Passer à Pro */
   content.querySelector(".echo-upgrade-btn")?.addEventListener("click",()=>{
-    window.open("https://vidsparkpro.com/pricing.html","_blank");
+    window.open("https://vidsparkpro.com/billing","_blank");
+  });
+
+  /* Cadenas "Passer à Pro" sur les fonctions floutées (utilisateurs Free) */
+  content.querySelectorAll(".echo-locked-btn").forEach(b=>{
+    b.addEventListener("click",()=>window.open("https://vidsparkpro.com/billing","_blank"));
   });
 
   /* Sous-onglets SEO */
@@ -3342,12 +7843,27 @@ function bindTabEvents(tab,data,scores,checklist){
           </div>
         </div>`).join("");
       const suggs=(res.suggestions||[]).map(s=>`<div class="echo-suggestion">${esc(s)}</div>`).join("");
+      const lockCTA = res.preview ? `
+        <div style="position:relative;margin-top:10px;border-radius:12px;overflow:hidden;">
+          <div style="filter:blur(6px);opacity:.6;pointer-events:none;">
+            <div class="echo-suggestion">✦ Optimisation détaillée masquée</div>
+            <div class="echo-suggestion">✦ Checklist SEO complète masquée</div>
+          </div>
+          <div class="echo-locked-overlay" style="position:absolute;inset:0;">
+            <div class="echo-locked-icon">🔒</div>
+            <div class="echo-locked-title">Rapport IA complet</div>
+            <div class="echo-locked-sub">Checklist + suggestions détaillées avec Pro</div>
+            <button class="echo-locked-btn" id="btnUnlockReport">⭐ ${T("upgrade_btn")}</button>
+          </div>
+        </div>` : "";
       setContent("card-seo-ai",`
-        <div class="echo-card-head">${T("seo_suggestions")} <span class="echo-badge echo-badge-ai">IA</span></div>
-        <div class="echo-ai-insight">${esc(res.viral_reason||"Analyse générée.")}</div>
+        <div class="echo-card-head">${T("seo_suggestions")} <span class="echo-badge echo-badge-ai">IA</span>${res.preview?' <span class="echo-badge" style="background:rgba(34,197,94,.15);color:#22c55e">Aperçu gratuit</span>':''}</div>
+        <div class="echo-ai-insight">${esc(res.viral_reason||T("analysis_done"))}</div>
         ${items}
         ${suggs?`<div style="margin-top:8px">${suggs}</div>`:""}
-        <div style="margin-top:8px;font-size:20px;font-weight:800;color:${scoreColor(res.score||scores.seo)}">${res.score||scores.seo}/100</div>`);
+        <div style="margin-top:8px;font-size:20px;font-weight:800;color:${scoreColor(res.score||scores.seo)}">${res.score||scores.seo}/100</div>
+        ${lockCTA}`);
+      document.getElementById("btnUnlockReport")?.addEventListener("click",()=>window.open("https://vidsparkpro.com/billing","_blank"));
     }catch(e){setContent("card-seo-ai",errHTML(e.message));}
   });
 
@@ -3358,9 +7874,623 @@ function bindTabEvents(tab,data,scores,checklist){
       const res=await sendBG({action:"seo_report",videoId:data.videoId,title:data.title,description:data.description,language:currentLanguage});
       setContent("card-viral-ai",`
         <div class="echo-card-head">${T("viral_prediction")} <span class="echo-badge echo-badge-ai">IA</span></div>
-        <div class="echo-ai-insight">${esc(res.viral_reason||"Analyse IA générée.")}</div>
+        <div class="echo-ai-insight">${esc(res.viral_reason||T("analysis_done"))}</div>
         <div style="margin-top:8px;font-size:18px;font-weight:800;color:${scoreColor(res.viral_score||scores.viral)}">${T("viral_score")} : ${res.viral_score||scores.viral}/100</div>`);
     }catch(e){setContent("card-viral-ai",errHTML(e.message));}
+  });
+
+  /* Détecteur de tendances */
+  content.querySelector("#btnTrends")?.addEventListener("click",async()=>{
+    const niche=content.querySelector("#treNiche")?.value||"";
+    const region=content.querySelector("#treRegion")?.value||"";
+    if(!niche){ showToast(T("tre_need")); return; }
+    setContent("card-trends-result",spinnerHTML(T("spin_trends")));
+    try{
+      const r=await sendBG({action:"trends",niche,region,language:currentLanguage});
+      if(r.empty||(!(r.trends||[]).length&&!(r.videos||[]).length)){ setContent("card-trends-result",`<div style="color:#888;font-size:12px;margin-top:8px;">${T("tre_none")}</div>`); return; }
+      const vids=(r.videos||[]).slice(0,6).map(v=>`
+        <div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid #1a1a1a;">
+          <div style="flex:1;overflow:hidden;"><div style="font-size:12px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(v.title)}</div><div style="font-size:10px;color:#888;">${esc(v.channel)}</div></div>
+          <div style="text-align:right;white-space:nowrap;"><b style="color:#ff5252;font-size:11px;">${fmtNum(v.views_per_hour)}/h</b></div>
+        </div>`).join("");
+      const trends=(r.trends||[]).map(t=>`
+        <div style="border-left:3px solid #7c6dfa;padding:4px 8px;margin:6px 0;background:#0e0e12;border-radius:0 6px 6px 0;">
+          <div style="font-size:12px;font-weight:700;color:#e8e8f0;">🔥 ${esc(t.topic||"")} ${t.format?`<span class="echo-badge echo-badge-purple">${esc(t.format)}</span>`:""}</div>
+          ${t.why?`<div style="font-size:11px;color:#999;margin-top:2px;">${esc(t.why)}</div>`:""}
+        </div>`).join("");
+      const list=(arr,ic,c)=>(arr||[]).map(x=>`<div style="font-size:12px;color:${c};margin:2px 0;">${ic} ${esc(x)}</div>`).join("");
+      setContent("card-trends-result",`
+        <div class="echo-card" style="margin-top:8px;">
+          ${trends?`<div style="font-size:11px;color:#7c6dfa;font-weight:700;">${T("tre_trends")}</div>${trends}`:""}
+          ${r.rising_keywords?.length?`<div style="font-size:11px;color:#eab308;font-weight:700;margin-top:8px;">${T("tre_keywords")}</div><div class="echo-tag-cloud">${r.rising_keywords.map(k=>`<span class="echo-kw-tag">${esc(k)}</span>`).join("")}</div>`:""}
+          ${r.advice?.length?`<div style="font-size:11px;color:#22c55e;font-weight:700;margin-top:8px;">${T("tre_advice")}</div>${list(r.advice,"→","#ccc")}`:""}
+          ${vids?`<div style="font-size:11px;color:#ff5252;font-weight:700;margin-top:8px;">${T("tre_hot")}</div>${vids}`:""}
+        </div>`);
+    }catch(e){setContent("card-trends-result",errHTML(e.message));}
+  });
+
+  /* Planificateur de contenu 7 jours */
+  content.querySelector("#btnPlanner")?.addEventListener("click",async()=>{
+    const niche=content.querySelector("#plNiche")?.value||"";
+    const region=content.querySelector("#plRegion")?.value||"";
+    const frequency=content.querySelector("#plFreq")?.value||"";
+    setContent("card-planner-result",spinnerHTML(T("spin_planner")));
+    try{
+      const r=await sendBG({action:"plan",niche,region,frequency,language:currentLanguage});
+      const days=r.plan||[];
+      if(!days.length){ setContent("card-planner-result",`<div style="color:#888;font-size:12px;margin-top:8px;">${T("error_generic")}</div>`); return; }
+      const tColor=t=>/short/i.test(t)?"#ec4899":/repos|rest|راحة|休/i.test(t)?"#888":"#3b82f6";
+      const rows=days.map(d=>`
+        <div style="display:flex;gap:8px;padding:7px 0;border-bottom:1px solid #1a1a1a;">
+          <div style="width:62px;flex-shrink:0;"><div style="font-size:12px;font-weight:700;color:#fff;">${esc(d.day||"")}</div><div style="font-size:10px;color:#7c6dfa;">${esc(d.time||"")}</div></div>
+          <div style="flex:1;">
+            <span class="echo-badge" style="background:${tColor(d.type)}22;color:${tColor(d.type)};">${esc(d.type||"")}</span>
+            <div style="font-size:12px;color:#e8e8f0;margin-top:3px;">${esc(d.idea||"")}</div>
+            ${d.why?`<div style="font-size:10px;color:#888;">${esc(d.why)}</div>`:""}
+          </div>
+        </div>`).join("");
+      setContent("card-planner-result",`<div class="echo-card" style="margin-top:8px;">${rows}</div>`);
+    }catch(e){setContent("card-planner-result",errHTML(e.message));}
+  });
+
+  /* Posts communautaires */
+  content.querySelector("#btnCommunity")?.addEventListener("click",async()=>{
+    const niche=content.querySelector("#ideaNiche")?.value||"";
+    const topic=(content.querySelector("#ideaTopic")?.value||"").trim();
+    setContent("card-community-result",spinnerHTML(T("spin_community")));
+    try{
+      const r=await sendBG({action:"community",niche,topic,language:currentLanguage});
+      const posts=r.posts||[];
+      if(!posts.length){ setContent("card-community-result",`<div style="color:#888;font-size:12px;margin-top:8px;">${T("error_generic")}</div>`); return; }
+      const cards=posts.map(p=>{
+        const opts=(p.options&&p.options.length)?`<div style="margin-top:4px;">${p.options.map(o=>`<div style="font-size:11px;color:#aaa;">⚪ ${esc(o)}</div>`).join("")}</div>`:"";
+        const full=`${p.text||""}${(p.options&&p.options.length)?"\n- "+p.options.join("\n- "):""}`;
+        return `
+          <div class="echo-card" data-txt="${esc(full)}" style="margin-top:8px;">
+            <span class="echo-badge echo-badge-purple">${esc(p.type||"")}</span>
+            <div style="font-size:13px;color:#e8e8f0;margin-top:6px;">${esc(p.text||"")}</div>
+            ${opts}
+            <button class="echo-copy-mini echo-copy-cp" style="margin-top:6px;width:auto;padding:4px 10px;">⧉ ${T("com_copy")}</button>
+          </div>`;
+      }).join("");
+      setContent("card-community-result",cards);
+      content.querySelectorAll(".echo-copy-cp").forEach(b=>b.addEventListener("click",()=>{navigator.clipboard.writeText(b.closest("[data-txt]").dataset.txt);showToast(T("copied_title"));}));
+    }catch(e){setContent("card-community-result",errHTML(e.message));}
+  });
+
+  /* Générateur de script complet */
+  content.querySelector("#btnScript")?.addEventListener("click",async()=>{
+    const topic=(content.querySelector("#scTopic")?.value||"").trim();
+    const niche=content.querySelector("#scNiche")?.value||"";
+    const duration=content.querySelector("#scDur")?.value||"";
+    if(!topic){ showToast(T("sc_need")); return; }
+    setContent("card-script-result",spinnerHTML("📝 Écriture du script…"));
+    try{
+      const r=await sendBG({action:"script",topic,niche,duration,language:currentLanguage});
+      const secs=(r.sections||[]).map((s,i)=>`<div style="margin:6px 0;"><div style="font-size:12px;font-weight:700;color:#7c6dfa;">${i+1}. ${esc(s.title||"")}</div><div style="font-size:12px;color:#ccc;">${esc(s.content||"")}</div></div>`).join("");
+      const full=`🎬 HOOK: ${r.hook||""}\n\n${r.intro||""}\n\n${(r.sections||[]).map((s,i)=>`${i+1}. ${s.title}\n${s.content}`).join("\n\n")}\n\n📣 ${r.cta||""}\n\n${r.outro||""}`;
+      setContent("card-script-result",`
+        <div class="echo-card" style="margin-top:8px;">
+          <div style="font-size:11px;color:#22c55e;font-weight:700;">🎬 ${T("sc_hook")}</div>
+          <div style="font-size:13px;color:#e8e8f0;font-style:italic;margin-bottom:8px;">${esc(r.hook||"")}</div>
+          <div style="font-size:12px;color:#ccc;margin-bottom:8px;">${esc(r.intro||"")}</div>
+          ${secs}
+          ${r.cta?`<div style="font-size:12px;color:#eab308;margin-top:8px;">📣 ${esc(r.cta)}</div>`:""}
+          ${r.outro?`<div style="font-size:12px;color:#888;margin-top:4px;">${esc(r.outro)}</div>`:""}
+          <button class="echo-action-btn green" id="btnCopyScript" data-txt="${esc(full)}" style="margin-top:8px;">📋 ${T("sc_copy")}</button>
+        </div>`);
+      content.querySelector("#btnCopyScript")?.addEventListener("click",e=>{navigator.clipboard.writeText(e.currentTarget.dataset.txt||"");showToast(T("copied_title"));});
+    }catch(e){setContent("card-script-result",errHTML(e.message));}
+  });
+
+  /* Générateur d'idées de vidéos */
+  content.querySelector("#btnIdeas")?.addEventListener("click",async()=>{
+    const niche=content.querySelector("#ideaNiche")?.value||"";
+    const region=content.querySelector("#ideaRegion")?.value||"";
+    const topic=(content.querySelector("#ideaTopic")?.value||"").trim();
+    setContent("card-ideas-result",spinnerHTML(T("spin_ideas")));
+    try{
+      const r=await sendBG({action:"ideas",niche,region,topic,language:currentLanguage});
+      const ideas=r.ideas||[];
+      if(!ideas.length){ setContent("card-ideas-result",`<div style="color:#888;font-size:12px;margin-top:8px;">${T("error_generic")}</div>`); return; }
+      const cards=ideas.map((it,i)=>{
+        const sc=scoreColor(it.viral_score||70);
+        return `
+          <div class="echo-card" data-title="${esc(it.title||"")}" style="margin-top:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;">
+              <div style="font-size:13px;font-weight:700;color:#fff;flex:1;">${i+1}. ${esc(it.title||"")}</div>
+              <span class="echo-badge" style="background:${sc}22;color:${sc};white-space:nowrap;">${it.viral_score||"—"}/100</span>
+            </div>
+            ${it.format?`<span class="echo-badge echo-badge-purple" style="margin-top:4px;">${esc(it.format)}</span>`:""}
+            ${it.angle?`<div style="font-size:12px;color:#ccc;margin-top:6px;">🎬 ${esc(it.angle)}</div>`:""}
+            ${it.why?`<div style="font-size:11px;color:#888;margin-top:3px;">✅ ${esc(it.why)}</div>`:""}
+            <button class="echo-copy-mini echo-copy-idea" style="margin-top:6px;width:auto;padding:4px 10px;">⧉ ${T("idea_copy")}</button>
+          </div>`;
+      }).join("");
+      setContent("card-ideas-result",cards);
+      content.querySelectorAll(".echo-copy-idea").forEach(b=>{
+        b.addEventListener("click",()=>{navigator.clipboard.writeText(b.closest("[data-title]").dataset.title);showToast(T("copied_title"));});
+      });
+    }catch(e){setContent("card-ideas-result",errHTML(e.message));}
+  });
+
+  /* SEO TikTok : légende, hooks, hashtags, script, conseils */
+  content.querySelector("#btnTikTok")?.addEventListener("click",async()=>{
+    const topic=(content.querySelector("#tkTopic")?.value||"").trim();
+    const niche=content.querySelector("#tkNiche")?.value||"";
+    const description=(content.querySelector("#tkDesc")?.value||"").trim();
+    if(topic.length<2){ setContent("card-tiktok-result",errHTML(T("tk_need_topic"))); return; }
+    setContent("card-tiktok-result",spinnerHTML(T("tk_spin")));
+    try{
+      const d=await sendBG({action:"tiktok_seo",topic,niche,description,language:currentLanguage});
+      renderTikTokSEOResult(d);
+    }catch(e){setContent("card-tiktok-result",errHTML(e.message));}
+  });
+
+  /* Rendu "carte premium" du résultat SEO TikTok : header, sections, barre d'actions */
+  function renderTikTokSEOResult(d){
+    const ht=d.hashtags||{};
+    const chips=(arr)=>`<div style="display:flex;flex-wrap:wrap;gap:5px;margin:4px 0;">${(arr||[]).map(h=>`<span class="echo-badge echo-badge-purple">${esc(h)}</span>`).join("")}</div>`;
+    const allTags=[].concat(ht.broad||[],ht.niche||[],ht.trending||[]);
+    const hookCount=(d.hooks||[]).length, tagCount=allTags.length;
+    const fullText=[
+      d.caption&&`${T("tk_caption")}:\n${d.caption}`,
+      (d.hooks||[]).length&&`${T("tk_hooks")||"Hooks"}:\n${d.hooks.map(h=>"• "+h).join("\n")}`,
+      allTags.length&&`Hashtags:\n${allTags.join(" ")}`,
+      (d.keywords||[]).length&&`${T("tk_keywords")}:\n${d.keywords.join(", ")}`,
+      (d.script||[]).length&&`${T("tk_script")}:\n${d.script.map(s=>`[${s.part}] ${s.content}`).join("\n")}`,
+      d.sound_advice&&`${T("tk_sound")}:\n${d.sound_advice}`,
+      [].concat(d.posting_tips||[],d.discoverability_tips||[]).length&&`${T("tk_tips")}:\n${[].concat(d.posting_tips||[],d.discoverability_tips||[]).map(t=>"• "+t).join("\n")}`
+    ].filter(Boolean).join("\n\n");
+
+    const html=`
+      <div class="echo-premium echo-glass">
+        <div class="echo-premium-score">
+          <div class="echo-premium-score-ring" style="background:conic-gradient(#f7941d 0deg,#f7941d ${Math.min(360,hookCount*72)}deg,#2a2a35 ${Math.min(360,hookCount*72)}deg);">
+            <div style="position:absolute;inset:4px;border-radius:50%;background:#141414;display:flex;align-items:center;justify-content:center;font-size:13px;">🎵</div>
+          </div>
+          <div>
+            <div class="echo-premium-score-label">✅ ${T("tk_ready")||"Contenu prêt à publier"}</div>
+            <div class="echo-premium-score-sub">${hookCount} hooks · ${tagCount} hashtags · ${(d.keywords||[]).length} ${T("tk_keywords")||"mots-clés"}</div>
+          </div>
+        </div>
+
+        <div class="echo-premium-section">
+          <div class="echo-premium-section-head">📝 ${T("tk_caption")}</div>
+          <div class="echo-premium-section-body" style="white-space:pre-wrap;">${esc(d.caption||"")}</div>
+        </div>
+
+        <div class="echo-premium-section">
+          <div class="echo-premium-section-head">🪝 Hooks</div>
+          <div class="echo-premium-section-body">${(d.hooks||[]).map(h=>`<div style="margin:3px 0;">• ${esc(h)}</div>`).join("")}</div>
+        </div>
+
+        <div class="echo-premium-section">
+          <div class="echo-premium-section-head">#️⃣ Hashtags</div>
+          ${chips(ht.broad)}${chips(ht.niche)}${chips(ht.trending)}
+        </div>
+
+        <div class="echo-premium-section">
+          <div class="echo-premium-section-head">🔎 ${T("tk_keywords")}</div>
+          ${chips(d.keywords)}
+        </div>
+
+        <div class="echo-premium-section">
+          <div class="echo-premium-section-head">🎬 ${T("tk_script")}</div>
+          <div class="echo-premium-section-body">${(d.script||[]).map(s=>`<div style="margin:4px 0;"><span class="echo-badge">${esc(s.part||"")}</span> ${esc(s.content||"")}</div>`).join("")}</div>
+        </div>
+
+        ${d.sound_advice?`<div class="echo-premium-section"><div class="echo-premium-section-head">🎧 ${T("tk_sound")}</div><div class="echo-premium-section-body">${esc(d.sound_advice)}</div></div>`:""}
+
+        <div class="echo-premium-section">
+          <div class="echo-premium-section-head">🚀 ${T("tk_tips")}</div>
+          <div class="echo-premium-section-body">${[].concat(d.posting_tips||[],d.discoverability_tips||[]).map(t=>`<div style="margin:3px 0;">• ${esc(t)}</div>`).join("")}</div>
+        </div>
+
+        <div class="echo-premium-actions">
+          <button class="echo-premium-action-btn" id="tkPremCopy"><span class="ic">⧉</span>${T("tk_copy")}</button>
+          <button class="echo-premium-action-btn" id="tkPremDownload"><span class="ic">⬇️</span>${T("download")||"Télécharger"}</button>
+          <button class="echo-premium-action-btn" id="tkPremRegen"><span class="ic">🔄</span>${T("regenerate")||"Régénérer"}</button>
+          <button class="echo-premium-action-btn" id="tkPremShare"><span class="ic">📤</span>${T("share")||"Partager"}</button>
+          <button class="echo-premium-action-btn" id="tkPremExport"><span class="ic">📦</span>${T("export")||"Exporter"}</button>
+        </div>
+      </div>`;
+    setContent("card-tiktok-result",html);
+
+    const root=document.getElementById("card-tiktok-result");
+    root.querySelector("#tkPremCopy")?.addEventListener("click",()=>{navigator.clipboard.writeText(fullText);showToast(T("copied_title"));});
+    root.querySelector("#tkPremDownload")?.addEventListener("click",()=>downloadText(`tiktok-seo-${Date.now()}.txt`,fullText));
+    root.querySelector("#tkPremExport")?.addEventListener("click",()=>downloadText(`tiktok-seo-${Date.now()}.json`,JSON.stringify(d,null,2),"application/json"));
+    root.querySelector("#tkPremShare")?.addEventListener("click",async()=>{
+      if(navigator.share){ try{ await navigator.share({title:"VidSpark AI — TikTok SEO",text:fullText}); }catch(e){} }
+      else { navigator.clipboard.writeText(fullText); showToast(T("copied_title")); }
+    });
+    root.querySelector("#tkPremRegen")?.addEventListener("click",()=>{ content.querySelector("#btnTikTok")?.click(); });
+  }
+
+  /* Rendu générique "carte premium" pour un résultat sous forme de liste
+     (clips, idées, hooks, jours de calendrier…) : en-tête + items + actions. */
+  let premiumSeq=0;
+  function renderPremiumList(containerId,{icon,label,sub,items,footerNote,filenamePrefix,rawData,regenBtnId}){
+    const uid=`prem${++premiumSeq}`;
+    const fullText=items.map(it=>it.text||"").join("\n\n");
+    const itemsHtml=items.map(it=>`
+      <div class="echo-premium-section" ${it.highlight?'style="background:rgba(34,197,94,.06);border-radius:8px;padding:8px;"':''}>
+        <div style="display:flex;justify-content:space-between;gap:6px;align-items:flex-start;">
+          <div style="font-size:12.5px;color:#e8e8f0;font-weight:600;flex:1;">${it.head||""}</div>
+          ${it.headBadge?`<span class="echo-badge" style="background:${it.headBadge.color}22;color:${it.headBadge.color};flex-shrink:0;">${esc(String(it.headBadge.text))}</span>`:""}
+        </div>
+        <div class="echo-premium-section-body" style="margin-top:4px;">${it.body||""}</div>
+      </div>`).join("");
+    const html=`
+      <div class="echo-premium echo-glass">
+        <div class="echo-premium-score">
+          <div class="echo-premium-score-ring" style="background:conic-gradient(#f7941d 0deg,#f7941d 360deg,#2a2a35 360deg);">
+            <div style="position:absolute;inset:4px;border-radius:50%;background:#141414;display:flex;align-items:center;justify-content:center;font-size:13px;">${icon||"✨"}</div>
+          </div>
+          <div>
+            <div class="echo-premium-score-label">✅ ${esc(label||"")}</div>
+            <div class="echo-premium-score-sub">${esc(sub||"")}</div>
+          </div>
+        </div>
+        ${itemsHtml}
+        ${footerNote?`<div style="font-size:11px;color:#888;margin-top:8px;">${footerNote}</div>`:""}
+        <div class="echo-premium-actions">
+          <button class="echo-premium-action-btn" id="${uid}Copy"><span class="ic">⧉</span>${T("tk_copy")}</button>
+          <button class="echo-premium-action-btn" id="${uid}Download"><span class="ic">⬇️</span>${T("download")}</button>
+          <button class="echo-premium-action-btn" id="${uid}Regen"><span class="ic">🔄</span>${T("regenerate")}</button>
+          <button class="echo-premium-action-btn" id="${uid}Share"><span class="ic">📤</span>${T("share")}</button>
+          <button class="echo-premium-action-btn" id="${uid}Export"><span class="ic">📦</span>${T("export")}</button>
+        </div>
+      </div>`;
+    setContent(containerId,html);
+    const root=document.getElementById(containerId);
+    root.querySelector(`#${uid}Copy`)?.addEventListener("click",()=>{navigator.clipboard.writeText(fullText);showToast(T("copied_title"));});
+    root.querySelector(`#${uid}Download`)?.addEventListener("click",()=>downloadText(`${filenamePrefix}-${Date.now()}.txt`,fullText));
+    root.querySelector(`#${uid}Export`)?.addEventListener("click",()=>downloadText(`${filenamePrefix}-${Date.now()}.json`,JSON.stringify(rawData,null,2),"application/json"));
+    root.querySelector(`#${uid}Share`)?.addEventListener("click",async()=>{
+      if(navigator.share){ try{ await navigator.share({title:"VidSpark AI",text:fullText}); }catch(e){} }
+      else { navigator.clipboard.writeText(fullText); showToast(T("copied_title")); }
+    });
+    root.querySelector(`#${uid}Regen`)?.addEventListener("click",()=>{ content.querySelector(`#${regenBtnId}`)?.click(); });
+  }
+
+  /* TikTok : YouTube → TikTok (repurpose de la vidéo courante) */
+  content.querySelector("#btnTkRepurpose")?.addEventListener("click",async()=>{
+    if(!data.videoId){ setContent("card-tkrep-result",errHTML(T("tkr_novideo"))); return; }
+    setContent("card-tkrep-result",spinnerHTML(T("tkr_spin")));
+    try{
+      /* Transcription lue DEPUIS la page YouTube (session navigateur = fiable),
+         envoyée au backend qui ne dépend plus d'un fetch serveur bloqué. */
+      let transcript="";
+      try{ transcript=await getYouTubeTranscript(data.videoId); }catch(e){}
+      const d=await sendBG({action:"tiktok_repurpose",videoId:data.videoId,title:data.title||"",transcript,language:currentLanguage});
+      const clips=d.clips||[];
+      if(!clips.length){setContent("card-tkrep-result",errHTML(T("error_generic")));return;}
+      renderPremiumList("card-tkrep-result",{
+        icon:"✂️", label:T("tkr_ready")||"Clips prêts à découper", sub:`${clips.length} ${T("tk_clips")||"clips"}`,
+        items:clips.map((c,i)=>({
+          head:`▶️ Clip ${i+1} · ${esc(c.start||"?")} → ${esc(c.end||"?")}`,
+          body:`${c.angle?`<div style="color:#888;font-size:11.5px;margin-bottom:4px;">${esc(c.angle)}</div>`:""}${c.hook?`<div>🪝 ${esc(c.hook)}</div>`:""}<div style="margin-top:6px;background:#0e0e12;border-radius:6px;padding:6px;">${esc(c.caption||"")}</div>${(c.hashtags||[]).length?`<div style="margin-top:6px;">${(c.hashtags||[]).map(h=>`<span class="echo-badge echo-badge-purple">${esc(h)}</span>`).join(" ")}</div>`:""}`,
+          text:`Clip ${i+1} (${c.start||"?"} → ${c.end||"?"}): ${c.hook||""}\n${c.caption||""}\n${(c.hashtags||[]).join(" ")}`
+        })),
+        filenamePrefix:"tiktok-repurpose", rawData:d, regenBtnId:"btnTkRepurpose"
+      });
+    }catch(e){setContent("card-tkrep-result",errHTML(e.message));}
+  });
+
+  /* TikTok : idées virales */
+  content.querySelector("#btnTkIdeas")?.addEventListener("click",async()=>{
+    const niche=content.querySelector("#tkiNiche")?.value||"";
+    const topic=(content.querySelector("#tkiTopic")?.value||"").trim();
+    setContent("card-tkideas-result",spinnerHTML(T("tki_spin")));
+    try{
+      const d=await sendBG({action:"tiktok_tool",tool:"ideas",niche,topic,language:currentLanguage});
+      const ideas=d.ideas||[];
+      if(!ideas.length){setContent("card-tkideas-result",errHTML(T("error_generic")));return;}
+      renderPremiumList("card-tkideas-result",{
+        icon:"🔥", label:T("tki_ready")||"Idées prêtes", sub:`${ideas.length} ${T("tk_ideas")||"idées"}`,
+        items:ideas.map((it,i)=>{const sc=scoreColor(it.viral_score||70);return{
+          head:`${i+1}. ${esc(it.title||"")}`, headBadge:{text:it.viral_score||"—",color:sc},
+          body:`${it.format?`<span class="echo-badge echo-badge-purple">${esc(it.format)}</span>`:""}${it.hook?`<div style="margin-top:4px;">🪝 ${esc(it.hook)}</div>`:""}${it.why?`<div style="color:#888;font-size:11px;margin-top:2px;">✅ ${esc(it.why)}</div>`:""}`,
+          text:`${i+1}. ${it.title||""} (score ${it.viral_score||"—"})\n${it.hook||""}\n${it.why||""}`
+        };}),
+        filenamePrefix:"tiktok-idees", rawData:d, regenBtnId:"btnTkIdeas"
+      });
+    }catch(e){setContent("card-tkideas-result",errHTML(e.message));}
+  });
+
+  /* TikTok : optimiseur de hooks */
+  content.querySelector("#btnTkHooks")?.addEventListener("click",async()=>{
+    const topic=(content.querySelector("#tkhTopic")?.value||"").trim();
+    const niche=content.querySelector("#tkhNiche")?.value||"";
+    if(topic.length<2){setContent("card-tkhooks-result",errHTML(T("tk_need_topic")));return;}
+    setContent("card-tkhooks-result",spinnerHTML(T("tkh_spin")));
+    try{
+      const d=await sendBG({action:"tiktok_tool",tool:"hooks",topic,niche,language:currentLanguage});
+      const hooks=d.hooks||[];
+      if(!hooks.length){setContent("card-tkhooks-result",errHTML(T("error_generic")));return;}
+      const best=d.best_index;
+      renderPremiumList("card-tkhooks-result",{
+        icon:"🪝", label:T("tkh_ready")||"Hooks prêts", sub:`${hooks.length} ${T("tk_hooks")||"hooks"}`,
+        items:hooks.map((h,i)=>{const sc=scoreColor(h.score||70);return{
+          head:`${i===best?"⭐ ":""}${esc(h.text||"")}`, headBadge:{text:h.score||"—",color:sc}, highlight:i===best,
+          body:h.type?`<span class="echo-badge">${esc(h.type)}</span>`:"",
+          text:`${i===best?"⭐ ":""}${h.text||""} (score ${h.score||"—"}, ${h.type||""})`
+        };}),
+        footerNote:d.tip?`💡 ${esc(d.tip)}`:"",
+        filenamePrefix:"tiktok-hooks", rawData:d, regenBtnId:"btnTkHooks"
+      });
+    }catch(e){setContent("card-tkhooks-result",errHTML(e.message));}
+  });
+
+  /* TikTok : calendrier de contenu */
+  content.querySelector("#btnTkCal")?.addEventListener("click",async()=>{
+    const niche=content.querySelector("#tkcNiche")?.value||"";
+    const frequency=(content.querySelector("#tkcFreq")?.value||"").trim();
+    setContent("card-tkcal-result",spinnerHTML(T("tkc_spin")));
+    try{
+      const d=await sendBG({action:"tiktok_tool",tool:"calendar",niche,frequency,language:currentLanguage});
+      const sch=d.schedule||[];
+      if(!sch.length){setContent("card-tkcal-result",errHTML(T("error_generic")));return;}
+      renderPremiumList("card-tkcal-result",{
+        icon:"📅", label:T("tkc_ready")||"Calendrier prêt", sub:`${sch.length} ${T("tk_days")||"jours"}`,
+        items:sch.map(s=>({
+          head:`${esc(s.day||"")}${s.best_time?` · ${esc(s.best_time)}`:""}`,
+          body:`<div>${esc(s.idea||"")}</div>${s.format?`<span class="echo-badge echo-badge-purple" style="margin-top:4px;">${esc(s.format)}</span>`:""}${s.hook?`<div style="margin-top:4px;">🪝 ${esc(s.hook)}</div>`:""}`,
+          text:`${s.day||""}${s.best_time?" ("+s.best_time+")":""}: ${s.idea||""} [${s.format||""}]${s.hook?" - "+s.hook:""}`
+        })),
+        filenamePrefix:"tiktok-calendrier", rawData:d, regenBtnId:"btnTkCal"
+      });
+    }catch(e){setContent("card-tkcal-result",errHTML(e.message));}
+  });
+
+  /* Analyse des commentaires */
+  content.querySelector("#btnComments")?.addEventListener("click",async()=>{
+    setContent("card-comments-result",spinnerHTML("💬 Lecture & analyse des commentaires…"));
+    try{
+      const r=await sendBG({action:"comments",videoId:data.videoId,title:data.title,language:currentLanguage});
+      if(r.empty){ setContent("card-comments-result",`<div style="color:#888;font-size:12px;margin-top:8px;">${T("com_none")}</div>`); return; }
+      const s=r.sentiment||{};
+      const bar=(label,val,color)=>`<div style="display:flex;align-items:center;gap:6px;margin:2px 0;"><span style="font-size:11px;color:#aaa;width:60px;">${label}</span><div style="flex:1;height:8px;background:#1a1a1a;border-radius:4px;overflow:hidden;"><div style="width:${val||0}%;height:100%;background:${color};"></div></div><span style="font-size:11px;color:${color};width:32px;">${val||0}%</span></div>`;
+      const list=(arr,ic,c)=>(arr||[]).map(x=>`<div style="font-size:12px;color:${c};margin:2px 0;">${ic} ${esc(x)}</div>`).join("");
+      const replies=(r.suggested_replies||[]).map(rp=>`
+        <div style="background:#0e0e12;border:1px solid #2a2a35;border-radius:8px;padding:8px;margin:6px 0;">
+          <div style="font-size:11px;color:#888;font-style:italic;">💬 ${esc(rp.comment||"")}</div>
+          <div style="font-size:12px;color:#e8e8f0;margin-top:4px;">↳ ${esc(rp.reply||"")}</div>
+          <button class="echo-copy-mini echo-copy-reply" data-txt="${esc(rp.reply||"")}" style="margin-top:6px;width:auto;padding:4px 10px;">⧉ ${T("com_copy")}</button>
+        </div>`).join("");
+      setContent("card-comments-result",`
+        <div class="echo-card" style="margin-top:8px;">
+          <div style="font-size:11px;color:#aaa;margin-bottom:4px;">${T("com_sentiment")} (${r.count||0} ${T("nav_comments").toLowerCase()})</div>
+          ${bar(T("com_pos"),s.positive,"#22c55e")}
+          ${bar(T("com_neu"),s.neutral,"#888")}
+          ${bar(T("com_neg"),s.negative,"#ef4444")}
+          <div style="font-size:13px;color:#e8e8f0;line-height:1.5;margin:8px 0;">${esc(r.summary||"")}</div>
+          ${r.requests?.length?`<div style="font-size:11px;color:#eab308;font-weight:700;margin-top:8px;">${T("com_requests")}</div>${list(r.requests,"•","#ccc")}`:""}
+          ${r.video_ideas?.length?`<div style="font-size:11px;color:#7c6dfa;font-weight:700;margin-top:8px;">${T("com_ideas")}</div>${list(r.video_ideas,"💡","#ccc")}`:""}
+          ${replies?`<div style="font-size:11px;color:#22c55e;font-weight:700;margin-top:10px;">${T("com_replies")}</div>${replies}`:""}
+        </div>`);
+      content.querySelectorAll(".echo-copy-reply").forEach(b=>{
+        b.addEventListener("click",e=>{navigator.clipboard.writeText(e.currentTarget.dataset.txt||"");showToast(T("copied_title"));});
+      });
+    }catch(e){setContent("card-comments-result",errHTML(e.message));}
+  });
+
+  /* Tableau de bord chaîne */
+  content.querySelector("#btnChannelDash")?.addEventListener("click",async()=>{
+    setContent("card-channel-result",spinnerHTML(T("spin_channel")));
+    try{
+      let cid=extractYouTubeChannelId();
+      if(!cid){ const v=await sendBG({action:"yt_video",videoId:data.videoId}); cid=v&&v.channel_id; }
+      if(!cid) throw new Error(T("err_channel"));
+      const a=await sendBG({action:"channel_audit",channelId:cid});
+      const cell=(v,l)=>`<div class="echo-rs-cell"><b>${v}</b><span>${l}</span></div>`;
+      setContent("card-channel-result",`
+        <div class="echo-card" style="margin-top:8px;">
+          <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:8px;">${esc((a.channel||"").slice(0,40))}</div>
+          <div class="echo-rs-grid">
+            ${cell(fmtNum(a.subs),T("chan_subs"))}
+            ${cell(fmtNum(a.total_views),T("chan_views"))}
+            ${cell(fmtNum(a.total_videos),T("chan_vids"))}
+            ${cell(fmtNum(a.avg_views),T("chan_avg"))}
+            ${cell((a.avg_engagement||0)+"%",T("chan_eng"))}
+            ${cell(a.upload_freq_days?a.upload_freq_days+"j":"—",T("chan_freq"))}
+          </div>
+          ${a.best_video?`<div style="margin-top:8px;font-size:11px;color:#22c55e">🏆 ${esc((a.best_video.title||"").slice(0,45))} — ${fmtNum(a.best_video.views)} ${T("chan_views").toLowerCase()}</div>`:""}
+          ${a.worst_video?`<div style="margin-top:2px;font-size:11px;color:#ef4444">📉 ${esc((a.worst_video.title||"").slice(0,45))} — ${fmtNum(a.worst_video.views)}</div>`:""}
+          <div id="channelAiReport" style="margin-top:10px;color:#888;font-size:12px;">⏳ ${T("chan_ai_loading")}</div>
+        </div>`);
+      // Rapport IA (santé + recommandations)
+      try{
+        const rep=await sendBG({action:"channel_report",stats:a,language:currentLanguage});
+        const hc=scoreColor(rep.health_score||50);
+        const list=(arr,c,ic)=>(arr||[]).map(x=>`<div style="font-size:12px;color:${c};margin:2px 0;">${ic} ${esc(x)}</div>`).join("");
+        setContent("channelAiReport",`
+          <div style="border-top:1px solid #2a2a35;padding-top:10px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <div style="font-size:26px;font-weight:800;color:${hc}">${rep.health_score??"—"}</div>
+              <div><div style="font-size:11px;color:#aaa;">${T("chan_health")}</div><div style="font-size:12px;color:#e8e8f0;">${esc(rep.summary||"")}</div></div>
+            </div>
+            ${rep.strengths?.length?`<div style="font-size:11px;color:#22c55e;font-weight:700;margin-top:6px;">${T("chan_strengths")}</div>${list(rep.strengths,"#9fe6b0","✓")}`:""}
+            ${rep.weaknesses?.length?`<div style="font-size:11px;color:#ef4444;font-weight:700;margin-top:6px;">${T("chan_weak")}</div>${list(rep.weaknesses,"#e69f9f","✗")}`:""}
+            ${rep.recommendations?.length?`<div style="font-size:11px;color:#7c6dfa;font-weight:700;margin-top:6px;">${T("chan_reco")}</div>${list(rep.recommendations,"#ccc","→")}`:""}
+          </div>`);
+      }catch(e2){ setContent("channelAiReport",`<div style="color:#888;font-size:11px;">${T("chan_ai_fail")}</div>`); }
+    }catch(e){setContent("card-channel-result",errHTML(e.message));}
+  });
+
+  /* Kit Sponsor & Monétisation */
+  content.querySelector("#btnSponsor")?.addEventListener("click",async()=>{
+    const niche=content.querySelector("#spNiche")?.value||"";
+    const region=content.querySelector("#spRegion")?.value||"";
+    const subscribers=parseSubs(content.querySelector("#spSubs")?.value||"");
+    const avg_views=parseSubs(content.querySelector("#spViews")?.value||"");
+    setContent("card-sponsor-result",spinnerHTML(T("spin_sponsor")));
+    try{
+      const r=await sendBG({action:"sponsor",niche,region,subscribers,avg_views,language:currentLanguage});
+      const rate=r.rate_usd||{};
+      const list=(arr,ic,c)=>(arr||[]).map(x=>`<div style="font-size:12px;color:${c};margin:2px 0;">${ic} ${esc(x)}</div>`).join("");
+      setContent("card-sponsor-result",`
+        <div class="echo-card" style="margin-top:8px;">
+          <div style="text-align:center;border:1px solid #22c55e;border-radius:10px;padding:10px;margin-bottom:10px;">
+            <div style="font-size:10px;color:#888;">${T("sp_rate")}</div>
+            <div style="font-size:22px;font-weight:800;color:#22c55e;">$${fmtNum(rate.low||0)} – $${fmtNum(rate.high||0)}</div>
+            <div style="font-size:10px;color:#777;margin-top:2px;">${esc(r.rate_basis||"")}</div>
+          </div>
+          <div style="font-size:11px;color:#7c6dfa;font-weight:700;margin-bottom:2px;">${T("sp_pitch")}</div>
+          <textarea readonly style="width:100%;box-sizing:border-box;background:#0e0e12;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;min-height:110px;resize:vertical;">${esc(r.pitch||"")}</textarea>
+          <button class="echo-action-btn blue" id="btnCopyPitch" data-txt="${esc(r.pitch||"")}" style="margin-top:6px;">📋 ${T("sp_copy_pitch")}</button>
+          ${r.media_kit?.length?`<div style="font-size:11px;color:#eab308;font-weight:700;margin-top:10px;">${T("sp_mediakit")}</div>${list(r.media_kit,"•","#ccc")}`:""}
+          ${r.brand_types?.length?`<div style="font-size:11px;color:#3b82f6;font-weight:700;margin-top:8px;">${T("sp_brands")}</div>${list(r.brand_types,"🏢","#ccc")}`:""}
+          ${r.affiliate_ideas?.length?`<div style="font-size:11px;color:#ec4899;font-weight:700;margin-top:8px;">${T("sp_affiliate")}</div>${list(r.affiliate_ideas,"🔗","#ccc")}`:""}
+          <div style="font-size:10px;color:#666;margin-top:10px;font-style:italic;">${T("sp_disclaimer")}</div>
+        </div>`);
+      content.querySelector("#btnCopyPitch")?.addEventListener("click",e=>{navigator.clipboard.writeText(e.currentTarget.dataset.txt||"");showToast(T("copied_title"));});
+    }catch(e){setContent("card-sponsor-result",errHTML(e.message));}
+  });
+
+  /* Estimateur vues + revenus */
+  content.querySelector("#btnRevenue")?.addEventListener("click",async()=>{
+    const t=(content.querySelector("#revTitle")?.value||"").trim();
+    const niche=(content.querySelector("#revNiche")?.value||"").trim();
+    const region=(content.querySelector("#revRegion")?.value||"").trim();
+    const subscribers=parseSubs(content.querySelector("#revSubs")?.value||"");
+    setContent("card-revenue-result",spinnerHTML("💰 Estimation en cours…"));
+    try{
+      const r=await sendBG({action:"revenue",title:t,niche,region,subscribers,language:currentLanguage});
+      const v=r.views_7d||{}, rev=r.revenue_usd||{};
+      const box=(label,low,exp,high,color,unit)=>`
+        <div style="flex:1;border:1px solid ${color};border-radius:10px;padding:10px;text-align:center;">
+          <div style="font-size:10px;color:#888;">${label}</div>
+          <div style="font-size:20px;font-weight:800;color:${color};">${unit}${fmtNum(exp||0)}</div>
+          <div style="font-size:10px;color:#777;">${unit}${fmtNum(low||0)} – ${unit}${fmtNum(high||0)}</div>
+        </div>`;
+      const list=arr=>(arr||[]).map(x=>`<div style="font-size:12px;color:#ccc;margin:2px 0;">• ${esc(x)}</div>`).join("");
+      setContent("card-revenue-result",`
+        <div class="echo-card" style="margin-top:8px;">
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            ${box(T("rev_views"),v.low,v.expected,v.high,"#3b82f6","")}
+            ${box(T("rev_income"),rev.low,rev.expected,rev.high,"#22c55e","$")}
+          </div>
+          <div style="font-size:11px;color:#888;text-align:center;margin-bottom:10px;">RPM ≈ $${r.rpm_usd??"—"} / 1000 ${T("rev_views").toLowerCase()}</div>
+          <div style="font-size:11px;color:#7c6dfa;font-weight:700;margin-bottom:2px;">${T("rev_factors")}</div>
+          ${list(r.factors)}
+          <div style="font-size:11px;color:#22c55e;font-weight:700;margin:10px 0 2px;">${T("rev_tips")}</div>
+          ${list(r.tips)}
+          <div style="font-size:10px;color:#666;margin-top:10px;font-style:italic;">${T("rev_disclaimer")}</div>
+        </div>`);
+    }catch(e){setContent("card-revenue-result",errHTML(e.message));}
+  });
+
+  /* Optimiseur d'audience (région/langue) */
+  content.querySelector("#btnAudience")?.addEventListener("click",async()=>{
+    const target=(content.querySelector("#audTarget")?.value||"").trim();
+    const niche=(content.querySelector("#audNiche")?.value||"").trim();
+    const contentLang=content.querySelector("#audLang")?.value||currentLanguage;
+    setContent("card-audience-result",spinnerHTML(T("spin_audience")));
+    try{
+      const r=await sendBG({action:"audience",target,niche,content_language:contentLang,language:currentLanguage});
+      const times=(r.best_times||[]).map(t=>`
+        <div style="display:flex;gap:8px;align-items:baseline;margin:3px 0;">
+          <span style="font-family:monospace;color:#7c6dfa;font-weight:700;white-space:nowrap;min-width:90px;">${esc(t.day||"")} ${esc(t.time||"")}</span>
+          <span style="font-size:11px;color:#999;">${esc(t.reason||"")}</span>
+        </div>`).join("");
+      const chips=arr=>(arr||[]).map(x=>`<span class="echo-badge echo-badge-purple" style="margin:2px 3px 0 0;">${esc(x)}</span>`).join("");
+      const list=arr=>(arr||[]).map(x=>`<div style="font-size:12px;color:#ccc;margin:2px 0;">• ${esc(x)}</div>`).join("");
+      setContent("card-audience-result",`
+        <div class="echo-card" style="margin-top:8px;">
+          <div style="font-size:12px;color:#aaa;margin-bottom:6px;">🎯 ${esc(r.target||target)} ${r.timezone?`· 🕓 ${esc(r.timezone)}`:""}</div>
+          <div style="font-size:11px;color:#22c55e;font-weight:700;margin-bottom:2px;">${T("audience_times")}</div>
+          ${times||`<div style="color:#888;font-size:12px;">—</div>`}
+          <div style="font-size:11px;color:#7c6dfa;font-weight:700;margin:10px 0 2px;">${T("audience_trends")}</div>
+          ${list(r.trends)}
+          <div style="font-size:11px;color:#eab308;font-weight:700;margin:10px 0 4px;">${T("audience_hashtags")}</div>
+          <div>${chips(r.hashtags)}</div>
+          <div style="font-size:11px;color:#3b82f6;font-weight:700;margin:10px 0 2px;">${T("audience_topics")}</div>
+          ${list(r.topic_ideas)}
+          <div style="font-size:11px;color:#ec4899;font-weight:700;margin:10px 0 2px;">${T("audience_tips")}</div>
+          ${list(r.tips)}
+        </div>`);
+    }catch(e){setContent("card-audience-result",errHTML(e.message));}
+  });
+
+  /* Audit complet en 1 clic (SEO + Miniature + Titre) */
+  content.querySelector("#btnFullAudit")?.addEventListener("click",async()=>{
+    setContent("card-audit1-result",spinnerHTML("⚡ Audit complet en cours…"));
+    try{
+      const [seo,thumb,td]=await Promise.all([
+        sendBG({action:"seo_report",videoId:data.videoId,title:data.title,description:data.description,language:currentLanguage}).catch(()=>({})),
+        sendBG({action:"thumbnail",videoId:data.videoId,title:data.title,language:currentLanguage}).catch(()=>({})),
+        sendBG({action:"title_doctor",title:data.title,language:currentLanguage}).catch(()=>({}))
+      ]);
+      const nums=[seo.score,thumb.score,td.score].filter(n=>typeof n==="number");
+      const global=nums.length?Math.round(nums.reduce((a,b)=>a+b,0)/nums.length):"—";
+      const gc=scoreColor(global||0);
+      // Plan d'action prioritaire
+      const actions=[];
+      (seo.suggestions||[]).slice(0,2).forEach(s=>actions.push(s));
+      (td.missing||[]).slice(0,1).forEach(s=>actions.push(T("td_title")+" : "+s));
+      (thumb.tips||[]).slice(0,1).forEach(s=>actions.push(T("nav_thumbnail")+" : "+s));
+      const sub=(label,val)=>`<div style="flex:1;text-align:center;"><div style="font-size:18px;font-weight:800;color:${scoreColor(val||0)}">${val??"—"}</div><div style="font-size:10px;color:#888;">${label}</div></div>`;
+      setContent("card-audit1-result",`
+        <div class="echo-card" style="margin-top:8px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+            <div style="font-size:30px;font-weight:800;color:${gc}">${global}<span style="font-size:13px;color:#666;">/100</span></div>
+            <div style="font-size:11px;color:#aaa;">${T("au_global")}</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            ${sub(T("score_seo"),seo.score)}${sub(T("score_thumb"),thumb.score)}${sub(T("td_title"),td.score)}
+          </div>
+          ${seo.viral_reason?`<div style="font-size:12px;color:#ccc;margin-bottom:8px;">${esc(seo.viral_reason)}</div>`:""}
+          ${actions.length?`<div style="font-size:11px;color:#22c55e;font-weight:700;margin-bottom:2px;">${T("au_plan")}</div>${actions.map((a,i)=>`<div style="font-size:12px;color:#e8e8f0;margin:2px 0;">${i+1}. ${esc(a)}</div>`).join("")}`:""}
+          ${td.improved?`<div style="font-size:11px;color:#7c6dfa;font-weight:700;margin-top:8px;">${T("td_improved")}</div><div class="echo-title-result" data-title="${esc(td.improved)}"><div class="echo-title-result-body"><div class="echo-title-result-text">${esc(td.improved)}</div></div><button class="echo-copy-mini">⧉</button></div>`:""}
+        </div>`);
+      content.querySelectorAll("#card-audit1-result .echo-copy-mini").forEach(b=>b.addEventListener("click",()=>{navigator.clipboard.writeText(b.closest(".echo-title-result").dataset.title);showToast(T("copied_title"));}));
+    }catch(e){setContent("card-audit1-result",errHTML(e.message));}
+  });
+
+  /* Hook Analyzer (rétention) */
+  content.querySelector("#btnHookAnalyze")?.addEventListener("click",async()=>{
+    const script=(content.querySelector("#hookScript")?.value||"").trim();
+    if(script.length<10){ showToast(T("hook_need")); return; }
+    setContent("card-hook-result",spinnerHTML(T("spin_hook")));
+    try{
+      const r=await sendBG({action:"hook",script,language:currentLanguage});
+      const rc=scoreColor(r.retention_estimate||50), hc=scoreColor(r.hook_score||50);
+      const drops=(r.drop_points||[]).map(d=>`
+        <div style="border-left:3px solid ${d.severity==='high'?'#ef4444':'#eab308'};padding:6px 8px;margin:6px 0;background:#0e0e12;border-radius:0 6px 6px 0;">
+          <div style="font-size:12px;color:#e8e8f0;font-style:italic;">"${esc(d.quote||"")}"</div>
+          <div style="font-size:11px;color:#999;margin-top:2px;">⚠ ${esc(d.reason||"")}</div>
+        </div>`).join("");
+      setContent("card-hook-result",`
+        <div class="echo-card" style="margin-top:8px;">
+          <div style="display:flex;gap:10px;margin-bottom:10px;">
+            <div style="flex:1;text-align:center;border:1px solid ${rc};border-radius:8px;padding:8px;">
+              <div style="font-size:22px;font-weight:800;color:${rc}">${r.retention_estimate??"—"}%</div>
+              <div style="font-size:10px;color:#888;">${T("hook_retention")}</div>
+            </div>
+            <div style="flex:1;text-align:center;border:1px solid ${hc};border-radius:8px;padding:8px;">
+              <div style="font-size:22px;font-weight:800;color:${hc}">${r.hook_score??"—"}/100</div>
+              <div style="font-size:10px;color:#888;">${T("hook_score_label")}</div>
+            </div>
+          </div>
+          <div style="font-size:13px;color:#e8e8f0;line-height:1.5;margin-bottom:10px;">${esc(r.verdict||"")}</div>
+          ${drops?`<div style="font-size:11px;color:#ef4444;margin-bottom:2px;font-weight:700;">${T("hook_drops")}</div>${drops}`:""}
+          ${(r.fixes&&r.fixes.length)?`<div style="font-size:11px;color:#22c55e;margin:8px 0 2px;font-weight:700;">${T("hook_fixes")}</div>${r.fixes.map(f=>`<div style="font-size:12px;color:#ccc;margin:2px 0;">✓ ${esc(f)}</div>`).join("")}`:""}
+          ${r.rewritten_hook?`
+            <div style="border-top:1px solid #2a2a35;padding-top:10px;margin-top:10px;">
+              <div style="font-size:11px;color:#7c6dfa;margin-bottom:4px;">${T("hook_rewrite")}</div>
+              <div class="echo-title-result" data-title="${esc(r.rewritten_hook)}">
+                <div class="echo-title-result-body"><div class="echo-title-result-text">${esc(r.rewritten_hook)}</div></div>
+                <button class="echo-copy-mini">⧉</button>
+              </div>
+            </div>`:""}
+        </div>`);
+      content.querySelectorAll("#card-hook-result .echo-copy-mini").forEach(b=>{
+        b.addEventListener("click",()=>{navigator.clipboard.writeText(b.closest(".echo-title-result").dataset.title);showToast(T("copied_title"));});
+      });
+    }catch(e){setContent("card-hook-result",errHTML(e.message));}
   });
 
   /* Titres IA */
@@ -3380,16 +8510,296 @@ function bindTabEvents(tab,data,scores,checklist){
           </div>
           <button class="echo-copy-mini">⧉</button>
         </div>`).join("")||`<div style="color:#888">${T("error_generic")}</div>`;
+      // Aperçu gratuit : titres verrouillés floutés + CTA pour passer à Pro
+      let lockedBlock="";
+      if(res.preview && res.locked>0){
+        const fakeRows=Array.from({length:res.locked}).map((_,i)=>`
+          <div class="echo-title-result">
+            <span class="echo-title-result-num">${i+2}</span>
+            <div class="echo-title-result-body">
+              <div class="echo-title-result-text">Titre optimisé Pro #${i+2} — exemple masqué</div>
+              <div class="echo-title-result-meta"><span class="echo-badge echo-badge-purple">Pro</span></div>
+            </div>
+          </div>`).join("");
+        lockedBlock=`
+          <div style="position:relative;margin-top:8px;border-radius:12px;overflow:hidden;">
+            <div style="filter:blur(6px);opacity:.7;pointer-events:none;user-select:none;">${fakeRows}</div>
+            <div class="echo-locked-overlay" style="position:absolute;inset:0;">
+              <div class="echo-locked-icon">🔒</div>
+              <div class="echo-locked-title">+${res.locked} titres IA en plus</div>
+              <div class="echo-locked-sub">Passe à Pro pour débloquer les 5 titres + génération illimitée</div>
+              <button class="echo-locked-btn" id="btnUnlockTitles">⭐ ${T("upgrade_btn")}</button>
+            </div>
+          </div>`;
+      }
       setContent("card-titles-content",`
-        <div class="echo-card-head">${T("nav_titles")} <span class="echo-badge echo-badge-ai">IA</span></div>
-        ${html}`);
+        <div class="echo-card-head">${T("nav_titles")} <span class="echo-badge echo-badge-ai">IA</span>${res.preview?' <span class="echo-badge" style="background:rgba(34,197,94,.15);color:#22c55e">Aperçu gratuit</span>':''}</div>
+        ${html}
+        ${lockedBlock}`);
       content.querySelectorAll(".echo-copy-mini").forEach(b=>{
         b.addEventListener("click",()=>{
           navigator.clipboard.writeText(b.closest(".echo-title-result").dataset.title);
           showToast(T("copied_title"));
         });
       });
+      document.getElementById("btnUnlockTitles")?.addEventListener("click",()=>window.open("https://vidsparkpro.com/billing","_blank"));
     }catch(e){setContent("card-titles-content",errHTML(e.message));}
+  });
+
+  /* A/B Test */
+  content.querySelector("#btnRunABTest")?.addEventListener("click",async()=>{
+    const ta=document.getElementById("abTitleA"), tb=document.getElementById("abTitleB");
+    const titleA=(ta?.value||"").trim(), titleB=(tb?.value||"").trim();
+    if(!titleA||!titleB){ showToast("Remplis les deux titres"); return; }
+    setContent("card-abtest-result",spinnerHTML(T("spin_abtest")));
+    try{
+      const r=await sendBG({action:"abtest",titleA,titleB,language:currentLanguage});
+      const win=r.winner==="A"?"A":"B";
+      const wc="#22c55e", lc="#888";
+      const card=(label,v,isWin)=>`
+        <div style="flex:1;border:1px solid ${isWin?wc:'#2a2a35'};border-radius:10px;padding:10px;background:${isWin?'rgba(34,197,94,.08)':'transparent'}">
+          <div style="font-size:11px;color:#aaa;margin-bottom:4px;">${label} ${isWin?`<span style="color:${wc};font-weight:700">★ ${T("abtest_winner")}</span>`:""}</div>
+          <div style="font-size:22px;font-weight:800;color:${isWin?wc:lc}">${v?.ctr_estimate??"—"}%</div>
+          <div style="font-size:10px;color:#777;">${T("abtest_ctr")} · ${v?.score??"—"}/100</div>
+          ${(v?.strengths||[]).map(s=>`<div style="font-size:11px;color:#9fe6b0;margin-top:3px;">✓ ${esc(s)}</div>`).join("")}
+          ${(v?.weaknesses||[]).map(s=>`<div style="font-size:11px;color:#e69f9f;margin-top:3px;">✗ ${esc(s)}</div>`).join("")}
+        </div>`;
+      setContent("card-abtest-result",`
+        <div class="echo-card">
+          <div class="echo-card-head">🏆 ${T("result_label")} — ${T("abtest_confidence")}: ${r.confidence??"—"}%</div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            ${card(T("abtest_a"),r.a,win==="A")}
+            ${card(T("abtest_b"),r.b,win==="B")}
+          </div>
+          <div style="font-size:11px;color:#aaa;margin-bottom:3px;">${T("abtest_verdict")}</div>
+          <div style="font-size:13px;color:#e8e8f0;line-height:1.5;margin-bottom:12px;">${esc(r.verdict||"")}</div>
+          ${r.improved?`
+            <div style="border-top:1px solid #2a2a35;padding-top:10px;">
+              <div style="font-size:11px;color:#7c6dfa;margin-bottom:4px;">${T("abtest_improved")}</div>
+              <div class="echo-title-result" data-title="${esc(r.improved)}">
+                <div class="echo-title-result-body"><div class="echo-title-result-text">${esc(r.improved)}</div></div>
+                <button class="echo-copy-mini">⧉</button>
+              </div>
+            </div>`:""}
+        </div>`);
+      content.querySelectorAll("#card-abtest-result .echo-copy-mini").forEach(b=>{
+        b.addEventListener("click",()=>{navigator.clipboard.writeText(b.closest(".echo-title-result").dataset.title);showToast(T("copied_title"));});
+      });
+    }catch(e){setContent("card-abtest-result",errHTML(e.message));}
+  });
+
+  /* Thumbnail A/B : aperçu des fichiers choisis */
+  const bindThumbPick=(inputId,prevId)=>{
+    const inp=content.querySelector("#"+inputId);
+    inp?.addEventListener("change",async()=>{
+      const f=inp.files?.[0]; if(!f) return;
+      try{
+        const b64=await fileToScaledBase64(f);
+        inp._b64=b64;
+        const p=content.querySelector("#"+prevId);
+        if(p) p.innerHTML=`<img src="data:image/jpeg;base64,${b64}" style="max-width:100%;max-height:70px;border-radius:6px;">`;
+      }catch(e){ showToast(e.message); }
+    });
+  };
+  bindThumbPick("fileThumbA","prevThumbA");
+  bindThumbPick("fileThumbB","prevThumbB");
+
+  content.querySelector("#btnRunThumbAB")?.addEventListener("click",async()=>{
+    const a=content.querySelector("#fileThumbA")?._b64, b=content.querySelector("#fileThumbB")?._b64;
+    if(!a||!b){ showToast(T("thumbab_need2")); return; }
+    setContent("card-thumbab-result",spinnerHTML(T("spin_thumbab")));
+    try{
+      const r=await sendBG({action:"thumbnail_ab",imageA:a,imageB:b,language:currentLanguage});
+      const win=r.winner==="A"?"A":"B";
+      const wc="#22c55e", lc="#888";
+      const imgs={A:a,B:b};
+      const card=(label,v,key,isWin)=>`
+        <div style="flex:1;border:1px solid ${isWin?wc:'#2a2a35'};border-radius:10px;padding:10px;background:${isWin?'rgba(34,197,94,.08)':'transparent'}">
+          <img src="data:image/jpeg;base64,${imgs[key]}" style="width:100%;border-radius:6px;margin-bottom:6px;">
+          <div style="font-size:11px;color:#aaa;margin-bottom:4px;">${label} ${isWin?`<span style="color:${wc};font-weight:700">★ ${T("abtest_winner")}</span>`:""}</div>
+          <div style="font-size:22px;font-weight:800;color:${isWin?wc:lc}">${v?.ctr_estimate??"—"}%</div>
+          <div style="font-size:10px;color:#777;">${T("abtest_ctr")} · ${v?.score??"—"}/100</div>
+          ${(v?.strengths||[]).map(s=>`<div style="font-size:11px;color:#9fe6b0;margin-top:3px;">✓ ${esc(s)}</div>`).join("")}
+          ${(v?.weaknesses||[]).map(s=>`<div style="font-size:11px;color:#e69f9f;margin-top:3px;">✗ ${esc(s)}</div>`).join("")}
+        </div>`;
+      setContent("card-thumbab-result",`
+        <div class="echo-card">
+          <div class="echo-card-head">🏆 ${T("result_label")} — ${T("abtest_confidence")}: ${r.confidence??"—"}%</div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            ${card(T("thumbab_a"),r.a,"A",win==="A")}
+            ${card(T("thumbab_b"),r.b,"B",win==="B")}
+          </div>
+          <div style="font-size:11px;color:#aaa;margin-bottom:3px;">${T("abtest_verdict")}</div>
+          <div style="font-size:13px;color:#e8e8f0;line-height:1.5;margin-bottom:10px;">${esc(r.verdict||"")}</div>
+          ${(r.tips&&r.tips.length)?`
+            <div style="border-top:1px solid #2a2a35;padding-top:8px;">
+              <div style="font-size:11px;color:#7c6dfa;margin-bottom:4px;">${T("thumbab_tips")}</div>
+              ${r.tips.map(t=>`<div style="font-size:12px;color:#ccc;margin:2px 0;">• ${esc(t)}</div>`).join("")}
+            </div>`:""}
+          ${r.improve_prompt?`
+            <div style="border-top:1px solid #2a2a35;padding-top:10px;margin-top:8px;">
+              <div style="font-size:11px;color:#22c55e;margin-bottom:4px;">${T("thumbab_prompt_label")}</div>
+              <textarea id="improvePromptBox" readonly style="width:100%;box-sizing:border-box;background:#0e0e12;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;min-height:80px;resize:vertical;">${esc(r.improve_prompt)}</textarea>
+              <button class="echo-action-btn green" id="btnCopyImprovePrompt" data-prompt="${esc(r.improve_prompt)}">📋 ${T("thumbab_prompt_copy")}</button>
+              <div style="font-size:10px;color:#777;margin-top:4px;">${T("thumbab_prompt_hint")}</div>
+            </div>`:""}
+        </div>`);
+      // Copier le prompt détaillé pour le coller dans une autre IA
+      content.querySelector("#btnCopyImprovePrompt")?.addEventListener("click",(ev)=>{
+        navigator.clipboard.writeText(ev.currentTarget.dataset.prompt||"");
+        showToast(T("copied_title"));
+      });
+    }catch(e){setContent("card-thumbab-result",errHTML(e.message));}
+  });
+
+  /* Shorts Generator */
+  content.querySelector("#btnGenShorts")?.addEventListener("click",async()=>{
+    setContent("card-shorts-result",spinnerHTML("📜 Lecture des sous-titres…"));
+    let transcript="";
+    try{ transcript=await getYouTubeTranscript(data.videoId); }catch(e){}
+    setContent("card-shorts-result",spinnerHTML(transcript?T("spin_shorts_real"):T("spin_shorts")));
+    try{
+      const r=await sendBG({action:"shorts",videoId:data.videoId,title:data.title,description:data.description,language:currentLanguage,transcript});
+      const shorts=r.shorts||[];
+      const cards=shorts.map((s,i)=>{
+        const sc=scoreColor(s.viral_score||70);
+        const clips=s.clips||[];
+        const clipsText=clips.map(c=>`${c.start||"?"} → ${c.end||"?"}${c.reason?" ("+c.reason+")":""}`).join("\n");
+        const scriptText=(s.script||[]).join("\n");
+        const copyText=`${s.title||""}\n${s.summary?s.summary+"\n":""}\n${T("shorts_clips")}:\n${clipsText}\n\n${T("shorts_script")}:\n${scriptText}`;
+        const estBadge=clips.length?`<span class="echo-badge" style="background:${s.estimated?'rgba(245,179,1,.15)':'rgba(34,197,94,.15)'};color:${s.estimated?'#f5b301':'#22c55e'};font-size:9px;">${s.estimated?T("shorts_estimated"):T("shorts_real")}</span>`:"";
+        return `
+          <div class="echo-card" data-copy="${esc(copyText)}">
+            <div class="echo-card-head" style="display:flex;justify-content:space-between;align-items:center;">
+              <span>📱 ${esc(s.title||("Short #"+(i+1)))}</span>
+              <span class="echo-badge" style="background:${sc}22;color:${sc}">${s.viral_score||"—"}/100</span>
+            </div>
+            ${s.summary?`<div style="font-size:12px;color:#bbb;margin-bottom:8px;">📝 ${esc(s.summary)}</div>`:""}
+            ${clips.length?`
+              <div style="background:#0e0e12;border:1px solid #2a2a35;border-radius:8px;padding:8px;margin-bottom:8px;">
+                <div style="font-size:11px;color:#f5b301;margin-bottom:4px;font-weight:700;">${T("shorts_clips")} ${estBadge}</div>
+                ${clips.map(c=>`
+                  <div style="font-size:12px;color:#e8e8f0;margin:3px 0;display:flex;gap:6px;align-items:baseline;">
+                    <span style="font-family:monospace;color:#7c6dfa;font-weight:700;white-space:nowrap;">${esc(c.start||"?")} → ${esc(c.end||"?")}</span>
+                    ${c.reason?`<span style="color:#999;font-size:11px;">${esc(c.reason)}</span>`:""}
+                  </div>`).join("")}
+              </div>`:""}
+            <div style="font-size:11px;color:#7c6dfa;margin-bottom:2px;">${T("shorts_hook")}</div>
+            <div style="font-size:13px;color:#e8e8f0;margin-bottom:8px;font-style:italic;">"${esc(s.hook||"")}"</div>
+            <div style="font-size:11px;color:#aaa;margin-bottom:2px;">${T("shorts_script")} · ${T("shorts_duration")}: ${esc(s.duration||"30s")}</div>
+            ${(s.script||[]).map((p,j)=>`<div style="font-size:12px;color:#ccc;margin:2px 0;">${j+1}. ${esc(p)}</div>`).join("")}
+            <div style="margin-top:6px;">${(s.hashtags||[]).map(h=>`<span class="echo-badge echo-badge-purple" style="margin:2px 3px 0 0;">${esc(h)}</span>`).join("")}</div>
+            <button class="echo-copy-mini echo-copy-script" style="margin-top:8px;width:auto;padding:4px 10px;">⧉ ${T("shorts_copy")}</button>
+          </div>`;
+      }).join("");
+      let lockedBlock="";
+      if(r.preview && r.locked>0){
+        lockedBlock=`
+          <div style="position:relative;margin-top:8px;border-radius:12px;overflow:hidden;">
+            <div style="filter:blur(6px);opacity:.6;pointer-events:none;" class="echo-card">
+              <div class="echo-card-head">📱 Short Pro masqué</div>
+              <div style="font-size:12px;">Hook viral · script complet · hashtags optimisés…</div>
+            </div>
+            <div class="echo-locked-overlay" style="position:absolute;inset:0;">
+              <div class="echo-locked-icon">🔒</div>
+              <div class="echo-locked-title">+${r.locked} Shorts en plus</div>
+              <div class="echo-locked-sub">Passe à Pro pour débloquer tous les Shorts</div>
+              <button class="echo-locked-btn" id="btnUnlockShorts">⭐ ${T("upgrade_btn")}</button>
+            </div>
+          </div>`;
+      }
+      setContent("card-shorts-result",cards+lockedBlock || `<div style="color:#888">${T("error_generic")}</div>`);
+      content.querySelectorAll(".echo-copy-script").forEach(b=>{
+        b.addEventListener("click",()=>{
+          const c=b.closest("[data-copy]");
+          navigator.clipboard.writeText(c.dataset.copy||"");
+          showToast(T("copied_title"));
+        });
+      });
+      document.getElementById("btnUnlockShorts")?.addEventListener("click",()=>window.open("https://vidsparkpro.com/billing","_blank"));
+    }catch(e){setContent("card-shorts-result",errHTML(e.message));}
+  });
+
+  /* Title Doctor — score CTR en direct (côté navigateur) */
+  const tdUpdate=()=>{
+    const v=content.querySelector("#tdInput")?.value||"";
+    const {score,checks}=computeTitleScore(v);
+    const c=scoreColor(score);
+    const bar=content.querySelector("#tdBar"); if(bar){bar.style.width=score+"%";bar.style.background=c;}
+    const sc=content.querySelector("#tdScore"); if(sc){sc.textContent=score;sc.style.color=c;}
+    const ch=content.querySelector("#tdChecks");
+    if(ch) ch.innerHTML=checks.map(x=>`<span class="echo-badge" title="${esc(x.tip||"")}" style="cursor:help;background:${x.ok?'rgba(34,197,94,.15)':'rgba(136,136,136,.12)'};color:${x.ok?'#22c55e':'#888'};">${x.ok?'✓':'○'} ${esc(x.label)} ?</span>`).join("");
+  };
+  const tdEl=content.querySelector("#tdInput");
+  if(tdEl){ ["input","keyup","change","paste"].forEach(ev=>tdEl.addEventListener(ev,()=>setTimeout(tdUpdate,0))); tdUpdate(); }
+
+  content.querySelector("#btnTitleDoctor")?.addEventListener("click",async()=>{
+    tdUpdate(); // recalcule le score instantané au clic
+    const v=(content.querySelector("#tdInput")?.value||"").trim();
+    if(v.length<3){ showToast(T("td_need")); return; }
+    setContent("card-td-result",spinnerHTML("🩺 Diagnostic IA…"));
+    try{
+      const r=await sendBG({action:"title_doctor",title:v,language:currentLanguage});
+      setContent("card-td-result",`
+        <div class="echo-card" style="margin-top:8px;">
+          <div style="display:flex;gap:10px;margin-bottom:8px;">
+            <div style="flex:1;text-align:center;"><div style="font-size:20px;font-weight:800;color:${scoreColor(r.score||50)}">${r.score??"—"}/100</div><div style="font-size:10px;color:#888;">${T("td_ai_score")}</div></div>
+            <div style="flex:1;text-align:center;"><div style="font-size:20px;font-weight:800;color:#3b82f6">${r.ctr_estimate??"—"}%</div><div style="font-size:10px;color:#888;">${T("abtest_ctr")}</div></div>
+          </div>
+          ${(r.missing&&r.missing.length)?`<div style="font-size:11px;color:#eab308;font-weight:700;">${T("td_missing")}</div>${r.missing.map(m=>`<div style="font-size:12px;color:#ccc;margin:1px 0;">• ${esc(m)}</div>`).join("")}`:""}
+          ${r.improved?`<div style="font-size:11px;color:#7c6dfa;font-weight:700;margin-top:8px;">${T("td_improved")}</div>
+            <div class="echo-title-result" data-title="${esc(r.improved)}"><div class="echo-title-result-body"><div class="echo-title-result-text">${esc(r.improved)}</div></div><button class="echo-copy-mini">⧉</button></div>`:""}
+          ${(r.tips&&r.tips.length)?`<div style="font-size:11px;color:#22c55e;font-weight:700;margin-top:8px;">${T("td_tips")}</div>${r.tips.map(t=>`<div style="font-size:12px;color:#ccc;margin:1px 0;">→ ${esc(t)}</div>`).join("")}`:""}
+        </div>`);
+      content.querySelectorAll("#card-td-result .echo-copy-mini").forEach(b=>b.addEventListener("click",()=>{navigator.clipboard.writeText(b.closest(".echo-title-result").dataset.title);showToast(T("copied_title"));}));
+    }catch(e){setContent("card-td-result",errHTML(e.message));}
+  });
+
+  /* Localisation / traduction des métadonnées */
+  content.querySelector("#btnTranslate")?.addEventListener("click",async()=>{
+    const target_lang=content.querySelector("#trLang")?.value||"en";
+    const title=(content.querySelector("#descTitle")?.value||data.title||"").trim();
+    if(!title){ showToast(T("desc_need")); return; }
+    setContent("card-translate-result",spinnerHTML("🌐 Traduction…"));
+    try{
+      const r=await sendBG({action:"translate",title,description:data.description||"",target_lang,language:currentLanguage});
+      const tags=(r.tags||[]).join(", ");
+      const full=`${r.title||""}\n\n${r.description||""}`;
+      setContent("card-translate-result",`
+        <div class="echo-card" style="margin-top:8px;">
+          <div style="font-size:11px;color:#aaa;">${T("tr_title")}</div>
+          <div style="font-size:13px;color:#fff;font-weight:600;margin-bottom:6px;">${esc(r.title||"")}</div>
+          <div style="font-size:11px;color:#aaa;">${T("tr_desc")}</div>
+          <textarea readonly style="width:100%;box-sizing:border-box;background:#0e0e12;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;min-height:90px;resize:vertical;">${esc(r.description||"")}</textarea>
+          ${tags?`<div style="font-size:11px;color:#eab308;font-weight:700;margin-top:8px;">${T("desc_tags")}</div><div style="font-size:12px;color:#ccc;">${esc(tags)}</div>`:""}
+          <button class="echo-action-btn green" id="btnCopyTr" data-txt="${esc(full)}" style="margin-top:8px;">📋 ${T("tr_copy")}</button>
+        </div>`);
+      content.querySelector("#btnCopyTr")?.addEventListener("click",e=>{navigator.clipboard.writeText(e.currentTarget.dataset.txt||"");showToast(T("copied_title"));});
+    }catch(e){setContent("card-translate-result",errHTML(e.message));}
+  });
+
+  /* Description complète (description + abonne-toi + hashtags + tags) */
+  content.querySelector("#btnDescPack")?.addEventListener("click",async()=>{
+    const t=(content.querySelector("#descTitle")?.value||"").trim();
+    const niche=(content.querySelector("#descNiche")?.value||"").trim();
+    const region=(content.querySelector("#descRegion")?.value||"").trim();
+    if(!t){ showToast(T("desc_need")); return; }
+    setContent("card-desc-result",spinnerHTML(T("spin_desc")));
+    try{
+      const r=await sendBG({action:"video_package",title:t,niche,region,language:currentLanguage});
+      const full=`${r.description||""}\n\n${r.subscribe_cta||""}\n\n${(r.hashtags||[]).join(" ")}`.trim();
+      setContent("card-desc-result",`
+        <div class="echo-card" style="margin-top:8px;">
+          <div style="font-size:11px;color:#22c55e;font-weight:700;margin-bottom:4px;">${T("desc_ready")}</div>
+          <textarea readonly style="width:100%;box-sizing:border-box;background:#0e0e12;border:1px solid #2a2a35;border-radius:8px;color:#e8e8f0;padding:8px;font-size:12px;min-height:140px;resize:vertical;">${esc(full)}</textarea>
+          <button class="echo-action-btn green" id="btnCopyDesc" data-txt="${esc(full)}">📋 ${T("desc_copy")}</button>
+          <div style="font-size:11px;color:#eab308;font-weight:700;margin:10px 0 4px;">${T("desc_tags")}</div>
+          <div>${(r.tags||[]).map(x=>`<span class="echo-badge echo-badge-purple" style="margin:2px 3px 0 0;">${esc(x)}</span>`).join("")}</div>
+          <button class="echo-action-btn blue" id="btnCopyTags" data-txt="${esc((r.tags||[]).join(", "))}" style="margin-top:8px;">📋 ${T("desc_copy_tags")}</button>
+        </div>`);
+      content.querySelector("#btnCopyDesc")?.addEventListener("click",e=>{navigator.clipboard.writeText(e.currentTarget.dataset.txt||"");showToast(T("copied_title"));});
+      content.querySelector("#btnCopyTags")?.addEventListener("click",e=>{navigator.clipboard.writeText(e.currentTarget.dataset.txt||"");showToast(T("copied_title"));});
+    }catch(e){setContent("card-desc-result",errHTML(e.message));}
   });
 
   /* Actions */
@@ -3465,10 +8875,170 @@ function addShortsToggle(panel){
 /* ══════════════════════════════════════════════════════════════
    BOOTSTRAP
 ══════════════════════════════════════════════════════════════ */
-chrome.storage.local.get(["activation_id","subscription_expiry","echoLanguage","userPlan","userEmail","userAvatar","userName","userToken","authorizedChannelIds"],result=>{
+
+// Afficher le panneau d'activation si pas encore activée
+function showActivationPanel() {
+  const target = document.querySelector("#secondary-inner") || document.querySelector("#secondary");
+  if (!target) return;
+  if (document.getElementById('vidspark-activation')) return; // déjà affiché → éviter les doublons
+  const oldPanel = document.getElementById('echo-rank-panel');
+  if (oldPanel) oldPanel.remove();
+
+  const panel = document.createElement('div');
+  panel.id = 'vidspark-activation';
+  panel.style.cssText = 'background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border:2px solid #7c6dfa;border-radius:12px;padding:20px;text-align:center;margin-bottom:12px;box-shadow:0 8px 24px rgba(124,109,250,0.2)';
+
+  const actLangOpts = LANG_LIST.map(l=>`<option value="${l.code}" ${l.code===currentLanguage?"selected":""}>${l.label}</option>`).join("");
+
+  panel.innerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+      <select id="actLangSelect" class="echo-lang-select" style="font-size:11px;">${actLangOpts}</select>
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:28px;margin-bottom:8px">⚡</div>
+      <h2 style="color:#7c6dfa;margin:0 0 8px;font-size:16px;font-weight:800">VidSpark AI</h2>
+      <p style="color:#aaa;margin:0;font-size:12px">${esc(T("act_subtitle"))}</p>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <label style="display:block;font-size:11px;color:#aaa;margin-bottom:4px;text-align:left;">${esc(T("act_id_label"))}</label>
+      <input type="text" id="activationIdInput" placeholder="VID..." style="width:100%;padding:10px;border:1px solid #7c6dfa;border-radius:8px;background:#0f0f1a;color:#fff;font-size:12px;box-sizing:border-box;">
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <label style="display:block;font-size:11px;color:#aaa;margin-bottom:4px;text-align:left;">${esc(T("act_secret_label"))}</label>
+      <div style="display:flex;gap:8px;">
+        <input type="password" id="activationSecretInput" placeholder="${esc(T("act_secret_placeholder"))}" style="flex:1;padding:10px;border:1px solid #7c6dfa;border-radius:8px;background:#0f0f1a;color:#fff;font-size:12px;box-sizing:border-box;">
+        <button id="toggleSecret" style="background:var(--b2,#2a2a35);color:#fff;padding:8px 12px;border:none;border-radius:8px;cursor:pointer;font-size:12px;">👁️</button>
+      </div>
+    </div>
+
+    <button id="activateBtn" style="width:100%;padding:12px;background:#7c6dfa;color:white;border:none;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer;transition:all 0.2s;margin-bottom:8px;">✅ ${esc(T("act_btn_activate"))}</button>
+    <p id="activationStatus" style="font-size:11px;color:#aaa;min-height:14px;margin-bottom:8px;"></p>
+
+    <button id="dashboardBtn" style="width:100%;padding:11px;background:transparent;color:#7c6dfa;border:1px solid #7c6dfa;border-radius:8px;font-weight:bold;font-size:12px;cursor:pointer;transition:all 0.2s;">📊 ${esc(T("act_btn_dashboard"))}</button>
+  `;
+
+  target.prepend(panel);
+
+  panel.querySelector('#actLangSelect').addEventListener('change', function(){
+    currentLanguage = this.value;
+    chrome.storage.local.set({ echoLanguage: currentLanguage });
+    panel.remove();
+    showActivationPanel();
+  });
+
+  const idInput = panel.querySelector('#activationIdInput');
+  const secretInput = panel.querySelector('#activationSecretInput');
+  const toggleBtn = panel.querySelector('#toggleSecret');
+  const activateBtn = panel.querySelector('#activateBtn');
+  const statusEl = panel.querySelector('#activationStatus');
+
+  // Toggle voir/masquer
+  toggleBtn.addEventListener('click', () => {
+    secretInput.type = secretInput.type === 'password' ? 'text' : 'password';
+    toggleBtn.textContent = secretInput.type === 'password' ? '👁️' : '🙈';
+  });
+
+  // Bouton Dashboard
+  const dashboardBtn = panel.querySelector('#dashboardBtn');
+  dashboardBtn.addEventListener('click', () => {
+    window.open('https://vidsparkpro.com/dashboard', '_blank');
+  });
+  dashboardBtn.addEventListener('mouseover', () => {
+    dashboardBtn.style.background = 'rgba(124, 109, 250, 0.1)';
+  });
+  dashboardBtn.addEventListener('mouseout', () => {
+    dashboardBtn.style.background = 'transparent';
+  });
+
+  // Activer
+  activateBtn.addEventListener('click', async () => {
+    const id = idInput.value.trim();
+    const secret = secretInput.value.trim();
+
+    if (!id || !secret) {
+      statusEl.textContent = '⚠️ ' + T('act_err_missing');
+      statusEl.style.color = '#fa6d6d';
+      return;
+    }
+
+    activateBtn.disabled = true;
+    activateBtn.textContent = '⏳ ' + T('act_verifying');
+    statusEl.textContent = '';
+
+    try {
+      const deviceId = await getDeviceId();
+      const res = await fetch('https://vidspark-ai-production-9ac7.up.railway.app/api/activation/activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ activation_id: id, activation_secret: secret, device_id: deviceId })
+      });
+
+      const body = await res.json();
+
+      if (!res.ok) {
+        /* Erreurs backend (français) traduites côté client via statut/flag/code. */
+        let errMsg;
+        if (body.expired)                    errMsg = T('act_err_expired');
+        else if (body.code === 'DEVICE_LOCKED') errMsg = T('act_err_device');
+        else if (res.status === 401)         errMsg = T('act_err_invalid');
+        else                                 errMsg = body.error || T('act_err_generic');
+        statusEl.textContent = '❌ ' + errMsg;
+        statusEl.style.color = '#fa6d6d';
+        activateBtn.disabled = false;
+        activateBtn.textContent = '✅ ' + T('act_btn_activate');
+        return;
+      }
+
+      // Succès
+      const expiryDate = new Date(body.subscription.expiry);
+      const storageData = {
+        activation_id: id,
+        activation_secret: secret,
+        subscription_expiry: expiryDate.toISOString(),
+        userToken: body.user?.id || '',
+        userEmail: body.user?.email || '',
+        userPlan: body.user?.plan || 'free'
+      };
+      // 🔒 Chaînes autorisées (multi-chaînes selon le plan) — gérées sur le dashboard
+      storageData.authorizedChannelIds = Array.isArray(body.channel_ids) ? body.channel_ids : [];
+      chrome.storage.local.set(storageData, () => {
+        statusEl.textContent = '✅ ' + T('act_success');
+        statusEl.style.color = '#4ade80';
+
+        // Supprimer le panneau d'activation et afficher le panneau normal
+        setTimeout(() => {
+          const activationPanel = document.getElementById('vidspark-activation');
+          if (activationPanel) activationPanel.remove();
+
+          // Charger le panneau normal
+          currentUserToken = body.user?.id;
+          currentUserEmail = body.user?.email;
+          currentPlan = body.user?.plan || 'free';
+          panelMounted = false;
+          panelCreating = false;
+          createPanel();
+        }, 800);
+      });
+    } catch (e) {
+      statusEl.textContent = '❌ ' + T('act_err_generic') + ': ' + e.message;
+      statusEl.style.color = '#fa6d6d';
+      activateBtn.disabled = false;
+      activateBtn.textContent = '✅ ' + T('act_btn_activate');
+    }
+  });
+}
+
+chrome.storage.local.get(["activation_id","activation_secret","subscription_expiry","echoLanguage","userPlan","userEmail","userAvatar","userName","userToken","authorizedChannelIds"],result=>{
+  // Langue choisie manuellement (ex. sur le panneau d'activation) : prioritaire sur la détection navigateur.
+  if(result.echoLanguage) currentLanguage = result.echoLanguage;
+
   // Vérifier l'activation
   if(!result.activation_id || !result.subscription_expiry){
-    console.log('[VidSpark] Extension non activée. Activez via la popup.');
+    console.log('[VidSpark] Extension non activée. Affichage du panneau d\'activation.');
+    // Attendre que la page charge
+    setTimeout(showActivationPanel, 1000);
     return; // Ne rien charger si pas activée
   }
 
@@ -3476,6 +9046,7 @@ chrome.storage.local.get(["activation_id","subscription_expiry","echoLanguage","
   const expiryDate = new Date(result.subscription_expiry);
   if(expiryDate < new Date()){
     console.log('[VidSpark] Forfait expiré.');
+    setTimeout(showActivationPanel, 1000);
     return;
   }
 
@@ -3491,9 +9062,48 @@ chrome.storage.local.get(["activation_id","subscription_expiry","echoLanguage","
     currentUserToken = result.userToken;
     console.log('[VidSpark] User auto-loaded from storage:', { email: result.userEmail, plan: result.userPlan });
   }
-  createPanel();
+
+  // 🔒 Resync serveur : récupérer la chaîne verrouillée (incontournable même si le cache est vidé)
+  (async () => {
+    try {
+      if (result.activation_id && result.activation_secret) {
+        const deviceId = await getDeviceId();
+        const r = await fetch('https://vidspark-ai-production-9ac7.up.railway.app/api/activation/activate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ activation_id: result.activation_id, activation_secret: result.activation_secret, device_id: deviceId })
+        });
+        // 🔒 Code lié à un autre appareil → déconnexion de ce PC
+        if (r.status === 403) {
+          const eb = await r.json().catch(()=>({}));
+          if (eb.code === 'DEVICE_LOCKED') {
+            chrome.storage.local.remove(['activation_id','activation_secret','subscription_expiry','userToken','userEmail','userPlan','authorizedChannelIds'],()=>{
+              showToast('🔒 '+(eb.error||'Code utilisé sur un autre appareil'));
+              panelMounted=false; createPanel();
+            });
+            return;
+          }
+        }
+        if (r.ok) {
+          const b = await r.json();
+          // Synchroniser le PLAN réel (corrige un badge périmé après un upgrade)
+          if (b.user?.plan) {
+            currentPlan = b.user.plan;
+            await chrome.storage.local.set({ userPlan: b.user.plan });
+            console.log('[VidSpark] Plan resynchronisé:', b.user.plan);
+          }
+          // Synchroniser la liste complète des chaînes autorisées (multi-chaînes)
+          if (Array.isArray(b.channel_ids)) {
+            await chrome.storage.local.set({ authorizedChannelIds: b.channel_ids });
+          }
+        }
+      }
+    } catch (e) { console.warn('[VidSpark] Resync chaîne échoué:', e.message); }
+    createPanel();
+  })();
   // Observer pour les changements de vidéo/URL (plus efficace que setInterval)
-  setInterval(()=>{
+  const _navIv=setInterval(()=>{
+    if(!extAlive()){ clearInterval(_navIv); return; }  // extension rechargée → on s'arrête proprement
     const cur=location.href;
     const vid=extractVideoId();
     if(cur!==lastUrl||(vid&&vid!==currentVideoId)){
