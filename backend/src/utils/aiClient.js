@@ -924,8 +924,9 @@ async function generateTikTokSEO(topic, niche = '', description = '', language =
   ].filter(Boolean).join('. ');
   const prompt = `Tu es un expert SEO TikTok et créateur viral. Optimise à fond la découvrabilité d'une vidéo TikTok.
 Sujet : "${topic}".${ctx ? ' ' + ctx + '.' : ''}
-Écris TOUT le contenu en ${langName} (sauf les hashtags qui peuvent rester tels quels).
 Adapte-toi au format TikTok : vidéos courtes verticales, rythme rapide, les 3 premières secondes sont décisives.
+
+IMPORTANT : quelle que soit la langue du sujet ci-dessus, ta réponse doit être ENTIÈREMENT rédigée en ${langName} (sauf les hashtags, qui peuvent rester tels quels). Ne mélange jamais les langues.
 
 Réponds UNIQUEMENT en JSON valide, sans texte autour :
 {
@@ -962,7 +963,7 @@ async function tiktokRepurpose(title = '', description = '', transcript = '', ni
   const prompt = `Tu es expert du repurposing de contenu. Transforme cette vidéo YouTube longue en 3 vidéos TikTok courtes et percutantes (verticales, 15-45s).
 ${src}
 
-Écris en ${langName}. Réponds UNIQUEMENT en JSON valide :
+IMPORTANT : la transcription/description ci-dessus peut être dans une AUTRE langue que celle demandée. Ignore la langue de la source : ta réponse (angle, hook, script, caption) doit être ENTIÈREMENT écrite en ${langName}, jamais dans la langue de la transcription. Réponds UNIQUEMENT en JSON valide :
 {
   "clips": [
     {
@@ -983,7 +984,8 @@ async function tiktokViralIdeas(niche = '', topic = '', language = 'fr') {
   const langName = LANG_NAMES[language] || language;
   const ctx = [niche && `Niche : ${niche}`, topic && `Sujet/angle : ${topic}`].filter(Boolean).join('. ');
   const prompt = `Tu es stratège TikTok viral. Propose 10 idées de vidéos TikTok à fort potentiel.${ctx ? ' ' + ctx + '.' : ''}
-Varie les formats (POV, tuto, storytime, challenge, avant/après, listicle, réaction, coulisses…). Écris en ${langName}.
+Varie les formats (POV, tuto, storytime, challenge, avant/après, listicle, réaction, coulisses…).
+IMPORTANT : réponds ENTIÈREMENT en ${langName}, quelle que soit la langue du sujet fourni.
 Réponds UNIQUEMENT en JSON valide :
 {
   "ideas": [
@@ -999,7 +1001,8 @@ async function tiktokHooks(topic = '', niche = '', language = 'fr') {
   const langName = LANG_NAMES[language] || language;
   const ctx = niche ? ` Niche : ${niche}.` : '';
   const prompt = `Tu es expert en rétention TikTok (les 3 premières secondes décident de tout). Pour une vidéo sur : "${topic}".${ctx}
-Génère 8 accroches VARIÉES (question, choc, promesse, curiosité, statistique, controverse, storytime, négatif). Note chacune sur 100 selon son pouvoir d'arrêt du scroll. Écris en ${langName}.
+Génère 8 accroches VARIÉES (question, choc, promesse, curiosité, statistique, controverse, storytime, négatif). Note chacune sur 100 selon son pouvoir d'arrêt du scroll.
+IMPORTANT : réponds ENTIÈREMENT en ${langName}, quelle que soit la langue du sujet fourni.
 Réponds UNIQUEMENT en JSON valide :
 {
   "hooks": [{"text": "<accroche>", "type": "<type>", "score": <0-100>}],
@@ -1014,7 +1017,8 @@ Exactement 8 hooks. Reste concis.`;
 async function tiktokCalendar(niche = '', frequency = '', language = 'fr') {
   const langName = LANG_NAMES[language] || language;
   const freq = frequency || '1 vidéo/jour';
-  const prompt = `Tu es coach de croissance TikTok. Établis un calendrier de contenu sur 7 jours pour la niche "${niche || 'généraliste'}", rythme : ${freq}. Écris en ${langName}.
+  const prompt = `Tu es coach de croissance TikTok. Établis un calendrier de contenu sur 7 jours pour la niche "${niche || 'généraliste'}", rythme : ${freq}.
+IMPORTANT : réponds ENTIÈREMENT en ${langName}, quelle que soit la langue de la niche fournie.
 Réponds UNIQUEMENT en JSON valide :
 {
   "schedule": [
@@ -1034,7 +1038,8 @@ Titre : "${title}".${duration ? ' Durée : ' + duration + '.' : ''}
 Transcription horodatée :
 ${timedTranscript}
 
-Écris en ${langName}. Réponds UNIQUEMENT en JSON valide :
+IMPORTANT : la transcription ci-dessus est probablement dans une AUTRE langue que celle demandée. Ignore complètement sa langue : ta réponse (angle, hook, caption) doit être ENTIÈREMENT rédigée en ${langName}, jamais dans la langue de la transcription. Ne recopie ni ne traduis mot à mot la transcription — reformule dans le style TikTok, en ${langName}.
+Réponds UNIQUEMENT en JSON valide :
 {
   "clips": [
     {
