@@ -258,7 +258,15 @@ router.post('/tiktok-repurpose', requireAuth, checkQuota, aiRateLimit, async (re
       getTranscript(videoId).catch(() => ({ available: false, segments: [] }))
     ]);
     if (!tr.available || !tr.segments.length) {
-      return res.status(422).json({ error: "Cette vidéo n'a pas de sous-titres exploitables — impossible de générer des timecodes fiables.", code: 'NO_TRANSCRIPT' });
+      // YouTube exige désormais un jeton généré par un vrai navigateur pour servir les
+      // sous-titres (anti-scraping) : un appel serveur ne peut techniquement pas l'obtenir,
+      // quelle que soit la vidéo. L'extension, elle, lit la transcription depuis le
+      // navigateur de l'utilisateur (fiable). On l'explique honnêtement plutôt que de
+      // laisser croire à un bug ponctuel ou à un problème avec cette vidéo précise.
+      return res.status(422).json({
+        error: "YouTube empêche la récupération des sous-titres depuis un serveur pour cette fonctionnalité. Utilise l'extension VidSpark AI directement sur la page de la vidéo : elle lit la transcription depuis ton navigateur et fonctionne de manière fiable.",
+        code: 'NO_TRANSCRIPT'
+      });
     }
 
     const timed = buildTimedTranscript(tr.segments);

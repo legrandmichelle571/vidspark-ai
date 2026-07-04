@@ -267,8 +267,17 @@ function secToTimestamp(s) {
    Méthode : on lit la page watch, on extrait captionTracks, on récupère le json3. */
 async function getTranscript(videoId) {
   try {
+    // User-Agent réaliste + cookie CONSENT : sans ça, YouTube sert souvent une
+    // page d'interstitiel "consentement cookies" aux IP de datacenter (Railway),
+    // qui ne contient jamais captionTracks — d'où l'échec systématique côté
+    // serveur alors que la même vidéo fonctionne dans un vrai navigateur.
+    const BROWSER_HEADERS = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Cookie': 'CONSENT=YES+cb.20210328-17-p0.en+FX+410'
+    };
     const r = await fetch(`https://www.youtube.com/watch?v=${videoId}&hl=en`, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept-Language': 'en-US,en' }
+      headers: BROWSER_HEADERS
     });
     const html = await r.text();
     const m = html.match(/"captionTracks":(\[.*?\])/);
@@ -283,7 +292,7 @@ async function getTranscript(videoId) {
     let baseUrl = track.baseUrl.replace(/\\u0026/g, '&');
     if (!/[?&]fmt=/.test(baseUrl)) baseUrl += '&fmt=json3';
 
-    const cr = await fetch(baseUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const cr = await fetch(baseUrl, { headers: BROWSER_HEADERS });
     const cj = await cr.json().catch(() => null);
     if (!cj || !cj.events) return { available: false, segments: [] };
 
