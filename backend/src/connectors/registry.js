@@ -13,8 +13,31 @@
 const fs = require('fs');
 const path = require('path');
 const { assertValidProvider, ProviderContractError } = require('./base/contract');
+const { grantedCapabilities } = require('../utils/capabilities');
+const { computeHealth } = require('../utils/health');
 
 const IGNORED_DIR_PATTERN = /^(base|__.*)$/;
+
+/**
+ * Garantit que tout Provider chargé expose getCapabilities/getHealth, qu'il les définisse
+ * lui-même (surcharge) ou non (défaut générique lié à son manifest). Le cœur applicatif
+ * n'appelle JAMAIS grantedCapabilities()/computeHealth() directement une fois un Provider
+ * passé par le registre — toujours provider.getCapabilities(...)/provider.getHealth(...),
+ * qu'il s'agisse de l'implémentation par défaut ou d'une surcharge. C'est ce qui garantit
+ * que "le cœur utilise toujours l'interface publique du Provider".
+ * @param {import('./base/contract').Provider} provider
+ * @returns {import('./base/contract').Provider} même provider, avec les deux méthodes garanties
+ */
+function attachDefaultInterface(provider) {
+  const getCapabilities = provider.getCapabilities
+    || ((grantedScopes) => grantedCapabilities(provider.manifest, grantedScopes));
+  // async même si computeHealth() est synchrone : le contrat déclare getHealth comme
+  // renvoyant toujours une Promise<HealthState>, surcharge ou défaut confondus — un
+  // appelant ne doit jamais avoir à savoir laquelle des deux il a en main.
+  const getHealth = provider.getHealth
+    || (async (account, deps) => computeHealth(account, provider.manifest, deps));
+  return { ...provider, getCapabilities, getHealth };
+}
 
 /**
  * @param {string} dir  Dossier à scanner (chaque sous-dossier = un Provider).
@@ -50,7 +73,7 @@ function loadRegistry(dir) {
         `Provider "${entry.name}" : la clé "${provider.manifest.key}" est déjà utilisée par un autre dossier`
       );
     }
-    providers[provider.manifest.key] = provider;
+    providers[provider.manifest.key] = attachDefaultInterface(provider);
   }
 
   return providers;
@@ -84,4 +107,4 @@ function resetRegistryCache() {
   _cache.clear();
 }
 
-module.exports = { loadRegistry, getRegistry, resetRegistryCache, ProviderContractError };
+module.exports = { loadRegistry, getRegistry, resetRegistryCache, attachDefaultInterface, ProviderContractError };

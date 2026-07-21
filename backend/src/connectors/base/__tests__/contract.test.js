@@ -84,7 +84,7 @@ describe('assertValidProvider', () => {
   test('accepte un Provider oauth2 complet', () => {
     const provider = {
       manifest: baseManifest(),
-      auth: { getAuthUrl: () => '', exchangeCode: async () => ({}), refreshToken: async () => ({}), revoke: async () => {} },
+      auth: { startAuthorization: () => ({authorizationUrl:''}), exchangeAuthorizationCode: async () => ({}), refreshAccessToken: async () => ({}), revokeAccess: async () => {} },
       fetchProfile: async () => ({})
     };
     expect(() => assertValidProvider(provider)).not.toThrow();
@@ -98,16 +98,16 @@ describe('assertValidProvider', () => {
   test('rejette un Provider avec une méthode auth manquante', () => {
     const provider = {
       manifest: baseManifest(),
-      auth: { getAuthUrl: () => '', exchangeCode: async () => ({}), refreshToken: async () => ({}) }, // revoke manquant
+      auth: { startAuthorization: () => ({authorizationUrl:''}), exchangeAuthorizationCode: async () => ({}), refreshAccessToken: async () => ({}) }, // revokeAccess manquant
       fetchProfile: async () => ({})
     };
-    expect(() => assertValidProvider(provider)).toThrow(/auth\.revoke/);
+    expect(() => assertValidProvider(provider)).toThrow(/auth\.revokeAccess/);
   });
 
   test('rejette profile supporté sans fetchProfile exporté', () => {
     const provider = {
       manifest: baseManifest(),
-      auth: { getAuthUrl: () => '', exchangeCode: async () => ({}), refreshToken: async () => ({}), revoke: async () => {} }
+      auth: { startAuthorization: () => ({authorizationUrl:''}), exchangeAuthorizationCode: async () => ({}), refreshAccessToken: async () => ({}), revokeAccess: async () => {} }
       // fetchProfile manquant
     };
     expect(() => assertValidProvider(provider)).toThrow(/fetchProfile/);
@@ -116,7 +116,7 @@ describe('assertValidProvider', () => {
   test('rejette une tâche déclarée dans manifest.tasks mais absente de tasks{}', () => {
     const provider = {
       manifest: baseManifest({ tasks: ['syncProfile'] }),
-      auth: { getAuthUrl: () => '', exchangeCode: async () => ({}), refreshToken: async () => ({}), revoke: async () => {} },
+      auth: { startAuthorization: () => ({authorizationUrl:''}), exchangeAuthorizationCode: async () => ({}), refreshAccessToken: async () => ({}), revokeAccess: async () => {} },
       fetchProfile: async () => ({}),
       tasks: {}
     };
@@ -134,5 +134,30 @@ describe('assertValidProvider', () => {
   test('rejette un export qui n\'est pas un objet', () => {
     expect(() => assertValidProvider(null, 'x')).toThrow(ProviderContractError);
     expect(() => assertValidProvider(42, 'x')).toThrow(ProviderContractError);
+  });
+
+  test('accepte un Provider sans getCapabilities/getHealth (défauts attachés par le registre, pas ici)', () => {
+    const provider = { manifest: baseManifest({ auth: { type: 'none' } }), fetchProfile: async () => ({}) };
+    expect(() => assertValidProvider(provider)).not.toThrow();
+  });
+
+  test('accepte getCapabilities/getHealth quand ce sont des fonctions (surcharge explicite)', () => {
+    const provider = {
+      manifest: baseManifest({ auth: { type: 'none' } }),
+      fetchProfile: async () => ({}),
+      getCapabilities: () => ({}),
+      getHealth: async () => 'connected'
+    };
+    expect(() => assertValidProvider(provider)).not.toThrow();
+  });
+
+  test('rejette getCapabilities si présent mais pas une fonction', () => {
+    const provider = { manifest: baseManifest({ auth: { type: 'none' } }), fetchProfile: async () => ({}), getCapabilities: 'oups' };
+    expect(() => assertValidProvider(provider)).toThrow(/getCapabilities.*doit être une fonction/);
+  });
+
+  test('rejette getHealth si présent mais pas une fonction', () => {
+    const provider = { manifest: baseManifest({ auth: { type: 'none' } }), fetchProfile: async () => ({}), getHealth: 42 };
+    expect(() => assertValidProvider(provider)).toThrow(/getHealth.*doit être une fonction/);
   });
 });

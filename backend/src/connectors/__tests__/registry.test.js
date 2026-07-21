@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { loadRegistry, getRegistry, resetRegistryCache } = require('../registry');
+const { loadRegistry, getRegistry, resetRegistryCache, attachDefaultInterface } = require('../registry');
 const { ProviderContractError } = require('../base/contract');
 
 const FIXTURES = path.join(__dirname, '..', '__fixtures__');
@@ -35,13 +35,14 @@ describe('loadRegistry', () => {
       .toThrow(/déjà utilisée/);
   });
 
-  test('un scan du vrai dossier connectors/ ne contient QUE les Providers réels (youtube depuis la Phase 2)', () => {
-    // Mise à jour Phase 2 : ce test vérifiait un registre vide en Phase 1 (seul base/
-    // existait). Depuis l'ajout de connectors/youtube/ (adaptateur réel, lecture seule),
-    // le registre contient exactement { youtube }. Toujours aucune fixture/mock dedans.
+  test('un scan du vrai dossier connectors/ ne contient QUE les Providers réels (youtube + tiktok depuis la Phase 3)', () => {
+    // Historique : registre vide en Phase 1 (seul base/ existait), { youtube } en Phase 2.
+    // Depuis l'ajout de connectors/tiktok/ (premier Provider OAuth réel), { tiktok, youtube }.
+    // Toujours aucune fixture/mock dedans.
     const registry = loadRegistry(path.join(__dirname, '..'));
-    expect(Object.keys(registry)).toEqual(['youtube']);
+    expect(Object.keys(registry).sort()).toEqual(['tiktok', 'youtube']);
     expect(registry.youtube.manifest.auth.type).toBe('none');
+    expect(registry.tiktok.manifest.auth.type).toBe('oauth2');
   });
 
   test('erreur claire si le dossier n\'existe pas', () => {
@@ -64,6 +65,51 @@ describe('loadRegistry', () => {
     const registry = loadRegistry(path.join(__dirname, '..'));
     expect(registry).not.toHaveProperty('mock');
     expect(registry).not.toHaveProperty('legacy');
+  });
+
+  test('le Provider YouTube réel reçoit getCapabilities/getHealth par défaut via le registre', () => {
+    // Le module brut connectors/youtube/index.js n'exporte ni l'un ni l'autre (vérifié dans
+    // connectors/youtube/__tests__/index.test.js) — c'est bien loadRegistry() qui les ajoute.
+    const registry = loadRegistry(path.join(__dirname, '..'));
+    expect(typeof registry.youtube.getCapabilities).toBe('function');
+    expect(typeof registry.youtube.getHealth).toBe('function');
+  });
+});
+
+describe('attachDefaultInterface — point 3 du contrat (surchargeable, interface toujours complète)', () => {
+  const manifest = {
+    key: 'x', label: 'X', color: '#000', icon: '🔧', auth: { type: 'none' },
+    capabilities: { profile: { supported: true } }, multiAccount: false
+  };
+
+  test('attache des défauts génériques quand le Provider ne définit ni l\'un ni l\'autre', () => {
+    const provider = { manifest, fetchProfile: async () => ({}) };
+    const finalized = attachDefaultInterface(provider);
+    expect(finalized.getCapabilities(['x'])).toEqual(['profile']);
+  });
+
+  test('conserve la surcharge du Provider quand elle existe — ne l\'écrase jamais par le défaut', async () => {
+    const customHealth = jest.fn().mockResolvedValue('rate_limited');
+    const provider = { manifest, fetchProfile: async () => ({}), getHealth: customHealth };
+    const finalized = attachDefaultInterface(provider);
+
+    await expect(finalized.getHealth({ status: 'active' })).resolves.toBe('rate_limited');
+    expect(customHealth).toHaveBeenCalled();
+  });
+
+  test('le défaut getHealth renvoie toujours une Promise, comme une surcharge le ferait', async () => {
+    const provider = { manifest, fetchProfile: async () => ({}) };
+    const finalized = attachDefaultInterface(provider);
+    const result = finalized.getHealth({ status: 'active' });
+    expect(result).toBeInstanceOf(Promise);
+    await expect(result).resolves.toBe('connected');
+  });
+
+  test('ne modifie jamais l\'objet Provider original (pas de mutation)', () => {
+    const provider = { manifest, fetchProfile: async () => ({}) };
+    attachDefaultInterface(provider);
+    expect(provider.getCapabilities).toBeUndefined();
+    expect(provider.getHealth).toBeUndefined();
   });
 });
 

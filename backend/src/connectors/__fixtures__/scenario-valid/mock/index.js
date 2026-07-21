@@ -3,15 +3,18 @@
  * Simule un cycle OAuth complet sans aucun appel réseau réel (pas de fetch), pour prouver que
  * le registre + les capacités + la santé + withProviderCall s'assemblent correctement.
  *
- * Un flag interne (__forceError) permet aux tests de déclencher chaque branche d'erreur connue.
+ * Noms de méthodes conformes au contrat OAuth figé (v1.0) : startAuthorization /
+ * exchangeAuthorizationCode / refreshAccessToken / revokeAccess.
  */
 const manifest = require('./manifest');
 
-function getAuthUrl(state, codeVerifier) {
-  return `https://mock.example/oauth/authorize?state=${encodeURIComponent(state)}&challenge=${encodeURIComponent(codeVerifier || '')}`;
+function startAuthorization({ state, codeChallenge } = {}) {
+  return {
+    authorizationUrl: `https://mock.example/oauth/authorize?state=${encodeURIComponent(state)}&challenge=${encodeURIComponent(codeChallenge || '')}`
+  };
 }
 
-async function exchangeCode(code, codeVerifier) {
+async function exchangeAuthorizationCode(code, _context) {
   if (code === '__invalid__') {
     const err = new Error('code invalide (simulation)');
     err.code = 'UNKNOWN';
@@ -25,7 +28,7 @@ async function exchangeCode(code, codeVerifier) {
   };
 }
 
-async function refreshToken(refreshTokenValue) {
+async function refreshAccessToken(refreshTokenValue) {
   if (refreshTokenValue === '__expired__') {
     const err = new Error('refresh token révoqué côté plateforme (simulation)');
     err.code = 'REFRESH_FAILED';
@@ -39,7 +42,7 @@ async function refreshToken(refreshTokenValue) {
   };
 }
 
-async function revoke(_accessToken) {
+async function revokeAccess(_accessToken) {
   // best-effort par contrat : ne throw jamais, quoi qu'il arrive
   return;
 }
@@ -68,7 +71,7 @@ const tasks = {
 
 module.exports = {
   manifest,
-  auth: { getAuthUrl, exchangeCode, refreshToken, revoke },
+  auth: { startAuthorization, exchangeAuthorizationCode, refreshAccessToken, revokeAccess },
   fetchProfile,
   tasks
 };

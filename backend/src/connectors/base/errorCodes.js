@@ -9,7 +9,11 @@
  * ailleurs.
  */
 
-/** @type {Object.<string, import('./contract').HealthState>} */
+/**
+ * TIMEOUT/NETWORK_ERROR/SERVER_ERROR ajoutés en Phase 3 (contrat OAuth de référence, §résilience)
+ * — extension additive : aucun code existant renommé, aucun Provider Phase 1/2 cassé.
+ * @type {Object.<string, import('./contract').HealthState>}
+ */
 const ERROR_CODE_TO_HEALTH = Object.freeze({
   RATE_LIMITED: 'rate_limited',
   MISSING_SCOPE: 'missing_scope',
@@ -17,7 +21,10 @@ const ERROR_CODE_TO_HEALTH = Object.freeze({
   INVALID_GRANT: 'refresh_failed', // refresh token révoqué/invalide côté plateforme = un refresh qui échoue
   PROVIDER_DOWN: 'provider_unavailable',
   PROVIDER_UNAVAILABLE: 'provider_unavailable',
-  CONFIG_ERROR: 'config_error'
+  CONFIG_ERROR: 'config_error',
+  TIMEOUT: 'provider_unavailable',       // délai HTTP dépassé — panne transitoire, pas une erreur métier
+  NETWORK_ERROR: 'provider_unavailable', // DNS/connexion refusée/coupure
+  SERVER_ERROR: 'provider_unavailable'   // 5xx explicite de la plateforme distante
 });
 
 const KNOWN_ERROR_CODES = Object.freeze(new Set(Object.keys(ERROR_CODE_TO_HEALTH)));
