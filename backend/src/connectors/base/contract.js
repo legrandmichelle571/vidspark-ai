@@ -50,9 +50,20 @@
  * @typedef {Object} Provider
  * @property {Manifest} manifest
  * @property {ProviderAuth} [auth]                        Requis si manifest.auth.type === 'oauth2'.
- * @property {function(string): Promise<ExternalProfile>} [fetchProfile]
+ * @property {function(string, Object=): Promise<ExternalProfile>} [fetchProfile]
+ *   Pour un Provider oauth2, le 1er argument est l'access token. Pour un Provider
+ *   auth.type:'none' (ex: adaptateur YouTube), c'est l'identifiant interne de
+ *   l'utilisateur (users.id) — il n'y a pas de jeton à ce moment. Convention, pas une
+ *   contrainte vérifiée par le contrat (JS ne type pas les paramètres).
+ * @property {function(string, Object=): Promise<ExternalProfile[]>} [listAccounts]
+ *   Optionnel — recommandé quand manifest.multiAccount === true : énumère tous les
+ *   comptes disponibles pour un identifiant donné (accessToken ou userId selon
+ *   auth.type), alors que fetchProfile n'en renvoie qu'un seul par convention.
  * @property {Object.<string, function>} [tasks]
  * @property {function(Object): Promise<HealthState>} [getHealth]
+ *   Optionnel — la plupart des Providers n'en ont pas besoin : utils/health.js
+ *   expose un computeHealth() générique qui suffit pour les cas standards (voir
+ *   l'adaptateur YouTube, qui ne définit pas getHealth et s'appuie entièrement dessus).
  */
 
 const RECOGNIZED_CAPABILITIES = [

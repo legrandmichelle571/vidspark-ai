@@ -35,14 +35,13 @@ describe('loadRegistry', () => {
       .toThrow(/déjà utilisée/);
   });
 
-  test('renvoie un registre vide sur un dossier ne contenant que "base"', () => {
-    // Reproduit l'état RÉEL de backend/src/connectors/ en Phase 1 : aucun Provider
-    // n'est encore présent, seul base/ existe → le registre doit être vide, pas planter.
-    const registry = loadRegistry(path.join(__dirname, '..'), );
-    // Le dossier réel connectors/ contient base/, __fixtures__/, __tests__/, registry.js —
-    // aucun n'est un Provider valide, donc un scan dessus ne doit lever aucune erreur et
-    // renvoyer un registre vide (les fixtures sont ignorées par le pattern __.*).
-    expect(registry).toEqual({});
+  test('un scan du vrai dossier connectors/ ne contient QUE les Providers réels (youtube depuis la Phase 2)', () => {
+    // Mise à jour Phase 2 : ce test vérifiait un registre vide en Phase 1 (seul base/
+    // existait). Depuis l'ajout de connectors/youtube/ (adaptateur réel, lecture seule),
+    // le registre contient exactement { youtube }. Toujours aucune fixture/mock dedans.
+    const registry = loadRegistry(path.join(__dirname, '..'));
+    expect(Object.keys(registry)).toEqual(['youtube']);
+    expect(registry.youtube.manifest.auth.type).toBe('none');
   });
 
   test('erreur claire si le dossier n\'existe pas', () => {
