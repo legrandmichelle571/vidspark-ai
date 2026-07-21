@@ -1,0 +1,122 @@
+const { assertValidManifest, assertValidProvider, ProviderContractError, RECOGNIZED_CAPABILITIES } = require('../contract');
+
+function baseManifest(overrides = {}) {
+  return {
+    key: 'sample',
+    label: 'Sample',
+    color: '#123456',
+    icon: '🧩',
+    auth: { type: 'oauth2', scopesAvailable: ['a'] },
+    capabilities: {
+      profile: { supported: true, scopes: ['a'] }
+    },
+    multiAccount: true,
+    ...overrides
+  };
+}
+
+describe('assertValidManifest', () => {
+  test('accepte un manifest valide', () => {
+    expect(() => assertValidManifest(baseManifest())).not.toThrow();
+  });
+
+  test('rejette un manifest sans key', () => {
+    const m = baseManifest(); delete m.key;
+    expect(() => assertValidManifest(m, 'x')).toThrow(ProviderContractError);
+  });
+
+  test('rejette une key en majuscules', () => {
+    expect(() => assertValidManifest(baseManifest({ key: 'TikTok' }))).toThrow(/minuscules/);
+  });
+
+  test('rejette un auth.type invalide', () => {
+    expect(() => assertValidManifest(baseManifest({ auth: { type: 'basic' } }))).toThrow(/auth\.type/);
+  });
+
+  test('accepte auth.type "none"', () => {
+    const m = baseManifest({ auth: { type: 'none' }, capabilities: { profile: { supported: true } } });
+    expect(() => assertValidManifest(m)).not.toThrow();
+  });
+
+  test('rejette une capacité inconnue', () => {
+    const m = baseManifest({ capabilities: { flying: { supported: true, scopes: ['a'] } } });
+    expect(() => assertValidManifest(m)).toThrow(/inconnue/);
+  });
+
+  test.each(RECOGNIZED_CAPABILITIES)('accepte la capacité reconnue "%s"', (cap) => {
+    const m = baseManifest({ capabilities: { [cap]: { supported: false } } });
+    expect(() => assertValidManifest(m)).not.toThrow();
+  });
+
+  test('rejette supported avec une valeur hors {true,false,"planned"}', () => {
+    const m = baseManifest({ capabilities: { profile: { supported: 'yes' } } });
+    expect(() => assertValidManifest(m)).toThrow(/true, false ou "planned"/);
+  });
+
+  test('rejette une capacité oauth2 supportée sans scopes', () => {
+    const m = baseManifest({ capabilities: { profile: { supported: true } } });
+    expect(() => assertValidManifest(m)).toThrow(/scope/);
+  });
+
+  test('rejette multiAccount non booléen', () => {
+    const m = baseManifest({ multiAccount: 'yes' });
+    expect(() => assertValidManifest(m)).toThrow(/multiAccount/);
+  });
+});
+
+describe('assertValidProvider', () => {
+  test('accepte un Provider oauth2 complet', () => {
+    const provider = {
+      manifest: baseManifest(),
+      auth: { getAuthUrl: () => '', exchangeCode: async () => ({}), refreshToken: async () => ({}), revoke: async () => {} },
+      fetchProfile: async () => ({})
+    };
+    expect(() => assertValidProvider(provider)).not.toThrow();
+  });
+
+  test('rejette un Provider oauth2 sans bloc auth', () => {
+    const provider = { manifest: baseManifest(), fetchProfile: async () => ({}) };
+    expect(() => assertValidProvider(provider)).toThrow(/aucune implémentation "auth"/);
+  });
+
+  test('rejette un Provider avec une méthode auth manquante', () => {
+    const provider = {
+      manifest: baseManifest(),
+      auth: { getAuthUrl: () => '', exchangeCode: async () => ({}), refreshToken: async () => ({}) }, // revoke manquant
+      fetchProfile: async () => ({})
+    };
+    expect(() => assertValidProvider(provider)).toThrow(/auth\.revoke/);
+  });
+
+  test('rejette profile supporté sans fetchProfile exporté', () => {
+    const provider = {
+      manifest: baseManifest(),
+      auth: { getAuthUrl: () => '', exchangeCode: async () => ({}), refreshToken: async () => ({}), revoke: async () => {} }
+      // fetchProfile manquant
+    };
+    expect(() => assertValidProvider(provider)).toThrow(/fetchProfile/);
+  });
+
+  test('rejette une tâche déclarée dans manifest.tasks mais absente de tasks{}', () => {
+    const provider = {
+      manifest: baseManifest({ tasks: ['syncProfile'] }),
+      auth: { getAuthUrl: () => '', exchangeCode: async () => ({}), refreshToken: async () => ({}), revoke: async () => {} },
+      fetchProfile: async () => ({}),
+      tasks: {}
+    };
+    expect(() => assertValidProvider(provider)).toThrow(/syncProfile/);
+  });
+
+  test('accepte un Provider auth.type "none" sans bloc auth', () => {
+    const provider = {
+      manifest: baseManifest({ auth: { type: 'none' }, capabilities: { profile: { supported: true } } }),
+      fetchProfile: async () => ({})
+    };
+    expect(() => assertValidProvider(provider)).not.toThrow();
+  });
+
+  test('rejette un export qui n\'est pas un objet', () => {
+    expect(() => assertValidProvider(null, 'x')).toThrow(ProviderContractError);
+    expect(() => assertValidProvider(42, 'x')).toThrow(ProviderContractError);
+  });
+});

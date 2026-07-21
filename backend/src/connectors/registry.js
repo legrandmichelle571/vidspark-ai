@@ -1,0 +1,59 @@
+/**
+ * Registre dynamique des Providers — SEULE source de vérité de la liste des plateformes.
+ *
+ * loadRegistry(dir) scanne un dossier et charge chaque sous-dossier (sauf "base" et tout
+ * dossier commençant par "__") comme un Provider, en validant son contrat. N'exécute AUCUN
+ * appel réseau, ne touche à AUCUNE table : c'est un simple require() + validation.
+ *
+ * ⚠️ Phase 1 : ce module n'est appelé nulle part dans l'application (aucune route ne l'importe).
+ * Il n'a donc aucun effet tant qu'il n'est pas explicitement invoqué — ce qui n'arrivera qu'à
+ * partir de la Phase 4 (routes génériques), sur le dossier connectors/ réel une fois qu'il
+ * contiendra de vrais Providers (youtube/, tiktok/…).
+ */
+const fs = require('fs');
+const path = require('path');
+const { assertValidProvider, ProviderContractError } = require('./base/contract');
+
+const IGNORED_DIR_PATTERN = /^(base|__.*)$/;
+
+/**
+ * @param {string} dir  Dossier à scanner (chaque sous-dossier = un Provider).
+ * @returns {Object.<string, import('./base/contract').Provider>} registre indexé par manifest.key
+ * @throws {ProviderContractError} si un Provider présent est invalide (fail-fast : on préfère
+ *         un démarrage qui échoue clairement plutôt qu'un Provider à moitié fonctionnel en prod)
+ */
+function loadRegistry(dir) {
+  if (!dir) throw new Error('loadRegistry(dir) : un dossier est requis');
+  const providers = {};
+  let entries;
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch (err) {
+    throw new Error(`loadRegistry : impossible de lire "${dir}" (${err.message})`);
+  }
+
+  for (const entry of entries) {
+    if (!entry.isDirectory() || IGNORED_DIR_PATTERN.test(entry.name)) continue;
+
+    const modPath = path.join(dir, entry.name);
+    let provider;
+    try {
+      provider = require(modPath);
+    } catch (err) {
+      throw new Error(`Provider "${entry.name}" : échec du chargement (${err.message})`);
+    }
+
+    assertValidProvider(provider, entry.name); // lève ProviderContractError si invalide
+
+    if (providers[provider.manifest.key]) {
+      throw new Error(
+        `Provider "${entry.name}" : la clé "${provider.manifest.key}" est déjà utilisée par un autre dossier`
+      );
+    }
+    providers[provider.manifest.key] = provider;
+  }
+
+  return providers;
+}
+
+module.exports = { loadRegistry, ProviderContractError };
