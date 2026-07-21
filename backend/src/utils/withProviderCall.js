@@ -11,15 +11,7 @@
  * les logs déjà présents dans le backend (ex. "[GET /user/channels]", routes/user.js).
  */
 
-const KNOWN_ERROR_CODES = new Set([
-  'RATE_LIMITED',
-  'MISSING_SCOPE',
-  'REFRESH_FAILED',
-  'PROVIDER_DOWN',
-  'PROVIDER_UNAVAILABLE',
-  'CONFIG_ERROR',
-  'INVALID_GRANT'
-]);
+const { KNOWN_ERROR_CODES } = require('../connectors/base/errorCodes');
 
 /**
  * @param {Error} err
@@ -47,28 +39,57 @@ function createProviderCallWrapper(deps = {}) {
   const logger = deps.logger || console;
 
   /**
+   * Best-effort : la journalisation ne doit JAMAIS masquer le résultat ou l'erreur
+   * réelle de l'appel Provider. Un logEvent/recordError qui échoue est lui-même
+   * journalisé sur logger.error mais n'est ni propagé ni ré-essayé.
+   */
+  async function safeObserve(fn, label) {
+    try {
+      await fn();
+    } catch (observabilityErr) {
+      logger.error(
+        `[connections:observability] ${label} a échoué : ${observabilityErr && observabilityErr.message}`
+      );
+    }
+  }
+
+  /**
    * @param {string} platform    manifest.key du Provider
    * @param {string} accountId   id de connected_accounts (ou null si pas encore créé, ex. /start)
    * @param {string} eventType   'oauth_start' | 'oauth_exchange' | 'refresh' | 'sync_profile' | …
    * @param {function(): Promise<any>} fn
    */
   return async function withProviderCall(platform, accountId, eventType, fn) {
+    let result;
     try {
-      const result = await fn();
-      if (logEvent) await logEvent({ accountId, platform, eventType: `${eventType}_success`, detail: {} });
-      return result;
+      result = await fn();
     } catch (err) {
       const code = classifyError(err);
       const message = err && err.message ? err.message : String(err);
+
       if (recordError) {
-        await recordError({ accountId, code, message, at: new Date().toISOString() });
+        await safeObserve(
+          () => recordError({ accountId, code, message, at: new Date().toISOString() }),
+          'recordError'
+        );
       }
       if (logEvent) {
-        await logEvent({ accountId, platform, eventType: `${eventType}_error`, detail: { code, message } });
+        await safeObserve(
+          () => logEvent({ accountId, platform, eventType: `${eventType}_error`, detail: { code, message } }),
+          'logEvent(error)'
+        );
       }
       logger.error(`[connections:${platform}:${eventType}] ${message}`);
-      throw err;
+      throw err; // toujours l'erreur ORIGINALE, jamais une erreur de journalisation
     }
+
+    if (logEvent) {
+      await safeObserve(
+        () => logEvent({ accountId, platform, eventType: `${eventType}_success`, detail: {} }),
+        'logEvent(success)'
+      );
+    }
+    return result; // toujours le résultat réel de fn(), même si logEvent a échoué
   };
 }
 

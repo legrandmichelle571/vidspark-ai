@@ -38,6 +38,17 @@ describe('grantedCapabilities', () => {
     expect(grantedCapabilities({}, ['p'])).toEqual([]);
     expect(grantedCapabilities(null, ['p'])).toEqual([]);
   });
+
+  test('grantedScopes est optionnel (défaut []) — un Provider auth.type="none" sans scopes fonctionne', () => {
+    // cas réel de la fixture legacy-adapter : capabilities.profile.supported=true sans "scopes"
+    const noneManifest = { capabilities: { profile: { supported: true } } };
+    expect(grantedCapabilities(noneManifest)).toEqual(['profile']);
+  });
+
+  test('une capacité supportée sans tableau "scopes" est considérée accordée sans condition', () => {
+    const m = { capabilities: { profile: { supported: true } } }; // pas de scopes du tout
+    expect(grantedCapabilities(m, [])).toEqual(['profile']);
+  });
 });
 
 describe('declaredCapabilityStates', () => {
@@ -49,5 +60,10 @@ describe('declaredCapabilityStates', () => {
 
   test('gère un manifest vide sans planter', () => {
     expect(declaredCapabilityStates(null)).toEqual({});
+  });
+
+  test('traite une entrée de capacité null/undefined comme false plutôt que de planter', () => {
+    const m = { capabilities: { profile: null } };
+    expect(declaredCapabilityStates(m)).toEqual({ profile: false });
   });
 });

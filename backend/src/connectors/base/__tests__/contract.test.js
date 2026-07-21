@@ -29,6 +29,22 @@ describe('assertValidManifest', () => {
     expect(() => assertValidManifest(baseManifest({ key: 'TikTok' }))).toThrow(/minuscules/);
   });
 
+  test('rejette un manifest null/undefined/non-objet', () => {
+    expect(() => assertValidManifest(null, 'x')).toThrow(/manquant ou invalide/);
+    expect(() => assertValidManifest(undefined, 'x')).toThrow(/manquant ou invalide/);
+    expect(() => assertValidManifest('pas un objet', 'x')).toThrow(/manquant ou invalide/);
+  });
+
+  test('rejette un manifest sans label', () => {
+    const m = baseManifest(); delete m.label;
+    expect(() => assertValidManifest(m, 'x')).toThrow(/label manquant/);
+  });
+
+  test('rejette un manifest sans capabilities', () => {
+    const m = baseManifest(); delete m.capabilities;
+    expect(() => assertValidManifest(m, 'x')).toThrow(/capabilities manquant/);
+  });
+
   test('rejette un auth.type invalide', () => {
     expect(() => assertValidManifest(baseManifest({ auth: { type: 'basic' } }))).toThrow(/auth\.type/);
   });

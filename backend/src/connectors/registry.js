@@ -56,4 +56,32 @@ function loadRegistry(dir) {
   return providers;
 }
 
-module.exports = { loadRegistry, ProviderContractError };
+/**
+ * Accesseur mémoïsé — garantit qu'un seul scan disque (fs.readdirSync + require + validation)
+ * a lieu par dossier, quel que soit le nombre d'appels. À utiliser par les routes (Phase 4) au
+ * lieu de loadRegistry() directement, pour ne jamais re-scanner le système de fichiers à chaque
+ * requête HTTP. loadRegistry() reste exportée telle quelle pour les tests, qui ont besoin d'un
+ * chargement frais à chaque scénario.
+ * @type {Map<string, Object.<string, import('./base/contract').Provider>>}
+ */
+const _cache = new Map();
+
+/**
+ * @param {string} dir
+ * @returns {Object.<string, import('./base/contract').Provider>} la MÊME référence d'objet
+ *          à chaque appel pour un dir donné, tant que resetRegistryCache() n'a pas été appelé.
+ */
+function getRegistry(dir) {
+  const resolved = path.resolve(dir);
+  if (!_cache.has(resolved)) {
+    _cache.set(resolved, loadRegistry(resolved));
+  }
+  return _cache.get(resolved);
+}
+
+/** Réservé aux tests : vide le cache pour forcer un rechargement au prochain getRegistry(). */
+function resetRegistryCache() {
+  _cache.clear();
+}
+
+module.exports = { loadRegistry, getRegistry, resetRegistryCache, ProviderContractError };

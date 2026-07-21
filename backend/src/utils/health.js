@@ -8,6 +8,8 @@
  *     rapporté via account.lastError.code par withProviderCall.js, jamais deviné ici.
  */
 
+const { ERROR_CODE_TO_HEALTH } = require('../connectors/base/errorCodes');
+
 const HEALTH_STATES = Object.freeze([
   'connected',
   'disconnected',
@@ -18,15 +20,6 @@ const HEALTH_STATES = Object.freeze([
   'config_error',
   'provider_unavailable'
 ]);
-
-const ERROR_CODE_TO_HEALTH = {
-  RATE_LIMITED: 'rate_limited',
-  MISSING_SCOPE: 'missing_scope',
-  REFRESH_FAILED: 'refresh_failed',
-  PROVIDER_DOWN: 'provider_unavailable',
-  PROVIDER_UNAVAILABLE: 'provider_unavailable',
-  CONFIG_ERROR: 'config_error'
-};
 
 /**
  * @param {{status?: string, tokenExpiresAt?: string|Date|null, lastError?: {code?: string}}|null} account

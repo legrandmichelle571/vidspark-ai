@@ -16,11 +16,15 @@ en JSDoc).
 ```
 connectors/
 ├── registry.js       ← scanne ce dossier et charge chaque sous-dossier comme Provider
-├── base/              ← primitives neutres (PKCE, HTTP, contrat) — ne JAMAIS y mettre
-│                         de logique propre à une plateforme
-│   ├── contract.js    ← validation du contrat Provider
-│   ├── pkce.js         ← code_verifier/code_challenge (RFC 7636)
-│   └── http.js         ← wrapper fetch pour l'échange de tokens OAuth
+│                         (loadRegistry = un scan frais ; getRegistry = mémoïsé, à
+│                         utiliser par les futures routes pour ne scanner qu'une fois)
+├── base/              ← primitives neutres (PKCE, HTTP, contrat, codes d'erreur) — ne
+│                         JAMAIS y mettre de logique propre à une plateforme
+│   ├── contract.js     ← validation du contrat Provider
+│   ├── pkce.js          ← code_verifier/code_challenge (RFC 7636)
+│   ├── http.js          ← wrapper fetch pour l'échange de tokens OAuth
+│   └── errorCodes.js    ← SOURCE UNIQUE des codes d'erreur reconnus + leur mapping vers
+│                           un état de santé (consommée par withProviderCall.js ET health.js)
 └── __fixtures__/       ← Mock Provider + cas d'erreur, POUR LES TESTS UNIQUEMENT
 ```
 
@@ -51,13 +55,19 @@ manquante, clé dupliquée entre deux dossiers.
 ## Sécurité
 
 - `utils/tokenCrypto.js` : AES-256-GCM, clé `CONNECTIONS_ENCRYPTION_KEY` (32 octets,
-  base64). Aucun token en clair ne doit jamais atteindre `connected_accounts`.
-- `utils/withProviderCall.js` : point de passage unique pour tout appel Provider —
-  un Provider ne journalise jamais lui-même, il attache un `err.code` reconnu
-  (`RATE_LIMITED`, `MISSING_SCOPE`, `REFRESH_FAILED`, `PROVIDER_DOWN`, `CONFIG_ERROR`,
-  `INVALID_GRANT`) à ses erreurs.
+  base64), AAD optionnel (3ᵉ argument) pour lier le ciphertext à son compte — à utiliser
+  en Phase 3 (ex: `` `${userId}:${platform}:${externalId}` ``) pour empêcher qu'un
+  ciphertext copié vers une autre ligne soit déchiffrable. Aucun token en clair ne doit
+  jamais atteindre `connected_accounts`.
+- `utils/withProviderCall.js` : point de passage unique pour tout appel Provider — un
+  Provider ne journalise jamais lui-même, il attache un `err.code` reconnu (voir
+  `base/errorCodes.js` pour la liste à jour) à ses erreurs. La journalisation elle-même
+  est best-effort : un échec de `logEvent`/`recordError` ne masque jamais le résultat ou
+  l'erreur métier réels (couvert par des tests de régression dédiés).
 - `utils/health.js` : calcul de l'état de santé (`connected`, `expired_token`,
   `missing_scope`…) — générique, ne devine jamais ce qu'un Provider n'a pas rapporté.
+  Partage sa table de mapping avec `withProviderCall.js` via `base/errorCodes.js` pour
+  qu'un code d'erreur ne puisse jamais être reconnu d'un côté et ignoré de l'autre.
 
 ## Base de données
 

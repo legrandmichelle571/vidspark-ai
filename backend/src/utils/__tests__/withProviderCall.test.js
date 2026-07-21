@@ -48,6 +48,11 @@ describe('withProviderCall (succès)', () => {
     const withProviderCall = createProviderCallWrapper({});
     await expect(withProviderCall('mock', 'acc-1', 'refresh', async () => 42)).resolves.toBe(42);
   });
+
+  test('fonctionne même appelé sans aucun argument (deps = {} par défaut)', async () => {
+    const withProviderCall = createProviderCallWrapper();
+    await expect(withProviderCall('mock', 'acc-1', 'refresh', async () => 1)).resolves.toBe(1);
+  });
 });
 
 describe('withProviderCall (échec)', () => {
@@ -100,5 +105,65 @@ describe('withProviderCall (échec)', () => {
     await expect(withProviderCall('mock', 'acc-6', 'sync', async () => { throw new Error('mystère'); })).rejects.toThrow();
 
     expect(deps.recordError).toHaveBeenCalledWith(expect.objectContaining({ code: 'UNKNOWN' }));
+  });
+
+  test('un Provider qui throw une valeur non-Error (sans .message) ne fait pas planter la classification', async () => {
+    const deps = makeDeps();
+    const withProviderCall = createProviderCallWrapper(deps);
+
+    await expect(
+      withProviderCall('mock', 'acc-10', 'sync', async () => { throw 'juste une chaîne'; })
+    ).rejects.toBe('juste une chaîne');
+
+    expect(deps.recordError).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'UNKNOWN', message: 'juste une chaîne' })
+    );
+  });
+});
+
+describe('withProviderCall — la journalisation ne doit jamais masquer le résultat/l\'erreur réels', () => {
+  // Régression trouvée pendant l'audit qualité : la première version appelait logEvent/recordError
+  // SANS les isoler dans leur propre try/catch. Une panne de la couche de persistance (Supabase
+  // indisponible, par exemple) faisait alors disparaître un résultat pourtant réussi, ou remplaçait
+  // l'erreur métier réelle (ex: REFRESH_FAILED) par une erreur de journalisation sans rapport.
+
+  test('un logEvent qui échoue en cas de SUCCÈS ne doit pas empêcher le résultat d\'être renvoyé', async () => {
+    const logger = { error: jest.fn() };
+    const logEvent = jest.fn().mockRejectedValue(new Error('DB indisponible'));
+    const withProviderCall = createProviderCallWrapper({ logEvent, logger });
+
+    const result = await withProviderCall('mock', 'acc-7', 'sync', async () => 'valeur-reelle');
+
+    expect(result).toBe('valeur-reelle');
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining('logEvent(success) a échoué')
+    );
+  });
+
+  test('un recordError qui échoue en cas d\'ÉCHEC ne doit pas remplacer l\'erreur métier d\'origine', async () => {
+    const logger = { error: jest.fn() };
+    const recordError = jest.fn().mockRejectedValue(new Error('DB indisponible'));
+    const withProviderCall = createProviderCallWrapper({ recordError, logger });
+    const businessError = new Error('refresh token révoqué côté TikTok');
+    businessError.code = 'REFRESH_FAILED';
+
+    await expect(
+      withProviderCall('tiktok', 'acc-8', 'refresh', async () => { throw businessError; })
+    ).rejects.toThrow('refresh token révoqué côté TikTok'); // pas "DB indisponible"
+
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('recordError a échoué'));
+    expect(logger.error).toHaveBeenCalledWith('[connections:tiktok:refresh] refresh token révoqué côté TikTok');
+  });
+
+  test('un logEvent qui échoue en cas d\'ÉCHEC ne doit pas non plus remplacer l\'erreur métier', async () => {
+    const logger = { error: jest.fn() };
+    const logEvent = jest.fn().mockRejectedValue(new Error('DB indisponible'));
+    const withProviderCall = createProviderCallWrapper({ logEvent, logger });
+    const businessError = new Error('quota dépassé');
+    businessError.code = 'RATE_LIMITED';
+
+    await expect(
+      withProviderCall('tiktok', 'acc-9', 'sync', async () => { throw businessError; })
+    ).rejects.toThrow('quota dépassé');
   });
 });

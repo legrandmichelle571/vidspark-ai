@@ -18,6 +18,11 @@ describe('computeHealth', () => {
     expect(computeHealth(account, oauthManifest)).toBe('expired_token');
   });
 
+  test('accepte tokenExpiresAt comme instance Date (pas seulement une chaîne ISO)', () => {
+    const account = { status: 'active', tokenExpiresAt: new Date(Date.now() - 1000) };
+    expect(computeHealth(account, oauthManifest)).toBe('expired_token');
+  });
+
   test('token valide, aucune erreur → connected', () => {
     const account = { status: 'active', tokenExpiresAt: new Date(Date.now() + 999999).toISOString() };
     expect(computeHealth(account, oauthManifest)).toBe('connected');
@@ -69,5 +74,19 @@ describe('computeHealth', () => {
       'connected', 'disconnected', 'expired_token', 'refresh_failed',
       'missing_scope', 'rate_limited', 'config_error', 'provider_unavailable'
     ]);
+  });
+
+  test('un tokenExpiresAt corrompu (date invalide) ne fait pas planter et ne déclenche pas expired_token', () => {
+    const account = { status: 'active', tokenExpiresAt: 'ceci-n-est-pas-une-date' };
+    expect(() => computeHealth(account, oauthManifest)).not.toThrow();
+    expect(computeHealth(account, oauthManifest)).toBe('connected');
+  });
+
+  test('INVALID_GRANT (spécifique OAuth) est mappé sur refresh_failed, pas ignoré silencieusement', () => {
+    // Régression : avant la consolidation dans connectors/base/errorCodes.js, ce code était
+    // reconnu par withProviderCall.js mais absent de la table locale de health.js — un compte
+    // avec un refresh token invalide s'affichait donc "connected" au lieu de "refresh_failed".
+    const account = { status: 'active', lastError: { code: 'INVALID_GRANT' } };
+    expect(computeHealth(account, oauthManifest)).toBe('refresh_failed');
   });
 });

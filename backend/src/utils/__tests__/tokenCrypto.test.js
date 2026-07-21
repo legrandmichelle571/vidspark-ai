@@ -50,4 +50,31 @@ describe('tokenCrypto', () => {
       expect(decrypt(payload, key)).toBe('probe');
     }
   });
+
+  test('rejette un plaintext null ou undefined (évite de chiffrer "null" par erreur)', () => {
+    expect(() => encrypt(null, TEST_KEY)).toThrow(/plaintext requis/);
+    expect(() => encrypt(undefined, TEST_KEY)).toThrow(/plaintext requis/);
+  });
+
+  test('accepte une chaîne vide comme plaintext valide (distinct de null/undefined)', () => {
+    const payload = encrypt('', TEST_KEY);
+    expect(decrypt(payload, TEST_KEY)).toBe('');
+  });
+
+  describe('AAD (contexte lié au ciphertext)', () => {
+    test('round-trip réussit quand le même contexte est fourni au chiffrement et au déchiffrement', () => {
+      const payload = encrypt('secret', TEST_KEY, 'user-1:tiktok:acc-1');
+      expect(decrypt(payload, TEST_KEY, 'user-1:tiktok:acc-1')).toBe('secret');
+    });
+
+    test('échoue si le contexte diffère — empêche un ciphertext copié vers une autre ligne d\'être déchiffré', () => {
+      const payload = encrypt('secret', TEST_KEY, 'user-1:tiktok:acc-1');
+      expect(() => decrypt(payload, TEST_KEY, 'user-2:tiktok:acc-2')).toThrow();
+    });
+
+    test('échoue si le contexte est fourni au déchiffrement mais absent au chiffrement (ou l\'inverse)', () => {
+      const payload = encrypt('secret', TEST_KEY); // pas d'aad
+      expect(() => decrypt(payload, TEST_KEY, 'user-1:tiktok:acc-1')).toThrow();
+    });
+  });
 });
