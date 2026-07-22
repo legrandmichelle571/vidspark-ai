@@ -13,6 +13,7 @@ const crypto  = require('crypto');
 const Joi     = require('joi');
 const { createClient } = require('@supabase/supabase-js');
 const { requireAuth } = require('../middleware/auth');
+const { hasLinkedChannel } = require('../utils/channelGate');
 
 const supabaseAnon = () => createClient(
   process.env.SUPABASE_URL,
@@ -244,11 +245,19 @@ router.post('/google', async (req, res) => {
       .update({ last_login: new Date().toISOString() })
       .eq('id', userData.id);
 
+    // activation_id/activation_secret/codes renvoyés au client UNIQUEMENT si une chaîne YouTube
+    // est déjà connectée — identifiants sensibles. subscription_expiry reste toujours renvoyé
+    // (abonnement payant, indépendant de YouTube).
+    const linked = await hasLinkedChannel(supabase, userData.id);
+
     res.json({
-      activation_id: activationId,
-      activation_secret: activationSecret,
+      youtube_connected: linked,
       subscription_expiry: subscriptionExpiry,
-      codes: codes.map(c => ({ activation_id: c.activation_id, activation_secret: c.activation_secret })),
+      ...(linked ? {
+        activation_id: activationId,
+        activation_secret: activationSecret,
+        codes: codes.map(c => ({ activation_id: c.activation_id, activation_secret: c.activation_secret }))
+      } : {}),
       user: {
         id:          userData.id,
         email:       userData.email,

@@ -13,6 +13,7 @@ const { requireAuth }  = require('../middleware/auth');
 const { getLimits }    = require('../config/plans');
 const { getChannelLimit } = require('../config/channelLimits');
 const { logConnection } = require('../utils/connectionLog');
+const { hasLinkedChannel } = require('../utils/channelGate');
 
 /* ── Géolocalisation pays (non bloquant, 1×/user par run serveur) ──
    Alimente le tableau admin "Utilisateurs par pays". Déduit le pays de l'IP via
@@ -201,13 +202,23 @@ router.get('/me', requireAuth, async (req, res) => {
       codes = codes.concat(created || []);
     }
 
+    // Les codes sont toujours créés/maintenus ci-dessus (prêts dès qu'une chaîne sera liée),
+    // mais activation_id/activation_secret/codes ne sont renvoyés au client QUE si une chaîne
+    // YouTube est effectivement connectée — ce sont des identifiants sensibles (activation de
+    // l'extension). subscription_expiry reste toujours renvoyé : il concerne l'abonnement payant,
+    // pas YouTube (affiché en KPI "jours restants" indépendamment de toute chaîne).
+    const linked = await hasLinkedChannel(supabase, id);
+
     res.json({
       id, email, name, avatar, plan, status, role,
       quota_used, quota_limit: getLimits(plan).quota_limit, language, created_at,
-      activation_id: codes[0]?.activation_id,
-      activation_secret: codes[0]?.activation_secret,
+      youtube_connected: linked,
       subscription_expiry: codes[0]?.subscription_expiry,
-      codes: codes.map(c => ({ activation_id: c.activation_id, activation_secret: c.activation_secret }))
+      ...(linked ? {
+        activation_id: codes[0]?.activation_id,
+        activation_secret: codes[0]?.activation_secret,
+        codes: codes.map(c => ({ activation_id: c.activation_id, activation_secret: c.activation_secret }))
+      } : {})
     });
   } catch (err) {
     console.error('[GET /me]', err);
