@@ -163,14 +163,14 @@ Génère 5 variantes de titres YouTube optimisés basés sur ce titre original :
 Chaque variante a un type différent. Réponds UNIQUEMENT en JSON valide :
 {
   "titles": [
-    {"text": "<titre version SEO>",      "hook": "SEO",      "score": <0-100>},
-    {"text": "<titre version CTR>",       "hook": "CTR",      "score": <0-100>},
-    {"text": "<titre version Virale>",    "hook": "Viral",    "score": <0-100>},
-    {"text": "<titre version Curiosité>", "hook": "Curiosité","score": <0-100>},
-    {"text": "<titre version Trending>",  "hook": "Trending", "score": <0-100>}
+    {"text": "<titre version SEO>",      "hook": "SEO",  "score": <0-100>},
+    {"text": "<titre version CTR>",       "hook": "CTR",  "score": <0-100>},
+    {"text": "<titre version Virale>",    "hook": "<le mot 'Viral' traduit en ${LANG_NAMES[language] || language}>",     "score": <0-100>},
+    {"text": "<titre version Curiosité>", "hook": "<le mot 'Curiosité' traduit en ${LANG_NAMES[language] || language}>", "score": <0-100>},
+    {"text": "<titre version Trending>",  "hook": "<le mot 'Trending' traduit en ${LANG_NAMES[language] || language}>",  "score": <0-100>}
   ]
 }
-Langue: ${LANG_NAMES[language] || language}. Titres entre 55-70 caractères idéalement.`;
+"SEO" et "CTR" restent inchangés (acronymes universels). Langue: ${LANG_NAMES[language] || language}. Titres entre 55-70 caractères idéalement.`;
   return geminiJson(prompt, 2048);
 }
 
@@ -601,10 +601,10 @@ ${ctx || 'Niche généraliste.'}
 Réponds UNIQUEMENT en JSON valide :
 {
   "posts": [
-    {"type": "Sondage" ou "Question" ou "Teaser" ou "Annonce", "text": "<texte du post en ${langName}>", "options": ["<option sondage 1>", "<option 2>"]}
+    {"type": "<'Sondage', 'Question', 'Teaser' ou 'Annonce', traduit en ${langName}>", "text": "<texte du post en ${langName}>", "options": ["<option sondage 1>", "<option 2>"]}
   ]
 }
-5 posts variés (au moins 2 sondages avec options). Tout en ${langName}. Pour les non-sondages, "options" = [].`;
+5 posts variés (au moins 2 sondages avec options). Tout en ${langName}, y compris le champ "type". Pour les non-sondages, "options" = [].`;
   return geminiJson(prompt, 1600);
 }
 
@@ -801,10 +801,10 @@ async function analyzeThumbnail(imageBase64, title = '', language = 'fr') {
     try {
       const desc = await cloudflareDescribeImage(imageBase64);
       if (desc) {
-        const prompt = `Tu es un expert des miniatures YouTube (CTR). Voici la description d'une miniature (titre de la vidéo : "${title}") : "${desc}".
+        const prompt = `IMPORTANT : réponds ENTIÈREMENT en ${langName} (tous les champs texte, y compris "strengths", "tips" et "emotion").
+Tu es un expert des miniatures YouTube (CTR). Voici la description d'une miniature (titre de la vidéo : "${title}") : "${desc}".
 Réponds UNIQUEMENT en JSON valide :
-{ "score": <0-100>, "strengths": ["<point fort 1>","<point fort 2>"], "tips": ["<conseil CTR 1>","<conseil 2>","<conseil 3>"], "has_text": <true|false>, "has_face": <true|false>, "emotion": "<émotion ou 'neutre'>" }
-Langue : ${langName}.`;
+{ "score": <0-100>, "strengths": ["<point fort 1 en ${langName}>","<point fort 2 en ${langName}>"], "tips": ["<conseil CTR 1 en ${langName}>","<conseil 2 en ${langName}>","<conseil 3 en ${langName}>"], "has_text": <true|false>, "has_face": <true|false>, "emotion": "<émotion en ${langName}, ou 'neutre'>" }`;
         return await geminiJson(prompt, 900);
       }
     } catch (e) { /* on bascule sur Gemini Vision */ }
@@ -814,8 +814,9 @@ Langue : ${langName}.`;
   const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error('Analyse de miniature indisponible');
-  const prompt = `Tu es un expert des miniatures YouTube (CTR). Analyse cette miniature (titre : "${title}") en ${langName}.
-Réponds UNIQUEMENT en JSON : { "score": <0-100>, "strengths": ["..."], "tips": ["...","...","..."], "has_text": <true|false>, "has_face": <true|false>, "emotion": "<...>" }`;
+  const prompt = `IMPORTANT : réponds ENTIÈREMENT en ${langName} (tous les champs texte, y compris "strengths", "tips" et "emotion").
+Tu es un expert des miniatures YouTube (CTR). Analyse cette miniature (titre : "${title}").
+Réponds UNIQUEMENT en JSON : { "score": <0-100>, "strengths": ["<en ${langName}>"], "tips": ["<en ${langName}>","<en ${langName}>","<en ${langName}>"], "has_text": <true|false>, "has_face": <true|false>, "emotion": "<en ${langName}>" }`;
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
