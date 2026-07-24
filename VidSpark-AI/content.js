@@ -2097,7 +2097,7 @@ const EXTRA_I18N = {
     nav_channel:"Chaîne", chan_intro:"Tableau de bord de la chaîne : stats réelles + score de santé et recommandations IA.", chan_run:"Analyser ma chaîne",
     chan_subs:"Abonnés", chan_views:"Vues totales", chan_vids:"Vidéos", chan_avg:"Vues moy.", chan_eng:"Engagement", chan_freq:"Fréquence",
     chan_ai_loading:"Diagnostic IA en cours…", chan_ai_fail:"Diagnostic IA indisponible", chan_health:"Score de santé", chan_strengths:"✅ Forces", chan_weak:"⚠️ Faiblesses", chan_reco:"💡 Recommandations",
-    nav_comments:"Commentaires", com_intro:"L'IA lit les commentaires : sentiment, demandes de l'audience, idées de vidéos et réponses suggérées.", com_run:"Analyser les commentaires", com_none:"Aucun commentaire trouvé sur cette vidéo.",
+    nav_comments:"Commentaires", com_intro:"L'IA lit les commentaires : sentiment, demandes de l'audience, idées de vidéos et réponses suggérées.", com_run:"Analyser les commentaires", com_none:"Aucun commentaire trouvé sur cette vidéo.", com_loading:"💬 Lecture & analyse des commentaires…",
     com_sentiment:"Sentiment global", com_pos:"Positif", com_neu:"Neutre", com_neg:"Négatif",
     com_requests:"🙋 Demandes de l'audience", com_ideas:"💡 Idées de prochaines vidéos", com_replies:"✍️ Réponses suggérées", com_copy:"Copier",
     nav_tiktok:"TikTok", tk_intro:"Donne ton sujet : l'IA génère légende, hooks, hashtags, mots-clés et script optimisés pour TikTok.", tk_topic_ph:"Sujet de ta vidéo TikTok…", tk_desc_ph:"Contexte / description (optionnel)…", tk_run:"Générer le SEO TikTok", tk_caption:"Légende optimisée", tk_keywords:"Mots-clés de recherche", tk_script:"Structure / script", tk_sound:"Conseil son / musique", tk_tips:"Conseils & découvrabilité", tk_need_topic:"Entre un sujet de vidéo.", tk_spin:"L'IA optimise ta vidéo TikTok…", tk_copy:"Copier", tkr_title:"YouTube → TikTok", tkr_intro:"Ouvre une vidéo YouTube : l'IA repère les meilleurs moments et donne les timecodes à couper pour TikTok.", tkr_novideo:"Ouvre d'abord une vidéo YouTube pour la découper.", tkr_run:"Convertir en TikTok", tkr_spin:"Découpage en clips TikTok…", tki_title:"Idées virales TikTok", tki_run:"Générer 10 idées", tki_spin:"Recherche d'idées virales…", tkh_title:"Optimiseur de hooks", tkh_run:"Générer 8 hooks", tkh_spin:"Génération des accroches…", tkc_title:"Calendrier de contenu", tkc_run:"Générer le calendrier 7 jours", tkc_spin:"Création du calendrier…", tkc_freq_ph:"Rythme (ex : 1 vidéo/jour)…",
@@ -2174,7 +2174,7 @@ const EXTRA_I18N = {
     nav_channel:"Channel", chan_intro:"Channel dashboard: real stats + health score and AI recommendations.", chan_run:"Analyze my channel",
     chan_subs:"Subscribers", chan_views:"Total views", chan_vids:"Videos", chan_avg:"Avg views", chan_eng:"Engagement", chan_freq:"Frequency",
     chan_ai_loading:"AI diagnosis in progress…", chan_ai_fail:"AI diagnosis unavailable", chan_health:"Health score", chan_strengths:"✅ Strengths", chan_weak:"⚠️ Weaknesses", chan_reco:"💡 Recommendations",
-    nav_comments:"Comments", com_intro:"AI reads the comments: sentiment, audience requests, video ideas and suggested replies.", com_run:"Analyze comments", com_none:"No comments found on this video.",
+    nav_comments:"Comments", com_intro:"AI reads the comments: sentiment, audience requests, video ideas and suggested replies.", com_run:"Analyze comments", com_none:"No comments found on this video.", com_loading:"💬 Reading & analyzing comments…",
     com_sentiment:"Overall sentiment", com_pos:"Positive", com_neu:"Neutral", com_neg:"Negative",
     com_requests:"🙋 Audience requests", com_ideas:"💡 Next video ideas", com_replies:"✍️ Suggested replies", com_copy:"Copy",
     nav_tiktok:"TikTok", tk_intro:"Enter your topic: AI generates a caption, hooks, hashtags, keywords and script optimized for TikTok.", tk_topic_ph:"Your TikTok video topic…", tk_desc_ph:"Context / description (optional)…", tk_run:"Generate TikTok SEO", tk_caption:"Optimized caption", tk_keywords:"Search keywords", tk_script:"Structure / script", tk_sound:"Sound / music tip", tk_tips:"Tips & discoverability", tk_need_topic:"Enter a video topic.", tk_spin:"AI is optimizing your TikTok video…", tk_copy:"Copy", tkr_title:"YouTube → TikTok", tkr_intro:"Open a YouTube video: AI finds the best moments and gives the timecodes to cut for TikTok.", tkr_novideo:"Open a YouTube video first to repurpose it.", tkr_run:"Convert to TikTok", tkr_spin:"Cutting into TikTok clips…", tki_title:"Viral TikTok ideas", tki_run:"Generate 10 ideas", tki_spin:"Finding viral ideas…", tkh_title:"Hook optimizer", tkh_run:"Generate 8 hooks", tkh_spin:"Generating hooks…", tkc_title:"Content calendar", tkc_run:"Generate 7-day calendar", tkc_spin:"Building calendar…", tkc_freq_ph:"Cadence (e.g. 1 video/day)…",
@@ -2252,7 +2252,7 @@ const EXTRA_I18N = {
     nav_channel:"القناة", chan_intro:"لوحة القناة: إحصائيات حقيقية + درجة الصحة وتوصيات الذكاء الاصطناعي.", chan_run:"تحليل قناتي",
     chan_subs:"المشتركون", chan_views:"إجمالي المشاهدات", chan_vids:"الفيديوهات", chan_avg:"متوسط المشاهدات", chan_eng:"التفاعل", chan_freq:"التكرار",
     chan_ai_loading:"جاري التشخيص بالذكاء الاصطناعي…", chan_ai_fail:"التشخيص غير متاح", chan_health:"درجة الصحة", chan_strengths:"✅ نقاط القوة", chan_weak:"⚠️ نقاط الضعف", chan_reco:"💡 توصيات",
-    nav_comments:"التعليقات", com_intro:"يقرأ الذكاء الاصطناعي التعليقات: المشاعر، طلبات الجمهور، أفكار فيديوهات وردود مقترحة.", com_run:"تحليل التعليقات", com_none:"لا توجد تعليقات على هذا الفيديو.",
+    nav_comments:"التعليقات", com_intro:"يقرأ الذكاء الاصطناعي التعليقات: المشاعر، طلبات الجمهور، أفكار فيديوهات وردود مقترحة.", com_run:"تحليل التعليقات", com_none:"لا توجد تعليقات على هذا الفيديو.", com_loading:"💬 قراءة وتحليل التعليقات…",
     com_sentiment:"المشاعر العامة", com_pos:"إيجابي", com_neu:"محايد", com_neg:"سلبي",
     com_requests:"🙋 طلبات الجمهور", com_ideas:"💡 أفكار للفيديوهات القادمة", com_replies:"✍️ ردود مقترحة", com_copy:"نسخ",
     nav_tiktok:"تيك توك", tk_intro:"أدخل موضوعك: يولّد الذكاء الاصطناعي وصفًا وجُملًا افتتاحية ووسوماً وكلمات مفتاحية ونصًا مُحسّناً لتيك توك.", tk_topic_ph:"موضوع فيديو تيك توك الخاص بك…", tk_desc_ph:"السياق / الوصف (اختياري)…", tk_run:"توليد سيو تيك توك", tk_caption:"الوصف المُحسّن", tk_keywords:"كلمات البحث المفتاحية", tk_script:"الهيكل / النص", tk_sound:"نصيحة الصوت / الموسيقى", tk_tips:"نصائح والاكتشاف", tk_need_topic:"أدخل موضوع الفيديو.", tk_spin:"الذكاء الاصطناعي يُحسّن فيديو تيك توك…", tk_copy:"نسخ", tkr_title:"يوتيوب → تيك توك", tkr_intro:"افتح فيديو يوتيوب: يحدد الذكاء الاصطناعي أفضل اللحظات ويعطيك التوقيتات للقص من أجل تيك توك.", tkr_novideo:"افتح فيديو يوتيوب أولاً لإعادة استخدامه.", tkr_run:"تحويل إلى تيك توك", tkr_spin:"تقطيع إلى مقاطع تيك توك…", tki_title:"أفكار تيك توك رائجة", tki_run:"توليد 10 أفكار", tki_spin:"البحث عن أفكار رائجة…", tkh_title:"محسّن الجُمل الافتتاحية", tkh_run:"توليد 8 جُمل", tkh_spin:"توليد الجُمل الافتتاحية…", tkc_title:"تقويم المحتوى", tkc_run:"توليد تقويم 7 أيام", tkc_spin:"إنشاء التقويم…", tkc_freq_ph:"الوتيرة (مثال: فيديو واحد يوميًا)…",
@@ -2268,7 +2268,12 @@ const EXTRA_I18N = {
     thumbab_title:"اختبار A/B للصور المصغّرة", thumbab_intro:"قارن صورتين مصغّرتين: يخبرك الذكاء الاصطناعي البصري أيّهما يحقق نسبة نقر أعلى ولماذا.",
     thumbab_a:"الصورة A", thumbab_b:"الصورة B", thumbab_run:"📸 قارن الصور المصغّرة", thumbab_tips:"💡 لتحسين الفائزة", thumbab_need2:"اختر صورتين أولاً",
     thumbab_prompt_label:"🎨 وصف مفصّل لإنشاء الصورة المصغّرة المحسّنة:", thumbab_prompt_copy:"نسخ الوصف",
-    thumbab_prompt_hint:"الصق هذا الوصف في ذكاء اصطناعي للصور (Midjourney، DALL·E، ChatGPT، Leonardo…) لتوليد صورتك."
+    thumbab_prompt_hint:"الصق هذا الوصف في ذكاء اصطناعي للصور (Midjourney، DALL·E، ChatGPT، Leonardo…) لتوليد صورتك.",
+    tk_ready:"المحتوى جاهز للنشر", tk_hooks:"الجُمل الافتتاحية",
+    tkr_ready:"المقاطع جاهزة للقص", tk_clips:"مقاطع",
+    tki_ready:"الأفكار جاهزة", tk_ideas:"أفكار",
+    tkh_ready:"الجُمل الافتتاحية جاهزة",
+    tkc_ready:"التقويم جاهز", tk_days:"أيام"
   },
   ja: {
     thumb_ideas_title:"サムネイルのコンセプトを生成", thumb_ideas_intro:"タイトルに基づく3つのコンセプト（テキスト、配色、レイアウト、顔）、すぐ実行可能。", thumb_ideas_btn:"3つのコンセプトを生成", thumb_ideas_loading:"コンセプトを生成中…", thumb_ideas_concept:"コンセプト", thumb_ideas_emotion:"感情", thumb_ideas_text:"テキスト", thumb_ideas_focal:"焦点", thumb_ideas_face:"顔", thumb_ideas_bg:"背景", thumb_ideas_why:"理由", thumb_ideas_copy:"ブリーフをコピー", thumb_ideas_locked_sub:"Proにアップグレードして3つのコンセプトをすべて解除", thumb_ideas_niche_ph:"ニッチ（任意、例：料理、ゲーム）",
@@ -2341,7 +2346,7 @@ const EXTRA_I18N = {
     nav_channel:"チャンネル", chan_intro:"チャンネルダッシュボード：実データ＋健全性スコアとAI提案。", chan_run:"チャンネルを分析",
     chan_subs:"登録者", chan_views:"総再生数", chan_vids:"動画数", chan_avg:"平均再生数", chan_eng:"エンゲージ", chan_freq:"頻度",
     chan_ai_loading:"AI診断中…", chan_ai_fail:"AI診断は利用できません", chan_health:"健全性スコア", chan_strengths:"✅ 強み", chan_weak:"⚠️ 弱み", chan_reco:"💡 提案",
-    nav_comments:"コメント", com_intro:"AIがコメントを分析：感情、視聴者の要望、動画アイデア、返信案。", com_run:"コメントを分析", com_none:"この動画にコメントはありません。",
+    nav_comments:"コメント", com_intro:"AIがコメントを分析：感情、視聴者の要望、動画アイデア、返信案。", com_run:"コメントを分析", com_none:"この動画にコメントはありません。", com_loading:"💬 コメントを読み込んで分析中…",
     com_sentiment:"全体の感情", com_pos:"ポジティブ", com_neu:"中立", com_neg:"ネガティブ",
     com_requests:"🙋 視聴者の要望", com_ideas:"💡 次の動画アイデア", com_replies:"✍️ 返信案", com_copy:"コピー",
     nav_ideas:"アイデア", idea_intro:"ニッチ・地域・トピック（任意）を選択：AIが有望な動画アイデアを10件提案。", idea_topic_ph:"トピックまたはキーワード（任意）…", idea_run:"10案を生成", idea_copy:"タイトルをコピー",
@@ -2603,6 +2608,7 @@ const FILL_I18N = {
   "com_intro": "La IA lee los comentarios: sentimiento, peticiones del público, ideas de vídeo y respuestas sugeridas.",
   "com_run": "Analizar comentarios",
   "com_none": "No se encontraron comentarios en este vídeo.",
+  "com_loading": "💬 Leyendo y analizando comentarios…",
   "com_sentiment": "Sentimiento general",
   "com_pos": "Positivo",
   "com_neu": "Neutral",
@@ -2886,6 +2892,7 @@ const FILL_I18N = {
   "com_intro": "A IA lê os comentários: sentimento, pedidos do público, ideias de vídeo e respostas sugeridas.",
   "com_run": "Analisar comentários",
   "com_none": "Nenhum comentário encontrado neste vídeo.",
+  "com_loading": "💬 Lendo e analisando comentários…",
   "com_sentiment": "Sentimento geral",
   "com_pos": "Positivo",
   "com_neu": "Neutro",
@@ -3169,6 +3176,7 @@ const FILL_I18N = {
   "com_intro": "Die KI liest die Kommentare: Stimmung, Wünsche des Publikums, Video-Ideen und Antwortvorschläge.",
   "com_run": "Kommentare analysieren",
   "com_none": "Keine Kommentare zu diesem Video gefunden.",
+  "com_loading": "💬 Kommentare werden gelesen und analysiert…",
   "com_sentiment": "Gesamtstimmung",
   "com_pos": "Positiv",
   "com_neu": "Neutral",
@@ -3452,6 +3460,7 @@ const FILL_I18N = {
   "com_intro": "L'IA legge i commenti: sentiment, richieste del pubblico, idee video e risposte suggerite.",
   "com_run": "Analizza i commenti",
   "com_none": "Nessun commento trovato su questo video.",
+  "com_loading": "💬 Lettura e analisi dei commenti…",
   "com_sentiment": "Sentiment generale",
   "com_pos": "Positivo",
   "com_neu": "Neutro",
@@ -3735,6 +3744,7 @@ const FILL_I18N = {
   "com_intro": "ИИ читает комментарии: тональность, запросы аудитории, идеи видео и предлагаемые ответы.",
   "com_run": "Анализировать комментарии",
   "com_none": "Комментариев к этому видео не найдено.",
+  "com_loading": "💬 Чтение и анализ комментариев…",
   "com_sentiment": "Общая тональность",
   "com_pos": "Позитивная",
   "com_neu": "Нейтральная",
@@ -4018,6 +4028,7 @@ const FILL_I18N = {
   "com_intro": "AI가 댓글을 읽습니다: 감정, 시청자 요청, 영상 아이디어, 추천 답변.",
   "com_run": "댓글 분석",
   "com_none": "이 영상에서 댓글을 찾지 못했습니다.",
+  "com_loading": "💬 댓글 읽기 및 분석 중…",
   "com_sentiment": "전체 감정",
   "com_pos": "긍정",
   "com_neu": "중립",
@@ -4301,6 +4312,7 @@ const FILL_I18N = {
   "com_intro": "AI कमेंट पढ़ता है: भावना, ऑडियंस अनुरोध, वीडियो आइडिया और सुझाए गए जवाब।",
   "com_run": "कमेंट विश्लेषण करें",
   "com_none": "इस वीडियो पर कोई कमेंट नहीं मिला।",
+  "com_loading": "💬 टिप्पणियाँ पढ़ी और विश्लेषित की जा रही हैं…",
   "com_sentiment": "समग्र भावना",
   "com_pos": "सकारात्मक",
   "com_neu": "तटस्थ",
@@ -4584,6 +4596,7 @@ const FILL_I18N = {
   "com_intro": "AI 阅读评论：情绪、受众需求、视频创意和建议回复。",
   "com_run": "分析评论",
   "com_none": "此视频未找到评论。",
+  "com_loading": "💬 正在读取并分析评论…",
   "com_sentiment": "整体情绪",
   "com_pos": "正面",
   "com_neu": "中性",
@@ -4867,6 +4880,7 @@ const FILL_I18N = {
   "com_intro": "YZ yorumları okur: duygu, kitle istekleri, video fikirleri ve önerilen yanıtlar.",
   "com_run": "Yorumları analiz et",
   "com_none": "Bu videoda yorum bulunamadı.",
+  "com_loading": "💬 Yorumlar okunuyor ve analiz ediliyor…",
   "com_sentiment": "Genel duygu",
   "com_pos": "Olumlu",
   "com_neu": "Nötr",
@@ -5150,6 +5164,7 @@ const FILL_I18N = {
   "com_intro": "De AI leest de reacties: sentiment, verzoeken van het publiek, video-ideeën en voorgestelde antwoorden.",
   "com_run": "Reacties analyseren",
   "com_none": "Geen reacties gevonden bij deze video.",
+  "com_loading": "💬 Reacties lezen en analyseren…",
   "com_sentiment": "Algemeen sentiment",
   "com_pos": "Positief",
   "com_neu": "Neutraal",
@@ -8247,7 +8262,7 @@ function bindTabEvents(tab,data,scores,checklist){
 
   /* Analyse des commentaires */
   content.querySelector("#btnComments")?.addEventListener("click",async()=>{
-    setContent("card-comments-result",spinnerHTML("💬 Lecture & analyse des commentaires…"));
+    setContent("card-comments-result",spinnerHTML(T("com_loading")));
     try{
       const r=await sendBG({action:"comments",videoId:data.videoId,title:data.title,language:currentLanguage});
       if(r.empty){ setContent("card-comments-result",`<div style="color:#888;font-size:12px;margin-top:8px;">${T("com_none")}</div>`); return; }
