@@ -456,10 +456,10 @@ Réponds UNIQUEMENT en JSON valide :
   "trend": "montant" | "stable" | "déclin",
   "verdict": "<recommandation en ${langName}, 1-2 phrases>",
   "best_keywords": [
-    {"keyword": "<mot-clé long-tail à fort potentiel, lié à '${query}'>", "difficulty": "facile" | "moyen" | "difficile", "why": "<pourquoi en ${langName}>"}
+    {"keyword": "<mot-clé long-tail à fort potentiel, en ${langName}, lié à '${query}'>", "difficulty": "facile" | "moyen" | "difficile", "why": "<pourquoi en ${langName}>"}
   ]
 }
-Donne 4 à 6 best_keywords (privilégie les long-tail faciles à classer). Tout en ${langName}.`;
+Donne 4 à 6 best_keywords, RÉDIGÉS EN ${langName} (pas en français sauf si ${langName} est le français), et privilégie les long-tail faciles à classer. Tout le JSON (y compris "keyword") en ${langName}.`;
   return geminiJson(prompt, 1500);
 }
 
