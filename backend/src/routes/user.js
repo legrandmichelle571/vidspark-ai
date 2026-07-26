@@ -52,20 +52,75 @@ router.get('/channels', requireAuth, async (req, res) => {
     const supabase = req.app.locals.supabase;
     const { data: channels } = await supabase
       .from('activation_channels')
-      .select('channel_id, channel_name, created_at')
+      .select('channel_id, channel_name, subscriber_count, created_at')
       .eq('user_id', req.user.id)
       .order('created_at', { ascending: true });
+
+    const list = channels || [];
+
+    // Rattrapage : chaînes ajoutées avant la colonne subscriber_count (migration 020),
+    // ou dont le fetch avait échoué à l'ajout → on retente une fois ici et on persiste
+    // le résultat pour ne plus refaire ce fetch aux prochains chargements.
+    const missing = list.filter(c => c.subscriber_count == null);
+    if (missing.length) {
+      await Promise.all(missing.map(async c => {
+        const subs = await fetchChannelSubscribers(c.channel_id);
+        if (subs != null) {
+          c.subscriber_count = subs;
+          await supabase.from('activation_channels')
+            .update({ subscriber_count: subs })
+            .eq('user_id', req.user.id)
+            .eq('channel_id', c.channel_id);
+        }
+      }));
+    }
 
     res.json({
       plan:     req.user.plan,
       limit:    getChannelLimit(req.user.plan),
-      channels: channels || []
+      channels: list
     });
   } catch (err) {
     console.error('[GET /user/channels]', err.message);
     res.status(500).json({ error: 'Erreur lors de la récupération des chaînes' });
   }
 });
+
+/* Nombre d'abonnés d'une chaîne — scraping (pas de clé API YouTube configurée ici,
+   même approche que resolveChannelId). Vérifié sur une vraie page de chaîne : le seul
+   champ présent aujourd'hui est "subscriberCountText.accessibility...label" (pas de
+   "simpleText"), et le texte anglais utilise des MOTS ("1.12 million subscribers",
+   "521 thousand subscribers"), pas d'abréviations K/M — d'où le forçage Accept-Language
+   et le parsing des deux formes. Sans ça, le serveur peut recevoir une autre langue
+   selon la géolocalisation IP de Railway et le nombre ne serait pas parsé du tout. */
+function parseSubscriberCountText(raw) {
+  const m = (raw || '').replace(/,/g, '').match(/([\d.]+)\s*(thousand|million|billion|[KMB])?/i);
+  if (!m) return null;
+  let n = parseFloat(m[1]);
+  if (isNaN(n)) return null;
+  const suf = (m[2] || '').toLowerCase();
+  if (suf === 'k' || suf === 'thousand') n *= 1e3;
+  else if (suf === 'm' || suf === 'million') n *= 1e6;
+  else if (suf === 'b' || suf === 'billion') n *= 1e9;
+  return Math.round(n);
+}
+function extractSubscriberCount(html) {
+  const m = html.match(/"subscriberCountText":\{"simpleText":"([^"]+)"/)
+         || html.match(/"subscriberCountText":\{"accessibility":\{"accessibilityData":\{"label":"([^"]+)"/)
+         || html.match(/([\d][\d,.\s]*(?:thousand|million|billion|[KMB])?)\+?\s*subscribers/i);
+  return m ? parseSubscriberCountText(m[1]) : null;
+}
+async function fetchChannelSubscribers(channelId) {
+  try {
+    const resp = await fetch(`https://www.youtube.com/channel/${channelId}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept-Language': 'en-US,en;q=0.9' }
+    });
+    return extractSubscriberCount(await resp.text());
+  } catch (e) {
+    console.warn('[fetchChannelSubscribers] fetch error:', e.message);
+    return null;
+  }
+}
 
 /* Résoudre une URL / @handle / UC... en ID de chaîne UC... (fetch côté serveur) */
 async function resolveChannelId(input) {
@@ -131,9 +186,11 @@ router.post('/channels', requireAuth, async (req, res) => {
       });
     }
 
+    const subscriber_count = await fetchChannelSubscribers(channel_id);
+
     const { error: insErr } = await supabase
       .from('activation_channels')
-      .insert({ user_id: req.user.id, channel_id, channel_name: channel_name || channel_id });
+      .insert({ user_id: req.user.id, channel_id, channel_name: channel_name || channel_id, subscriber_count });
 
     if (insErr) {
       console.error('[POST /user/channels] insert error:', insErr.message);
