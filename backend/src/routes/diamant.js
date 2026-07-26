@@ -215,6 +215,23 @@ router.post('/analyze', requireAuth, requireTier('pro'), async (req, res, next) 
 
     const engVerdict = eng >= 5 ? 'Excellent engagement' : eng >= 2 ? 'Engagement correct' : 'Engagement faible';
 
+    /* Sauvegarder dans l'historique — sans ça, le tableau de bord (Coach, tuiles
+       "Score SEO moyen"/"Vidéos analysées"/"Points SEO gagnés", section Analytique)
+       ne voit jamais les analyses faites depuis cet outil : /api/user/coach lit
+       exclusivement analysis_history, or cette route n'y écrivait jamais (contrairement
+       à POST /api/ai/seo-report qui, lui, le faisait déjà). */
+    const perfScore = { excellent: 90, good: 72, average: 55, low: 32 }[perf] || 50;
+    try {
+      await req.app.locals.supabase.from('analysis_history').upsert({
+        user_id:     req.user.id,
+        video_id:    videoId,
+        title:       stats.title,
+        score_seo:   (titleAI && titleAI.score != null) ? titleAI.score : null,
+        score_viral: perfScore,
+        ai_report:   { title: titleAI, insights, performance: { label: perfLabel, level: perf } }
+      }, { onConflict: 'user_id,video_id' });
+    } catch (histErr) { console.error('[DIAMANT/ANALYZE] analysis_history upsert:', histErr.message); }
+
     res.json({
       videoId, ...stats,
       analysis: {
