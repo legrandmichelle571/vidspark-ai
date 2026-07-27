@@ -99,6 +99,7 @@ app.use('/api/diamant',       require('./routes/diamant'));
 app.use('/api/analysis',      require('./routes/analysis'));
 app.use('/api/subscription',  require('./routes/subscription'));
 app.use('/api/ai',            require('./routes/ai'));
+app.use('/api/story',          require('./routes/story'));
 app.use('/api/admin',         require('./routes/admin'));
 app.use('/api/webhook',       require('./routes/webhook'));
 

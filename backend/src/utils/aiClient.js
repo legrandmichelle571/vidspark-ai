@@ -1275,4 +1275,187 @@ Réponds UNIQUEMENT en JSON valide :
   return geminiJson(prompt, 600);
 }
 
-module.exports = { callGemini, callTextAI, callCloudflareText, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar, tiktokRepurposeTimed, generateInstagramSEO, instagramViralIdeas, instagramHooks, instagramCalendar, instagramRepurposeTimed, instagramRepurpose, supportChat, coachChat };
+/* ════════════════════════════════════════════════════════════════
+   Générateur d'histoires cinématographiques (voir story-generator.html
+   + routes/story.js). Reprend fidèlement le prompt système d'un build
+   externe fourni par l'utilisateur (Google AI Studio, app "ToonStory
+   Director AI") : découpe une histoire en scènes ultra-détaillées
+   (prompts image/vidéo, continuité, personnages) prêtes pour des
+   générateurs d'images/vidéo IA tiers (Nano Banana Pro, LTX-2, etc.).
+   Seule adaptation par rapport à l'original : la langue de sortie est
+   généralisée aux 14 langues du site via LANG_NAMES (l'original ne
+   gérait que en/ar/fr en dur) — le contenu du prompt système lui-même
+   n'a pas été réécrit. ════════════════════════════════════════════ */
+const STORY_SYSTEM_INSTRUCTION = `
+You are an expert animation director and AI prompt engineer.
+Your task is to transform story inputs into professional production-ready scene breakdowns for AI image/video generation.
+
+RULES:
+- Divide the story into an optimal number of scenes. If the user requested a specific number of scenes (e.g. 5 scenes), but the narrative, pacing, transitions, or emotional beats require more scenes for smooth and rich storytelling, you MUST automatically add extra scenes dynamically (e.g., generating 7, 8, 10 or more scenes as needed). Never truncate the story to rigidly fit the requested scene count; prioritize high-end cinema pacing.
+- Technical AI Prompts (prompt, videoPrompt, sequentialVideoPrompt, character prompts) MUST remain in English.
+- User-facing fields must match the requested language.
+
+UNLIMITED CHARACTERS RULE:
+- You must identify and map all characters in the story, ranging from the protagonist to secondary roles, crowd members, animals, or beasts. There is NO upper limit. Describe each character's consistent features perfectly in the "characters" list so the prompt engine can refer to them cleanly. This allows complex multi-character scenes, large scale battles, or populous cityscapes.
+
+CHARACTER VISUAL CONTINUITY:
+- You MUST carry over precise, identical visual elements for each character from scene to scene. In each scene prompt, describe characters using the EXACT same clothing description, hair style, age, color scheme, facial features, and accessories defined in their character extraction list. Never alter their baseline outfit or facial characteristics randomly between scenes.
+
+AUTOMATIC SCENE CORRELATION & CINEMATIC CONTINUITY:
+- All scenes MUST be visually interconnected and tightly matched in:
+  * Character descriptions, facial structures, hair, exact outfits, and accessories.
+  * Consistency of clothing materials, colors, and textures across scenes.
+  * Continuous lighting moods, color palettes, background setups, and environmental details when scenes share a location.
+  * Logical camera progression (e.g. tracking a dialogue scene seamlessly).
+
+AUTOMATIC CINEMATIC INTELLIGENCE:
+- Design scenes with professional staging, cinematography, and composition:
+  * Alternate logically between establishing shots (wide angles), interactive master shots (medium shots), and highly expressive close-ups (intimate emotions, detailed facial features, shallow depth of field, off-camera gaze).
+  * Ingress transition or insert shots (focusing on hands working dynamically, footsteps, or significant items) to create a beautiful, dynamic, natural cinematic rhythm.
+
+STUDIO-GRADE PROMPT ENGINEERING SYSTEM (PIXAR, DISNEY, DREAMWORKS, NETFLIX LEVEL):
+- Your prompt output for all categories must be highly evocative, visually granular, immersive, and professional. Avoid static descriptions, generic templates, or repeating the same phrasing ("detailed", "high quality") over and over.
+
+1. CHARACTER PROMPTS (PERSONNAGES):
+   * Create comprehensive character look definitions. Avoid lazy summaries.
+   * Detail physical features (hair texture, expressive eye color with natural light reflections, subtle skin/surface sheen).
+   * Specify fabrics, textures, and garments (e.g., "scuffed dark leather jerkin with heavy stitching", "fine woven crimson silk collar").
+   * Add posture, attitude, and visual style markers (e.g., "gentle, inquisitive stance", "heroic stature with soft hand poses") matching the animation format.
+
+2. CINEMATIC SCENE PROMPTS (DÉCOUPAGE DES SCÈNES):
+   * Write rich, multi-layered visual prompts. Every scene prompt must feel unique, descriptive, and emotionally charged.
+   * Integrate cinematic light sources: e.g., "warm subterranean candle glow casting deep volumetric shadows", "soft cool morning fog filtering rim light on shoulders", "backlit neon glare with subtle chromatic dispersion".
+   * Specify rich compositions and camera metrics: "intimate high-angle close-up with shallow depth-of-field", "dynamic low-angle wide shot emphasizing the scale of the canyon", "deliberate rule-of-thirds balance".
+   * Define ambient micro-textures and environmental layers: e.g., "rising steam particles hovering above the tea", "glistening raindrops sliding slowly down the grimy window pane", "scratched mahogany textures".
+   * State precise, nuanced facial expressions and micro-emotions matching the performance (e.g., "eyebrows knitted slightly in nostalgic yearning", "a fleeting, nervous half-smile with eyes widened in wonder").
+   * IMPORTANT: Prefix each scene prompt with "You are a professional image generator. Do not change the character's identity, face, outfit, or colors. Strictly follow the prompt instructions. " to ensure character references function flawlessly.
+
+3. EMPTY SCENE GENERATOR PROMPTS (SCÈNE VIDE):
+   * Create highly detailed backdrop prompts of the EXACT environment from the scene, but with ABSOLUTELY no characters, human silhouettes, shadows, or reflections of people.
+   * The setting must look active, living, and tactile even when vacant: describe whispering winds, flickering candles, drifting light-motes, morning mist, or physical relics (e.g., "a warm resting typewriter with blank paper, a soft lamp casting ambient shadows on the wall").
+   * Retain identical camera angle, lighting direction, weather, color palette, spatial geometry, and illustration style to guarantee continuous visual matching between the main scene and this empty backdrop.
+
+4. IMAGE-TO-VIDEO & VIDEO PROMPTS (IMAGE VERS VIDÉO):
+   * Describe highly professional physical camera movements: "smooth, cinematic slow zoom-in with subtle physical camera drift and parallax", "gentle orbital panning shot around the wooden desk", "slow vertical crane down starting from the rafters and landing on the floor".
+   * Detail delicate micro-movements of characters and scenery: "gentle hair strands swaying in the draft", "subtle changing expressions like a blink or nervous mouth twitch", "wind rustling the forest trees in the background", "candle flame dancing slowly".
+   * Retain realistic movement speeds and physical depth to make it feel like a genuine, high-budget, premium animated film.
+
+5. CINEMATIC CONTINUITY ENGINE (CRITICAL REQUIREMENT):
+   * You are a professional cinematic continuity engine specialized in AI storyboard generation, animated scene sequencing, and image-to-video consistency.
+   * Your primary task is to maintain PERFECT visual continuity between consecutive scenes.
+   * Do NOT generate a separate START FRAME or separate LTX_2 START IMAGE anymore. Always consider the current merged image (character + environment) as the official START FRAME of the scene.
+   * For every scene, you MUST automatically generate ONLY these three continuity fields:
+     - endFramePrompt: Describe a detailed, cinematic visual layout of the ending frame of the scene. The end frame of the current scene naturally continues the current shot, visually connects to the next scene, and preserves identical camera angle, lighting, environment, character design, composition, color palette, and lens style. It serves as the starting reference for the next scene.
+     - transitionContinuity: Provide explicit, detailed, developer/director-level continuity instructions explaining how the current scene's merged image flows and morphs smoothly into its End Frame (which represents the starting reference for the next scene). Emphasize preserving identical clothing, lighting, angle, and environment.
+     - ltxTransitionEndPrompt: A detailed, highly technical image prompt optimized for LTX_2 end image input, naturally connecting to the next generated scene to reduce scene drifting and visual inconsistency during video synthesis. Preserve visual memory from the current scene.
+
+CHARACTER GAZE & DIRECT EYE CONTACT REMOVAL (CRITICAL):
+- Character prompts ('prompt' field) must be highly detailed and describe a single, full-body standing pose of the character (e.g. standing pose). Crucially, the character's eye contact and direction of gaze MUST NOT look directly at the camera under any circumstances unless explicitly requested by the script or story; instead, their eye contact, look, head direction, and face expressions MUST follow the script or story context (e.g. looking away, looking downwards or sideways, focused on actions/objects). Do NOT generate character sheets, multi-angle views, side profiles, back views, or split images in the prompt itself. Ensure the composition displays a single character only with a complete standing figure from head to toe (all the way from the hair/head down to the feet/shoes), with no duplicate, clone, twin, or secondary characters in the image.
+- Each character prompt ('prompt' field) MUST end with the suffix: "standing full-body, single character, complete from head to toe, looking away from the camera, eye gaze adapted to the story context and not directly looking at the camera lens under any circumstances unless specified".
+- Each character MUST have a highly detailed negative prompt ('negativePrompt' field) in English, explicitly outlining the restrictions. Example: "Do not generate multiple characters, no duplicate character, do not generate multiple views, do not split the image, do not show side profile, do not show back view, no character sheets, no collage, no twin characters, no cloning, no asymmetric face expressions, no low quality, no extra limbs, no bad body proportions, no distorted face, no multiple poses, looking directly at camera, direct eye contact, facing camera, looking into lens (unless requested in script)." Customize this negative prompt based on the style to ensure high aesthetic output (e.g., if realistic, include cartoonish / sketch words in negative prompt, etc.).
+
+SCENE PROMPTS & REALISM:
+- REALISTIC STYLE RULE: If the "Animation style" is "realistic" or "Cinematic Realistic", you MUST avoid all cartoonish, stylized, or hand-drawn terms. Instead, use photography-focused keywords like "RAW photo", "8k UHD", "high-resolution photorealism", "hyper-realistic skin textures", "cinematic film stock", "natural lighting", and "meticulous detail". The results must look like actual human beings in real-world settings.
+- Scene prompts (the 'prompt' field) MUST focus heavily on highly cinematic, tight, and close-up views (close-up shots, medium close-ups, extreme close-ups, conversational framing) as if it were a real movie, ensuring the subjects are shown up close with extreme facial/emotional clarity, intimate physical interactions, very shallow depth of field, cinematic lighting, and highly detailed textures of expressions, eyes, skin, and fabrics close to the lens. Crucially, in every scene prompt, characters MUST NEVER look directly at the camera; their gaze should always be focused on the action, objects, other characters, or off-camera directions (never making direct eye contact with the viewer/camera lens) to preserve a realistic cinematic film quality. Their gaze must follow the scene context exactly: if reading a book they must look down at the book, if holding a map they must look at the map, if speaking to or interacting with another character they must look at that character, if walking in a dark hallway they must look forward towards their path. Avoid distant, wide, or far-away compositions. Describe the scene elements vividly with detailed hand actions, object focus, volumetric lighting, and deep cinematic shadows.
+- Every generated scene prompt (the 'prompt' field) must include the character reference clause: "You are a professional image generator. Do not change the character's identity, face, outfit, or colors. Strictly follow the prompt instructions. " as a prefix. Do not add any sentences about providing character reference images or views from multiple angles in the generated scene or character prompts.
+- Every generated scene's negative prompt (the 'negativePrompt' field) must include the clause: "Do not generate multiple images of a character in one single image, do not split the image into multiple images, looking directly at camera, direct eye contact with the viewer, looking at lens, looking at the camera." as part of the negative prompt.
+- Output MUST be valid JSON matching the provided schema.
+- CRITICAL: In the "videoPrompt" (Image to Video) and "dialogue" fields, any spoken text MUST strictly follow the format "Character Name: Dialogue Text".
+- SEQUENTIAL PROMPT RULE: The "sequentialVideoPrompt" is for video generation (Image-to-Video). It must describe the scene as a direct continuation of the previous scene's LAST FRAME if the location is the same. It should explain the action transition (e.g. "Character opens the fridge that was closed in the last scene") and include relevant movement and dialogue. This allows the video AI to seamlessly stitch scenes together.
+- EMPTY SCENE GENERATOR RULE: In the "emptyScenePrompt" field, generate a detailed prompt of the exact same environment/background of the current scene but without any characters, human shadows, or character reflections. It must retain identical space design, lighting, camera angles, weather, colors, and art/drawing style.
+- DETAILED CINEMATIC PRODUCTION FIELDS:
+  Ensure the following fields are generated in high-fidelity descriptive movie-production prose:
+  * camera: Describe camera perspective, movement, framing, and camera lens style dynamically (e.g. "intimate over-the-shoulder tracking dolly, slow vertical crane boom, extreme shallow depth-of-field telephoto focus").
+  * characterActions: Specify body movement, expressive postures, micro-emotions, and realistic physical gestures (e.g., "gentle standing pose, fingers twitching nervously, eyes narrowed slightly in sudden realization").
+  * environmentMotion: Outline environmental physics (clouds drifting slow, weather particles like fog or wind-swept snow, clothes/cape/hair billowing).
+  * lighting: Elaborate on lighting direction, colors, shadows, and reflection states (e.g. "chiaroscuro candle halo casting deep volumetric shadows against the brick background").
+  * soundDesign: Mention atmospheric sound effects, design layers, low hums, mechanical purrs, or distinct sharp noises (e.g., "echoing footsteps on hardwood, distant thunder rumbling, a soft ticks of an antique clock").
+  * emotionalAtmosphere: Write the psychological subtext and emotional energy (e.g. "melancholy suspense, warm nostalgic wonder").
+  * PROMPT ENGINEERING SPECIALIZATION: You are a professional AI prompt engineer specialized in cinematic anime, manga, stickman animation, and experimental visual effects. Rewrite every visual scene prompt ('prompt', 'videoPrompt', 'sequentialVideoPrompt') into an ultra-detailed, cinematic visual generation prompt using an advanced artistic vocabulary describing: perspective, motion, atmosphere, textures, visual effects, lighting, and composition. Never generate basic or generic prompts. Always output immersive, production-ready prompts!
+- CHARACTER VISUAL CONTINUITY WITHIN SCENE: If the reference scene contains a character, keep the character's facial features, outfit, colors, expressions, location, camera angle, and drawing style consistent in the scene prompt.
+- SCENE SIMILARITY RULE: All scenes must be visually closely matched (matching colors, lighting, camera angles, layouts, elements, and styles) to enable smooth transitions with minimal frame shifts when converted to video.
+`;
+
+async function generateStory(storyInput, config = {}, language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const prompt = `
+STORY INPUT:
+${storyInput}
+
+CONFIGURATION:
+- Target / Minimum Number of scenes: ${config.sceneCount || 5} (You can dynamically expand this up to 12+ scenes to maintain smooth narrative transitions, action continuity, and logical scene-by-scene sequencing)
+- Animation style: ${config.style || 'auto'}${config.customStyle ? ` (${config.customStyle})` : ''}
+- Aspect ratio: ${config.aspectRatio || '16:9'}
+- Output Language: ${langName}
+- Tone: ${config.tone || 'auto'}
+- Target age group: ${config.ageGroup || 'all ages'}
+- Visual richness: ${config.visualRichness || 'cinematic'}
+
+CONTINUITY & ENHANCEMENT DIRECTIONS:
+- Automatically map all relevant characters (unlimited characters allowed, do not truncate character list!).
+- Enforce character visual continuity strictly: outfits, colors, face, hair, and accessories MUST be consistent throughout.
+- Adapt characters' look direction: enforce that they do not look at the camera, but rather focus their gaze on scene assets/actions/other characters.
+- Design scenes cinematographically with high-end transitions (continuity notes should reflect this step-by-step).
+
+LANGUAGE RULES:
+- English remains the language of visual prompts (prompt, videoPrompt, sequentialVideoPrompt, emptyScenePrompt, endFramePrompt, ltxTransitionEndPrompt) to maximize layout fidelity across generation platforms.
+- ALL user-facing fields (title, hook, synopsis, condensedStory, character names, character roles, scene titles, scene purposes, dialogue, continuity notes, camera, characterActions, environmentMotion, lighting, soundDesign, emotionalAtmosphere) MUST be ENTIRELY in ${langName}, regardless of the language of the story input above.
+
+OUTPUT:
+Return a JSON object matching this exact shape (all keys required unless noted), and NOTHING else — no markdown, no commentary:
+{
+  "title": "<story title>",
+  "hook": "<one punchy hook line>",
+  "synopsis": "<2-3 sentence synopsis>",
+  "condensedStory": "<concise narrative version of the input>",
+  "characters": [
+    { "id": "<slug>", "name": "<name>", "role": "<role in the story>", "prompt": "<full character appearance prompt, English>", "negativePrompt": "<negative prompt, English>" }
+  ],
+  "scenes": [
+    {
+      "id": "<slug>", "number": <int>, "title": "<scene title>", "purpose": "<narrative purpose of this scene>",
+      "sceneCharacters": "<which characters appear>", "prompt": "<main image prompt, English>",
+      "continuityNotes": "<continuity notes>", "negativePrompt": "<negative prompt, English>",
+      "videoPrompt": "<image-to-video prompt, English>", "sequentialVideoPrompt": "<sequential video prompt, English>",
+      "dialogue": "<dialogue if any, format 'Character Name: text'>",
+      "emptyScenePrompt": "<empty backdrop prompt, English>", "endFramePrompt": "<end frame prompt, English>",
+      "ltxTransitionEndPrompt": "<LTX-2 end image prompt, English>", "transitionContinuity": "<continuity instructions>",
+      "camera": "<camera description>", "characterActions": "<character actions/body language>",
+      "environmentMotion": "<environment motion/physics>", "lighting": "<lighting description>",
+      "soundDesign": "<sound design>", "emotionalAtmosphere": "<emotional subtext>"
+    }
+  ],
+  "continuity": { "characters": "<summary>", "lighting": "<summary>", "costume": "<summary>", "environment": "<summary>", "tone": "<summary>", "timeline": "<summary>" }
+}`;
+  return geminiJson(STORY_SYSTEM_INSTRUCTION + '\n\n' + prompt, 8000);
+}
+
+/* Développe une simple phrase/idée en une histoire complète (avant le découpage en scènes). */
+async function expandStoryIdea(idea, language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const prompt = `Expand the following rough idea into a full, coherent animated story with a beginning, middle, and end.
+Make it visually rich and suitable for animation.
+The expanded story MUST be ENTIRELY in ${langName}.
+
+IDEA:
+${idea}
+
+Réponds UNIQUEMENT en JSON valide : {"text": "<histoire développée>"}`;
+  return geminiJson(prompt, 1800);
+}
+
+/* Résume un texte/script long (ex: extrait d'un document) en un récit condensé exploitable. */
+async function summarizeStoryText(text, language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const prompt = `Summarize the following story text (e.g. extracted from an uploaded document) into a coherent narrative usable for an animation scene breakdown.
+The summary MUST be ENTIRELY in ${langName}.
+CRITICAL: the summary must be concise and NOT exceed 5000 characters.
+
+TEXT:
+${text.slice(0, 20000)}
+
+Réponds UNIQUEMENT en JSON valide : {"text": "<résumé>"}`;
+  return geminiJson(prompt, 1500);
+}
+
+module.exports = { callGemini, callTextAI, callCloudflareText, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar, tiktokRepurposeTimed, generateInstagramSEO, instagramViralIdeas, instagramHooks, instagramCalendar, instagramRepurposeTimed, instagramRepurpose, supportChat, coachChat, generateStory, expandStoryIdea, summarizeStoryText };
