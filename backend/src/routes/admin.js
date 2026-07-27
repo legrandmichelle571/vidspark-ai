@@ -436,6 +436,13 @@ router.get('/stats/charts', async (req, res) => {
       users.forEach(u => { const v = u[field] || '—'; m[v] = (m[v] || 0) + 1; });
       return Object.entries(m).map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count);
     };
+    /* Les 4 paliers doivent toujours apparaître (même à 0), contrairement à by_country/
+       by_language qui restent une simple agrégation des valeurs présentes. */
+    const aggPlan = () => {
+      const m = { free: 0, pro: 0, business: 0, diamant: 0 };
+      users.forEach(u => { const v = u.plan || 'free'; if (v in m) m[v]++; else m[v] = (m[v] || 0) + 1; });
+      return Object.entries(m).map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count);
+    };
 
     res.json({
       signups:    bucket(users.filter(u => u.created_at >= d30), u => u.created_at),
@@ -443,7 +450,7 @@ router.get('/stats/charts', async (req, res) => {
       revenue:    bucket(payRes.data, p => p.created_at, p => parseFloat(p.amount || 0)),
       by_country: agg('country').slice(0, 8),
       by_language: agg('language').slice(0, 8),
-      by_plan:    agg('plan')
+      by_plan:    aggPlan()
     });
   } catch (err) {
     console.error('[stats/charts]', err);
