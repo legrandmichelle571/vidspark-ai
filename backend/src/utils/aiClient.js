@@ -1213,4 +1213,32 @@ Exactement 3 clips VARIÉS. Reste concis pour garantir un JSON valide.`;
   return geminiJson(prompt, 2000);
 }
 
-module.exports = { callGemini, callTextAI, callCloudflareText, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar, tiktokRepurposeTimed, generateInstagramSEO, instagramViralIdeas, instagramHooks, instagramCalendar, instagramRepurposeTimed, instagramRepurpose };
+/* ════════════════════════════════════════════════════════════════
+   Assistant IA public — widget de chat sur le site (visiteurs non
+   connectés, voir POST /api/public/ai/chat et js/support-chat.js).
+   Contexte produit injecté dans le prompt pour éviter les hallucinations
+   sur les tarifs/fonctionnalités. Sortie JSON {reply} comme le reste de
+   ce fichier (callGemini/callCloudflareText imposent le mode JSON — pas
+   de vrai "mode texte libre" possible sans changer ces deux fonctions).
+   ════════════════════════════════════════════════════════════════ */
+const VIDSPARK_CONTEXT = `VidSpark AI (vidsparkpro.com) est une plateforme SaaS qui aide les créateurs YouTube (et TikTok/Instagram) à obtenir plus de vues grâce à l'IA : analyse de vidéos (score SEO, score viral), génération de titres/descriptions/tags/miniatures par IA, Coach IA qui donne des actions prioritaires, extension Chrome qui analyse n'importe quelle vidéo YouTube ou TikTok en un clic, suites complètes "SEO TikTok" et "SEO Instagram" (légendes, hooks, hashtags, idées, calendrier, repurposing YouTube → clips courts).
+Forfaits : Free (gratuit, 10 analyses/jour), Pro (9,99$/mois), Business (29,99$/mois, jusqu'à 5 chaînes), Diamant (49,99$/mois, jusqu'à 10 chaînes + outils exclusifs : audit de chaîne avancé, suivi de position).`;
+
+async function supportChat(message, history = [], language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const hist = (history || []).slice(-6)
+    .map(h => `${h.role === 'assistant' ? 'Assistant' : 'Visiteur'} : ${String(h.content || '').slice(0, 500)}`)
+    .join('\n');
+  const prompt = `Tu es l'assistant IA de VidSpark AI, présent en chat sur le site public pour aider les visiteurs.
+Contexte produit (utilise-le pour répondre avec précision, ne l'invente jamais) :
+${VIDSPARK_CONTEXT}
+${hist ? '\nHistorique récent de la conversation :\n' + hist + '\n' : ''}
+Nouveau message du visiteur : "${message}"
+
+Réponds de façon utile, chaleureuse et concise (2-4 phrases max, sauf si une liste est vraiment utile), ENTIÈREMENT en ${langName}, quelle que soit la langue du message du visiteur. Si la question sort du cadre de VidSpark AI (support technique précis de compte/facturation, sujet hors-sujet), oriente poliment vers la page Contact plutôt que d'inventer une réponse.
+Réponds UNIQUEMENT en JSON valide :
+{"reply": "<ta réponse>"}`;
+  return geminiJson(prompt, 500);
+}
+
+module.exports = { callGemini, callTextAI, callCloudflareText, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar, tiktokRepurposeTimed, generateInstagramSEO, instagramViralIdeas, instagramHooks, instagramCalendar, instagramRepurposeTimed, instagramRepurpose, supportChat };

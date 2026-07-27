@@ -10,7 +10,7 @@ const {
   compareTitles, compareThumbnails, analyzeThumbnail,
   analyzeHook, generateShorts, generateVideoIdeas,
   optimizeAudience, estimateRevenue, analyzeComments,
-  titleDoctor
+  titleDoctor, supportChat
 } = require('../utils/aiClient');
 const { requireAuth } = require('../middleware/auth');
 
@@ -326,6 +326,40 @@ router.post('/ai/comment-analyzer', requireAuth, requireProPlan, aiLimiter, asyn
   } catch (err) {
     console.error('[PUBLIC/COMMENTS]', err.message);
     res.status(500).json({ error: err.message || 'Génération indisponible' });
+  }
+});
+
+/* Anti-abus du widget de chat public : 20 messages / heure / IP — assez pour
+   une vraie conversation, assez peu pour limiter le coût d'un endpoint sans
+   authentification (voir js/support-chat.js pour le widget correspondant). */
+const chatLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { trustProxy: false, xForwardedForHeader: false },
+  message: { error: 'Trop de messages, réessaie dans un moment.', code: 'RATE_LIMIT' }
+});
+
+/* POST /api/public/ai/chat {message, history[], language} → widget de chat IA
+   public (bulle flottante sur le site). Aucune authentification requise. */
+router.post('/ai/chat', chatLimiter, async (req, res) => {
+  try {
+    const { message, history, language = 'fr' } = req.body || {};
+    if (!message || String(message).trim().length < 1) return res.status(400).json({ error: 'Message requis' });
+    if (String(message).length > 800) return res.status(400).json({ error: 'Message trop long (800 caractères max)' });
+
+    const safeHistory = Array.isArray(history)
+      ? history.slice(-6)
+          .filter(h => h && h.role && h.content)
+          .map(h => ({ role: h.role === 'assistant' ? 'assistant' : 'user', content: String(h.content).slice(0, 500) }))
+      : [];
+
+    const r = await supportChat(String(message).trim().slice(0, 800), safeHistory, language);
+    res.json({ reply: r.reply || '' });
+  } catch (err) {
+    console.error('[PUBLIC/CHAT]', err.message);
+    res.status(500).json({ error: 'Assistant indisponible pour le moment.' });
   }
 });
 
