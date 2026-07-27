@@ -2,6 +2,11 @@
  * Accès à l'API YouTube Data v3 (clé serveur uniquement).
  * Fournit de VRAIES données : vues, likes, vues/heure, tags réels, stats chaîne.
  */
+const { execFile } = require('child_process');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+
 const YT = 'https://www.googleapis.com/youtube/v3';
 
 async function ytFetch(path) {
@@ -263,41 +268,91 @@ function secToTimestamp(s) {
   return (h ? `${h}:` : '') + `${mm}:${String(sec).padStart(2, '0')}`;
 }
 
-/* Récupère la transcription (sous-titres horodatés) d'une vidéo YouTube.
-   Retourne { available, segments:[{start, text}], language } — sans clé API.
-   Méthode : on lit la page watch, on extrait captionTracks, on récupère le json3. */
-async function getTranscript(videoId) {
-  try {
-    // User-Agent réaliste + cookie CONSENT : sans ça, YouTube sert souvent une
-    // page d'interstitiel "consentement cookies" aux IP de datacenter (Railway),
-    // qui ne contient jamais captionTracks — d'où l'échec systématique côté
-    // serveur alors que la même vidéo fonctionne dans un vrai navigateur.
-    const BROWSER_HEADERS = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Cookie': 'CONSENT=YES+cb.20210328-17-p0.en+FX+410'
-    };
-    const r = await fetch(`https://www.youtube.com/watch?v=${videoId}&hl=en`, {
-      headers: BROWSER_HEADERS
+/* Tentative rapide : lire la page watch, extraire captionTracks, récupérer le json3.
+   Vérifié début 2026 : la LISTE des pistes reste publique dans le HTML, mais le
+   CONTENU (baseUrl) revient systématiquement vide (200, 0 octet) depuis une IP
+   serveur — YouTube exige un jeton anti-bot qu'un simple fetch ne peut produire.
+   Gardée comme premier essai (rapide, sans sous-processus) : gratuite si jamais
+   ce blocage se relâche pour certaines vidéos/IP, sinon on tombe sur le repli. */
+async function getTranscriptViaFetch(videoId) {
+  const BROWSER_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Cookie': 'CONSENT=YES+cb.20210328-17-p0.en+FX+410'
+  };
+  const r = await fetch(`https://www.youtube.com/watch?v=${videoId}&hl=en`, {
+    headers: BROWSER_HEADERS
+  });
+  const html = await r.text();
+  const m = html.match(/"captionTracks":(\[.*?\])/);
+  if (!m) return { available: false, segments: [] };
+
+  let tracks;
+  try { tracks = JSON.parse(m[1]); } catch { return { available: false, segments: [] }; }
+  if (!tracks.length) return { available: false, segments: [] };
+
+  const track = tracks.find(t => t.kind !== 'asr') || tracks[0];
+  let baseUrl = track.baseUrl.replace(/\\u0026/g, '&');
+  if (!/[?&]fmt=/.test(baseUrl)) baseUrl += '&fmt=json3';
+
+  const cr = await fetch(baseUrl, { headers: BROWSER_HEADERS });
+  const cj = await cr.json().catch(() => null);
+  if (!cj || !cj.events) return { available: false, segments: [] };
+
+  const segments = cj.events
+    .filter(e => e.segs)
+    .map(e => ({
+      start: Math.round((e.tStartMs || 0) / 1000),
+      text: e.segs.map(s => s.utf8).join('').replace(/\n/g, ' ').trim()
+    }))
+    .filter(s => s.text);
+
+  return { available: segments.length > 0, segments, language: track.languageCode || 'en' };
+}
+
+function runYtDlp(args) {
+  return new Promise((resolve, reject) => {
+    execFile('yt-dlp', args, { timeout: 25000, maxBuffer: 20 * 1024 * 1024 }, (err, stdout, stderr) => {
+      if (err) return reject(new Error((stderr || '').slice(0, 300) || err.message));
+      resolve(stdout);
     });
-    const html = await r.text();
-    const m = html.match(/"captionTracks":(\[.*?\])/);
-    if (!m) return { available: false, segments: [] };
+  });
+}
 
-    let tracks;
-    try { tracks = JSON.parse(m[1]); } catch { return { available: false, segments: [] }; }
-    if (!tracks.length) return { available: false, segments: [] };
+/* Repli quand getTranscriptViaFetch échoue : yt-dlp gère lui-même les jetons
+   anti-bot de YouTube (mis à jour en continu par sa communauté, contrairement à
+   un simple fetch qui ne peut pas les produire). Nécessite le binaire `yt-dlp`
+   sur le serveur (voir backend/nixpacks.toml). Écrit le sous-titre dans un
+   dossier temporaire, le lit, puis le supprime — aucun stockage persistant.
 
-    // Préférer une piste non auto-générée, sinon la première
-    const track = tracks.find(t => t.kind !== 'asr') || tracks[0];
-    let baseUrl = track.baseUrl.replace(/\\u0026/g, '&');
-    if (!/[?&]fmt=/.test(baseUrl)) baseUrl += '&fmt=json3';
+   --sub-langs "en" et PAS "all" : testé en conditions réelles, "all" fait
+   télécharger à yt-dlp des CENTAINES de paires de traduction (ex: "ab-en",
+   "aa-de-DE"…) et déclenche un 429 "Too Many Requests" de YouTube après
+   quelques langues seulement. Une seule langue cible suffit : YouTube traduit
+   automatiquement en anglais dès qu'une piste ASR existe dans N'IMPORTE quelle
+   langue d'origine, et le prompt IA ignore déjà explicitement la langue de la
+   transcription (voir tiktokRepurposeTimed/instagramRepurposeTimed) — la
+   langue d'affichage demandée par l'utilisateur reste respectée dans tous
+   les cas. */
+async function getTranscriptViaYtDlp(videoId) {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ytsub-'));
+  try {
+    await runYtDlp([
+      '--skip-download',
+      '--write-auto-sub', '--write-sub',
+      '--sub-format', 'json3',
+      '--sub-langs', 'en',
+      '-o', path.join(tmpDir, '%(id)s.%(ext)s'),
+      `https://www.youtube.com/watch?v=${videoId}`
+    ]);
+    const files = fs.readdirSync(tmpDir).filter(f => f.endsWith('.json3'));
+    if (!files.length) return { available: false, segments: [] };
 
-    const cr = await fetch(baseUrl, { headers: BROWSER_HEADERS });
-    const cj = await cr.json().catch(() => null);
-    if (!cj || !cj.events) return { available: false, segments: [] };
+    const chosen = files[0];
+    const langMatch = chosen.match(/\.([a-zA-Z0-9-]+)\.json3$/);
+    const cj = JSON.parse(fs.readFileSync(path.join(tmpDir, chosen), 'utf8'));
 
-    const segments = cj.events
+    const segments = (cj.events || [])
       .filter(e => e.segs)
       .map(e => ({
         start: Math.round((e.tStartMs || 0) / 1000),
@@ -305,11 +360,27 @@ async function getTranscript(videoId) {
       }))
       .filter(s => s.text);
 
-    return { available: segments.length > 0, segments, language: track.languageCode || 'en' };
+    return { available: segments.length > 0, segments, language: langMatch ? langMatch[1] : 'en' };
   } catch (e) {
-    console.error('[TRANSCRIPT]', e.message);
+    console.error('[TRANSCRIPT/yt-dlp]', e.message);
     return { available: false, segments: [] };
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   }
+}
+
+/* Récupère la transcription (sous-titres horodatés) d'une vidéo YouTube.
+   Retourne { available, segments:[{start, text}], language }.
+   Essaie d'abord le fetch direct (rapide, gratuit), puis yt-dlp (fiable mais
+   plus lent — lance un sous-processus) si le premier ne renvoie rien. */
+async function getTranscript(videoId) {
+  try {
+    const viaFetch = await getTranscriptViaFetch(videoId);
+    if (viaFetch.available) return viaFetch;
+  } catch (e) {
+    console.error('[TRANSCRIPT/fetch]', e.message);
+  }
+  return getTranscriptViaYtDlp(videoId);
 }
 
 /* Résout un lien / @handle / nom / ID en vrai Channel ID UC (+ titre réel).

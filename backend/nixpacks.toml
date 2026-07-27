@@ -1,0 +1,11 @@
+# Ajoute yt-dlp (binaire système) à la stack Node.js auto-détectée par Nixpacks.
+# Nécessaire pour utils/youtube.js → getTranscriptViaYtDlp() : YouTube bloque la
+# récupération des sous-titres depuis un simple fetch serveur (jeton anti-bot),
+# yt-dlp contourne ça et est activement maintenu pour suivre les changements de
+# YouTube. Sans ce binaire, getTranscript() retombe silencieusement sur le repli
+# titre+description (voir /tiktok-repurpose et /instagram-repurpose).
+#
+# "..." conserve les paquets Nix auto-détectés pour un projet Node (nodejs, npm…) —
+# sans lui, ce bloc REMPLACERAIT la détection Node et casserait tout le build.
+[phases.setup]
+nixPkgs = ["...", "yt-dlp"]
