@@ -9,11 +9,28 @@
  * DELETE /api/user/account
  */
 const router = require('express').Router();
-const { requireAuth }  = require('../middleware/auth');
+const rateLimit = require('express-rate-limit');
+const { requireAuth, checkQuota }  = require('../middleware/auth');
 const { getLimits }    = require('../config/plans');
 const { getChannelLimit } = require('../config/channelLimits');
 const { logConnection } = require('../utils/connectionLog');
 const { hasLinkedChannel } = require('../utils/channelGate');
+const { coachChat } = require('../utils/aiClient');
+
+/* Même limite que le reste des routes IA du site (voir routes/ai.js) : 10 appels/min. */
+const coachChatRateLimit = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { error: 'Trop de messages, patiente un instant.' }
+});
+
+/* Incrémente quota_used (même compteur que les autres analyses) — dupliqué de
+   routes/ai.js (fonction privée là-bas, pas exportée) plutôt que de créer un
+   couplage entre fichiers pour 3 lignes. */
+async function bumpQuota(supabase, fn, userId, tag) {
+  const { error } = await supabase.rpc(fn, { p_user_id: userId });
+  if (error) console.error(`[${tag}] RPC ${fn} a échoué:`, error.message);
+}
 
 /* ── Géolocalisation pays (non bloquant, 1×/user par run serveur) ──
    Alimente le tableau admin "Utilisateurs par pays". Déduit le pays de l'IP via
@@ -547,6 +564,63 @@ router.get('/coach', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('[USER/COACH]', err.message);
     res.status(500).json({ error: 'Coach unavailable' });
+  }
+});
+
+/* Contexte réel de l'utilisateur pour le Coach IA conversationnel — requête légère
+   et indépendante de la logique de scoring pondéré de /coach ci-dessus (pas de
+   refactor du endpoint existant qui fonctionne déjà en prod, juste une moyenne
+   simple : suffisant pour donner au chat des chiffres réels, pas pour le score
+   affiché sur la tuile du tableau de bord). */
+async function getCoachChatContext(supabase, userId) {
+  const [{ data: rows }, { data: channels }] = await Promise.all([
+    supabase.from('analysis_history').select('title,score_seo,score_viral,created_at')
+      .eq('user_id', userId).order('created_at', { ascending: false }).limit(10),
+    supabase.from('activation_channels').select('channel_name,subscriber_count')
+      .eq('user_id', userId).order('created_at', { ascending: true }).limit(1)
+  ]);
+  const n = x => { const v = Number(x); return Number.isFinite(v) ? Math.round(v) : null; };
+  const vids = rows || [];
+  const avg = (key) => {
+    const vals = vids.map(v => n(v[key])).filter(v => v != null);
+    return vals.length ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : null;
+  };
+  const ch = (channels && channels[0]) || null;
+  return {
+    channel_name: ch?.channel_name || null,
+    subscriber_count: ch?.subscriber_count ?? null,
+    videos_analyzed: vids.length,
+    avg_seo: avg('score_seo'),
+    avg_viral: avg('score_viral'),
+    recent_titles: vids.slice(0, 5).map(v => v.title).filter(Boolean)
+  };
+}
+
+/* POST /api/user/coach-chat {message, history[], language} → Coach IA conversationnel
+   du tableau de bord (voir #aiPop dans dashboard.html), personnalisé avec les vraies
+   données de l'utilisateur connecté (contrairement à /api/public/ai/chat, générique). */
+router.post('/coach-chat', requireAuth, checkQuota, coachChatRateLimit, async (req, res) => {
+  try {
+    const { message, history, language = 'fr' } = req.body || {};
+    if (!message || String(message).trim().length < 1) return res.status(400).json({ error: 'Message requis' });
+    if (String(message).length > 800) return res.status(400).json({ error: 'Message trop long (800 caractères max)' });
+
+    const supabase = req.app.locals.supabase;
+    const context = await getCoachChatContext(supabase, req.user.id);
+    context.plan = req.user.plan;
+
+    const safeHistory = Array.isArray(history)
+      ? history.slice(-8)
+          .filter(h => h && h.role && h.content)
+          .map(h => ({ role: h.role === 'assistant' ? 'assistant' : 'user', content: String(h.content).slice(0, 500) }))
+      : [];
+
+    const r = await coachChat(String(message).trim().slice(0, 800), safeHistory, context, language);
+    await bumpQuota(supabase, 'increment_user_quota', req.user.id, 'AI/COACH-CHAT');
+    res.json({ reply: r.reply || '' });
+  } catch (err) {
+    console.error('[USER/COACH-CHAT]', err.message);
+    res.status(500).json({ error: 'Assistant indisponible pour le moment.' });
   }
 });
 

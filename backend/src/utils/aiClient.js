@@ -1241,4 +1241,38 @@ Réponds UNIQUEMENT en JSON valide :
   return geminiJson(prompt, 500);
 }
 
-module.exports = { callGemini, callTextAI, callCloudflareText, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar, tiktokRepurposeTimed, generateInstagramSEO, instagramViralIdeas, instagramHooks, instagramCalendar, instagramRepurposeTimed, instagramRepurpose, supportChat };
+/* ════════════════════════════════════════════════════════════════
+   Coach IA conversationnel — chat authentifié du tableau de bord (voir
+   POST /api/user/coach-chat et le panneau #aiPop dans dashboard.html).
+   Contrairement à supportChat (visiteurs anonymes, contexte produit
+   générique), ce coach reçoit les VRAIES données de CET utilisateur
+   (chaîne, abonnés, scores SEO/viral moyens) pour des réponses
+   personnalisées — jamais inventées si une donnée manque.
+   ════════════════════════════════════════════════════════════════ */
+async function coachChat(message, history = [], context = {}, language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const ctxLines = [
+    context.channel_name && `Chaîne : ${context.channel_name}`,
+    context.subscriber_count != null && `Abonnés : ${context.subscriber_count}`,
+    context.videos_analyzed != null && `Vidéos analysées sur VidSpark AI : ${context.videos_analyzed}`,
+    context.avg_seo != null && `Score SEO moyen : ${context.avg_seo}/100`,
+    context.avg_viral != null && `Score viral moyen : ${context.avg_viral}/100`,
+    context.recent_titles && context.recent_titles.length && `Titres récemment analysés : ${context.recent_titles.join(' | ')}`,
+    context.plan && `Forfait : ${context.plan}`
+  ].filter(Boolean).join('\n');
+  const hist = (history || []).slice(-8)
+    .map(h => `${h.role === 'assistant' ? 'Coach' : 'Utilisateur'} : ${String(h.content || '').slice(0, 500)}`)
+    .join('\n');
+  const prompt = `Tu es le Coach IA personnel de VidSpark AI. Tu aides CET utilisateur précis à faire grandir sa chaîne YouTube, en te basant sur ses vraies données ci-dessous — ne les invente JAMAIS, et si une donnée manque dis simplement que tu n'as pas encore assez d'analyses pour ça plutôt que d'inventer un chiffre.
+Données réelles de l'utilisateur :
+${ctxLines || "Aucune vidéo analysée pour l'instant sur VidSpark AI — c'est un nouvel utilisateur."}
+${hist ? '\nConversation récente :\n' + hist + '\n' : ''}
+Nouveau message de l'utilisateur : "${message}"
+
+Réponds de façon utile, chaleureuse et actionnable (conseils concrets liés à SES données réelles), en 2-5 phrases sauf si une liste est vraiment utile, ENTIÈREMENT en ${langName}.
+Réponds UNIQUEMENT en JSON valide :
+{"reply": "<ta réponse>"}`;
+  return geminiJson(prompt, 600);
+}
+
+module.exports = { callGemini, callTextAI, callCloudflareText, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar, tiktokRepurposeTimed, generateInstagramSEO, instagramViralIdeas, instagramHooks, instagramCalendar, instagramRepurposeTimed, instagramRepurpose, supportChat, coachChat };
