@@ -1178,4 +1178,39 @@ Réponds UNIQUEMENT en JSON valide :
   return geminiJson(prompt, 2200);
 }
 
-module.exports = { callGemini, callTextAI, callCloudflareText, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar, tiktokRepurposeTimed, generateInstagramSEO, instagramViralIdeas, instagramHooks, instagramCalendar, instagramRepurposeTimed };
+/* ── Instagram : repli SANS transcription (titre + description seulement) ──
+   YouTube bloque désormais la récupération des sous-titres depuis un serveur
+   (jeton anti-bot généré uniquement par un vrai navigateur, voir getTranscript
+   dans youtube.js) — /instagram-repurpose ne peut donc pas toujours produire de
+   clips horodatés. Plutôt qu'un échec sec, ce repli génère 3 idées de Reels à
+   partir du titre/de la description seuls (mêmes clips angle/hook/caption/
+   hashtags que instagramRepurposeTimed, mais sans "start"/"end" puisqu'aucun
+   moment précis n'est identifiable sans le contenu réel de la vidéo). */
+async function instagramRepurpose(title = '', description = '', transcript = '', niche = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const src = [
+    title && `Titre : ${title}`,
+    niche && `Niche : ${niche}`,
+    description && `Description : ${description.slice(0, 400)}`,
+    transcript && `Transcription (extrait) : ${transcript.slice(0, 1500)}`
+  ].filter(Boolean).join('\n');
+  const prompt = `Tu es expert du repurposing de contenu. Transforme cette vidéo YouTube longue en 3 Reels Instagram courts et percutants (verticaux, 15-90s).
+${src}
+
+IMPORTANT : la description ci-dessus peut être dans une AUTRE langue que celle demandée. Ignore sa langue : ta réponse (angle, hook, script, caption) doit être ENTIÈREMENT écrite en ${langName}, jamais dans la langue de la source. Réponds UNIQUEMENT en JSON valide :
+{
+  "clips": [
+    {
+      "angle": "<le moment fort/angle à extraire>",
+      "hook": "<accroche des 3 premières secondes>",
+      "script": "<mini-script parlé de 15-90s>",
+      "caption": "<légende Instagram optimisée avec emojis>",
+      "hashtags": ["#...", "#...", "#...", "#...", "#..."]
+    }
+  ]
+}
+Exactement 3 clips VARIÉS. Reste concis pour garantir un JSON valide.`;
+  return geminiJson(prompt, 2000);
+}
+
+module.exports = { callGemini, callTextAI, callCloudflareText, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar, tiktokRepurposeTimed, generateInstagramSEO, instagramViralIdeas, instagramHooks, instagramCalendar, instagramRepurposeTimed, instagramRepurpose };

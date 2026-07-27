@@ -10,7 +10,7 @@
 const router = require('express').Router();
 const { requireAuth, requirePro, checkQuota, checkTitlesQuota, checkSocialQuota } = require('../middleware/auth');
 const rateLimit = require('express-rate-limit');
-const { callTextAI, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar, tiktokRepurposeTimed, generateInstagramSEO, instagramViralIdeas, instagramHooks, instagramCalendar, instagramRepurposeTimed } = require('../utils/aiClient');
+const { callTextAI, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar, tiktokRepurposeTimed, generateInstagramSEO, instagramViralIdeas, instagramHooks, instagramCalendar, instagramRepurposeTimed, instagramRepurpose } = require('../utils/aiClient');
 const { getVideoStats, getTranscript, secToTimestamp, iso8601ToSeconds, extractVideoId, buildTimedTranscript } = require('../utils/youtube');
 
 /* Dispatch des outils TikTok avancés (repurpose / ideas / hooks / calendar) */
@@ -275,12 +275,23 @@ router.post('/tiktok-repurpose', requireAuth, checkSocialQuota, aiRateLimit, asy
     if (!tr.available || !tr.segments.length) {
       // YouTube exige désormais un jeton généré par un vrai navigateur pour servir les
       // sous-titres (anti-scraping) : un appel serveur ne peut techniquement pas l'obtenir,
-      // quelle que soit la vidéo. L'extension, elle, lit la transcription depuis le
-      // navigateur de l'utilisateur (fiable). On l'explique honnêtement plutôt que de
-      // laisser croire à un bug ponctuel ou à un problème avec cette vidéo précise.
-      return res.status(422).json({
-        error: "YouTube empêche la récupération des sous-titres depuis un serveur pour cette fonctionnalité. Utilise l'extension VidSpark AI directement sur la page de la vidéo : elle lit la transcription depuis ton navigateur et fonctionne de manière fiable.",
-        code: 'NO_TRANSCRIPT'
+      // quelle que soit la vidéo. Sans transcription, pas de timecodes précis possibles —
+      // mais titre + description (déjà récupérés via l'API YouTube, pas bloqués) suffisent
+      // à l'IA pour proposer 3 idées de clips (sans horodatage exact) plutôt qu'un échec
+      // sec. On ne peut vraiment rien faire que si même le titre est indisponible.
+      if (!stats?.title) {
+        return res.status(422).json({
+          error: "YouTube empêche la récupération des sous-titres depuis un serveur pour cette fonctionnalité, et la vidéo elle-même est introuvable. Utilise l'extension VidSpark AI directement sur la page de la vidéo : elle lit la transcription depuis ton navigateur et fonctionne de manière fiable.",
+          code: 'NO_TRANSCRIPT'
+        });
+      }
+      const fallback = await tiktokRepurpose(stats.title, stats.description || '', '', '', language);
+      await bumpQuota(req.app.locals.supabase, 'increment_social_quota', req.user.id, 'AI/TIKTOK-REPURPOSE');
+      return res.json({
+        video: { id: videoId, title: stats.title, duration: '' },
+        fallback: true,
+        fallback_reason: "YouTube bloque la récupération des sous-titres depuis un serveur : ces idées sont générées à partir du titre et de la description, sans horodatage précis. Utilise l'extension directement sur la vidéo pour des clips minutés exacts.",
+        ...fallback
       });
     }
 
@@ -341,9 +352,22 @@ router.post('/instagram-repurpose', requireAuth, checkSocialQuota, aiRateLimit, 
       getTranscript(videoId).catch(() => ({ available: false, segments: [] }))
     ]);
     if (!tr.available || !tr.segments.length) {
-      return res.status(422).json({
-        error: "YouTube empêche la récupération des sous-titres depuis un serveur pour cette fonctionnalité. Utilise l'extension VidSpark AI directement sur la page de la vidéo : elle lit la transcription depuis ton navigateur et fonctionne de manière fiable.",
-        code: 'NO_TRANSCRIPT'
+      // Voir le commentaire équivalent dans /tiktok-repurpose : sans transcription, on
+      // retombe sur un repli titre+description (sans horodatage précis) plutôt que
+      // d'échouer sèchement — on ne peut vraiment rien faire que si le titre manque aussi.
+      if (!stats?.title) {
+        return res.status(422).json({
+          error: "YouTube empêche la récupération des sous-titres depuis un serveur pour cette fonctionnalité, et la vidéo elle-même est introuvable. Utilise l'extension VidSpark AI directement sur la page de la vidéo : elle lit la transcription depuis ton navigateur et fonctionne de manière fiable.",
+          code: 'NO_TRANSCRIPT'
+        });
+      }
+      const fallback = await instagramRepurpose(stats.title, stats.description || '', '', '', language);
+      await bumpQuota(req.app.locals.supabase, 'increment_social_quota', req.user.id, 'AI/INSTAGRAM-REPURPOSE');
+      return res.json({
+        video: { id: videoId, title: stats.title, duration: '' },
+        fallback: true,
+        fallback_reason: "YouTube bloque la récupération des sous-titres depuis un serveur : ces idées sont générées à partir du titre et de la description, sans horodatage précis. Utilise l'extension directement sur la vidéo pour des clips minutés exacts.",
+        ...fallback
       });
     }
 

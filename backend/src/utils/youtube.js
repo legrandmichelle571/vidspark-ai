@@ -35,6 +35,7 @@ async function getVideoStats(videoId) {
 
   return {
     title:        v.snippet.title,
+    description:  v.snippet.description || '',
     channel:      v.snippet.channelTitle,
     channel_id:   v.snippet.channelId,
     published_at: v.snippet.publishedAt,
