@@ -12,22 +12,26 @@ const PLAN_LIMITS = {
   free: {
     daily_analyses: 10,   // analyses SEO / description / tags par jour
     daily_titles:   0,    // 0 = accès bloqué (requirePro)
+    daily_social:   3,    // suites SEO TikTok / SEO Instagram (aperçu limité, pas bloqué)
     quota_limit:    10    // valeur stockée dans users.quota_limit
   },
   pro: {
     daily_analyses: 200,
     daily_titles:   100,
+    daily_social:   100,
     quota_limit:    200
   },
   business: {
     daily_analyses: 1000,
     daily_titles:   500,
+    daily_social:   500,
     quota_limit:    1000
   },
   // 💎 Palier premium — inclut tout Business + outils exclusifs (site web)
   diamant: {
     daily_analyses: 5000,
     daily_titles:   2000,
+    daily_social:   2000,
     quota_limit:    5000,
     channels:       10,      // chaînes maximum
     channel_audit:  true,    // 💎 Audit de chaîne avancé sur le site

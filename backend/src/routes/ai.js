@@ -8,7 +8,7 @@
  * POST /api/ai/analysis/save
  */
 const router = require('express').Router();
-const { requireAuth, requirePro, checkQuota, checkTitlesQuota } = require('../middleware/auth');
+const { requireAuth, requirePro, checkQuota, checkTitlesQuota, checkSocialQuota } = require('../middleware/auth');
 const rateLimit = require('express-rate-limit');
 const { callTextAI, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar, tiktokRepurposeTimed, generateInstagramSEO, instagramViralIdeas, instagramHooks, instagramCalendar, instagramRepurposeTimed } = require('../utils/aiClient');
 const { getVideoStats, getTranscript, secToTimestamp, iso8601ToSeconds, extractVideoId, buildTimedTranscript } = require('../utils/youtube');
@@ -226,16 +226,17 @@ Langue: ${language}. Tags: 2-5 mots max chacun.`;
 });
 
 /* ── SEO TikTok : suite complète (légende, hooks, hashtags, script, mots-clés…)
-   Accessible à tous les plans connectés, compté dans le quota journalier. ── */
-router.post('/tiktok-seo', requireAuth, checkQuota, aiRateLimit, async (req, res) => {
+   Accessible à tous les plans connectés, quota dédié daily_social (checkSocialQuota,
+   voir plans.js) — plus restrictif pour Free que le quota d'analyses général. ── */
+router.post('/tiktok-seo', requireAuth, checkSocialQuota, aiRateLimit, async (req, res) => {
   try {
     const { topic, niche = '', description = '', language = 'fr' } = req.body;
     if (!topic || topic.trim().length < 2) return res.status(400).json({ error: 'Sujet requis' });
 
     const result = await generateTikTokSEO(topic, niche, description, language);
 
-    /* Incrémenter quota_used — tous les plans */
-    await bumpQuota(req.app.locals.supabase, 'increment_user_quota', req.user.id, 'AI/TIKTOK');
+    /* Incrémenter social_used — tous les plans */
+    await bumpQuota(req.app.locals.supabase, 'increment_social_quota', req.user.id, 'AI/TIKTOK');
 
     res.json(result);
   } catch (err) {
@@ -245,13 +246,13 @@ router.post('/tiktok-seo', requireAuth, checkQuota, aiRateLimit, async (req, res
 });
 
 /* ── Outils TikTok avancés : repurpose YouTube→TikTok, idées virales, hooks, calendrier
-   Accessible à tous les plans connectés, compté dans le quota. ── */
-router.post('/tiktok-tool', requireAuth, checkQuota, aiRateLimit, async (req, res) => {
+   Accessible à tous les plans connectés, quota dédié daily_social (voir ci-dessus). ── */
+router.post('/tiktok-tool', requireAuth, checkSocialQuota, aiRateLimit, async (req, res) => {
   try {
     const { tool } = req.body;
     if (!tool) return res.status(400).json({ error: 'Outil requis' });
     const result = await runTikTokTool(tool, req.body);
-    await bumpQuota(req.app.locals.supabase, 'increment_user_quota', req.user.id, 'AI/TIKTOK-TOOL');
+    await bumpQuota(req.app.locals.supabase, 'increment_social_quota', req.user.id, 'AI/TIKTOK-TOOL');
     res.json(result);
   } catch (err) {
     console.error('[AI/TIKTOK-TOOL]', err.message);
@@ -261,7 +262,7 @@ router.post('/tiktok-tool', requireAuth, checkQuota, aiRateLimit, async (req, re
 
 /* ── YouTube → TikTok HORODATÉ : lien YouTube → clips avec timecodes (début→fin)
    Récupère la transcription horodatée de la vidéo puis l'IA propose les découpes. ── */
-router.post('/tiktok-repurpose', requireAuth, checkQuota, aiRateLimit, async (req, res) => {
+router.post('/tiktok-repurpose', requireAuth, checkSocialQuota, aiRateLimit, async (req, res) => {
   try {
     const { url = '', language = 'fr' } = req.body;
     const videoId = extractVideoId(url);
@@ -287,7 +288,7 @@ router.post('/tiktok-repurpose', requireAuth, checkQuota, aiRateLimit, async (re
     const durStr = stats?.duration ? secToTimestamp(iso8601ToSeconds(stats.duration)) : '';
     const result = await tiktokRepurposeTimed(stats?.title || '', durStr, timed, language);
 
-    await bumpQuota(req.app.locals.supabase, 'increment_user_quota', req.user.id, 'AI/TIKTOK-REPURPOSE');
+    await bumpQuota(req.app.locals.supabase, 'increment_social_quota', req.user.id, 'AI/TIKTOK-REPURPOSE');
     res.json({ video: { id: videoId, title: stats?.title || '', duration: durStr }, ...result });
   } catch (err) {
     console.error('[AI/TIKTOK-REPURPOSE]', err.message);
@@ -297,14 +298,14 @@ router.post('/tiktok-repurpose', requireAuth, checkQuota, aiRateLimit, async (re
 
 /* ── SEO Instagram : suite complète (légende, hooks, hashtags, script, mots-clés…)
    Miroir exact de /tiktok-seo, adapté au format Instagram (voir aiClient.js). ── */
-router.post('/instagram-seo', requireAuth, checkQuota, aiRateLimit, async (req, res) => {
+router.post('/instagram-seo', requireAuth, checkSocialQuota, aiRateLimit, async (req, res) => {
   try {
     const { topic, niche = '', description = '', language = 'fr' } = req.body;
     if (!topic || topic.trim().length < 2) return res.status(400).json({ error: 'Sujet requis' });
 
     const result = await generateInstagramSEO(topic, niche, description, language);
 
-    await bumpQuota(req.app.locals.supabase, 'increment_user_quota', req.user.id, 'AI/INSTAGRAM');
+    await bumpQuota(req.app.locals.supabase, 'increment_social_quota', req.user.id, 'AI/INSTAGRAM');
 
     res.json(result);
   } catch (err) {
@@ -314,12 +315,12 @@ router.post('/instagram-seo', requireAuth, checkQuota, aiRateLimit, async (req, 
 });
 
 /* ── Outils Instagram avancés : idées virales, hooks, calendrier ── */
-router.post('/instagram-tool', requireAuth, checkQuota, aiRateLimit, async (req, res) => {
+router.post('/instagram-tool', requireAuth, checkSocialQuota, aiRateLimit, async (req, res) => {
   try {
     const { tool } = req.body;
     if (!tool) return res.status(400).json({ error: 'Outil requis' });
     const result = await runInstagramTool(tool, req.body);
-    await bumpQuota(req.app.locals.supabase, 'increment_user_quota', req.user.id, 'AI/INSTAGRAM-TOOL');
+    await bumpQuota(req.app.locals.supabase, 'increment_social_quota', req.user.id, 'AI/INSTAGRAM-TOOL');
     res.json(result);
   } catch (err) {
     console.error('[AI/INSTAGRAM-TOOL]', err.message);
@@ -329,7 +330,7 @@ router.post('/instagram-tool', requireAuth, checkQuota, aiRateLimit, async (req,
 
 /* ── YouTube → Instagram Reels HORODATÉ : lien YouTube → clips avec timecodes
    Miroir exact de /tiktok-repurpose. ── */
-router.post('/instagram-repurpose', requireAuth, checkQuota, aiRateLimit, async (req, res) => {
+router.post('/instagram-repurpose', requireAuth, checkSocialQuota, aiRateLimit, async (req, res) => {
   try {
     const { url = '', language = 'fr' } = req.body;
     const videoId = extractVideoId(url);
@@ -350,7 +351,7 @@ router.post('/instagram-repurpose', requireAuth, checkQuota, aiRateLimit, async 
     const durStr = stats?.duration ? secToTimestamp(iso8601ToSeconds(stats.duration)) : '';
     const result = await instagramRepurposeTimed(stats?.title || '', durStr, timed, language);
 
-    await bumpQuota(req.app.locals.supabase, 'increment_user_quota', req.user.id, 'AI/INSTAGRAM-REPURPOSE');
+    await bumpQuota(req.app.locals.supabase, 'increment_social_quota', req.user.id, 'AI/INSTAGRAM-REPURPOSE');
     res.json({ video: { id: videoId, title: stats?.title || '', duration: durStr }, ...result });
   } catch (err) {
     console.error('[AI/INSTAGRAM-REPURPOSE]', err.message);

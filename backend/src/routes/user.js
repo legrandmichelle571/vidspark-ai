@@ -389,6 +389,9 @@ router.get('/quota', requireAuth, (req, res) => {
     titles_used:       req.user.titles_used || 0,
     titles_limit:      limits.daily_titles,
     titles_remaining:  Math.max(0, limits.daily_titles - (req.user.titles_used || 0)),
+    social_used:       req.user.social_used || 0,
+    social_limit:      limits.daily_social,
+    social_remaining:  Math.max(0, limits.daily_social - (req.user.social_used || 0)),
     reset_at:          'midnight UTC'
   });
 });

@@ -152,11 +152,39 @@ function checkTitlesQuota(req, res, next) {
   next();
 }
 
+/* ── Middleware quota outils sociaux (SEO TikTok / SEO Instagram) ────────
+   Ces deux suites (5 outils chacune, 100% IA) tapaient jusqu'ici dans le
+   quota général (checkQuota) — aucune limite qui leur soit propre. Compteur
+   séparé (social_used), plafond Free volontairement plus bas que le quota
+   général pour inciter à l'upgrade sans couper complètement l'accès
+   (contrairement à daily_titles = 0 pour Free).
+   Lit social_used depuis req.user (colonne users.social_used, migration 021).
+──────────────────────────────────────────────────────────────────────── */
+function checkSocialQuota(req, res, next) {
+  const user   = req.user;
+  const limits = getLimits(user.plan);
+  const used   = user.social_used || 0;
+
+  if (used >= limits.daily_social) {
+    return res.status(429).json({
+      error:        'Daily TikTok/Instagram quota exceeded',
+      code:         'SOCIAL_QUOTA_EXCEEDED',
+      social_used:  used,
+      social_limit: limits.daily_social,
+      plan:         user.plan,
+      reset_at:     'midnight UTC',
+      upgrade_url:  process.env.FRONTEND_URL + '/pricing'
+    });
+  }
+  next();
+}
+
 module.exports = {
   requireAuth,
   requireAdmin,
   requirePro,
   requireDiamant,
   checkQuota,
-  checkTitlesQuota
+  checkTitlesQuota,
+  checkSocialQuota
 };
