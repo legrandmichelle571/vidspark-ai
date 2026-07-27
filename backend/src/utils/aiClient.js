@@ -1427,6 +1427,13 @@ Return a JSON object matching this exact shape (all keys required unless noted),
   ],
   "continuity": { "characters": "<summary>", "lighting": "<summary>", "costume": "<summary>", "environment": "<summary>", "tone": "<summary>", "timeline": "<summary>" }
 }`;
+  /* Au-delà de 10 scènes, le JSON de sortie est trop volumineux pour tenir de façon fiable
+     dans la limite de sortie de Cloudflare Workers AI (gratuit) — il se tronquerait
+     silencieusement. story.js réserve ce cas aux comptes payants : on appelle Gemini
+     directement (pas d'essai Cloudflare) pour garantir une sortie complète. */
+  if ((config.sceneCount || 5) > 10) {
+    return parseJson(await callGemini(STORY_SYSTEM_INSTRUCTION + '\n\n' + prompt, 8000));
+  }
   return geminiJson(STORY_SYSTEM_INSTRUCTION + '\n\n' + prompt, 8000);
 }
 

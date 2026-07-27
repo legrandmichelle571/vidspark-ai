@@ -33,8 +33,12 @@ router.post('/generate', requireAuth, checkQuota, storyRateLimit, async (req, re
     if (!storyInput || String(storyInput).trim().length < 10) {
       return res.status(400).json({ error: 'Histoire trop courte (10 caractères minimum).' });
     }
+    /* Compte gratuit : plafond à 10 scènes pour rester sur Cloudflare Workers AI (gratuit,
+       fiable à cette taille). Comptes payants : jusqu'à 20, generateStory() bascule alors
+       directement sur Gemini (payant mais fiable) au lieu de risquer une troncature Cloudflare. */
+    const maxScenes = (req.user.plan === 'free' || !req.user.plan) ? 10 : 20;
     const safeConfig = {
-      sceneCount: Math.min(20, Math.max(1, parseInt(config.sceneCount, 10) || 5)),
+      sceneCount: Math.min(maxScenes, Math.max(1, parseInt(config.sceneCount, 10) || 5)),
       style: String(config.style || 'auto').slice(0, 60),
       customStyle: config.customStyle ? String(config.customStyle).slice(0, 100) : '',
       aspectRatio: String(config.aspectRatio || '16:9').slice(0, 20),
