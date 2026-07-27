@@ -10,7 +10,7 @@
 const router = require('express').Router();
 const { requireAuth, requirePro, checkQuota, checkTitlesQuota } = require('../middleware/auth');
 const rateLimit = require('express-rate-limit');
-const { callTextAI, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar, tiktokRepurposeTimed } = require('../utils/aiClient');
+const { callTextAI, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar, tiktokRepurposeTimed, generateInstagramSEO, instagramViralIdeas, instagramHooks, instagramCalendar, instagramRepurposeTimed } = require('../utils/aiClient');
 const { getVideoStats, getTranscript, secToTimestamp, iso8601ToSeconds, extractVideoId, buildTimedTranscript } = require('../utils/youtube');
 
 /* Dispatch des outils TikTok avancés (repurpose / ideas / hooks / calendar) */
@@ -21,6 +21,20 @@ async function runTikTokTool(tool, p = {}) {
     case 'hooks':     return tiktokHooks(p.topic, p.niche, p.language);
     case 'calendar':  return tiktokCalendar(p.niche, p.frequency, p.language);
     default: throw new Error('Outil TikTok inconnu');
+  }
+}
+
+/* Dispatch des outils Instagram avancés (ideas / hooks / calendar) — même principe
+   que runTikTokTool ci-dessus. Pas de cas 'repurpose' ici : côté TikTok ce cas
+   (tiktokRepurpose, sans timecodes) n'est jamais appelé par le frontend, qui utilise
+   exclusivement la route dédiée /*-repurpose (avec timecodes réels, voir plus bas) —
+   on ne duplique pas ce code mort pour Instagram. */
+async function runInstagramTool(tool, p = {}) {
+  switch (tool) {
+    case 'ideas':    return instagramViralIdeas(p.niche, p.topic, p.language);
+    case 'hooks':    return instagramHooks(p.topic, p.niche, p.language);
+    case 'calendar': return instagramCalendar(p.niche, p.frequency, p.language);
+    default: throw new Error('Outil Instagram inconnu');
   }
 }
 
@@ -278,6 +292,69 @@ router.post('/tiktok-repurpose', requireAuth, checkQuota, aiRateLimit, async (re
   } catch (err) {
     console.error('[AI/TIKTOK-REPURPOSE]', err.message);
     res.status(500).json({ error: 'Repurpose TikTok indisponible' });
+  }
+});
+
+/* ── SEO Instagram : suite complète (légende, hooks, hashtags, script, mots-clés…)
+   Miroir exact de /tiktok-seo, adapté au format Instagram (voir aiClient.js). ── */
+router.post('/instagram-seo', requireAuth, checkQuota, aiRateLimit, async (req, res) => {
+  try {
+    const { topic, niche = '', description = '', language = 'fr' } = req.body;
+    if (!topic || topic.trim().length < 2) return res.status(400).json({ error: 'Sujet requis' });
+
+    const result = await generateInstagramSEO(topic, niche, description, language);
+
+    await bumpQuota(req.app.locals.supabase, 'increment_user_quota', req.user.id, 'AI/INSTAGRAM');
+
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/INSTAGRAM-SEO]', err.message);
+    res.status(500).json({ error: 'Instagram SEO generation failed' });
+  }
+});
+
+/* ── Outils Instagram avancés : idées virales, hooks, calendrier ── */
+router.post('/instagram-tool', requireAuth, checkQuota, aiRateLimit, async (req, res) => {
+  try {
+    const { tool } = req.body;
+    if (!tool) return res.status(400).json({ error: 'Outil requis' });
+    const result = await runInstagramTool(tool, req.body);
+    await bumpQuota(req.app.locals.supabase, 'increment_user_quota', req.user.id, 'AI/INSTAGRAM-TOOL');
+    res.json(result);
+  } catch (err) {
+    console.error('[AI/INSTAGRAM-TOOL]', err.message);
+    res.status(500).json({ error: 'Instagram tool generation failed' });
+  }
+});
+
+/* ── YouTube → Instagram Reels HORODATÉ : lien YouTube → clips avec timecodes
+   Miroir exact de /tiktok-repurpose. ── */
+router.post('/instagram-repurpose', requireAuth, checkQuota, aiRateLimit, async (req, res) => {
+  try {
+    const { url = '', language = 'fr' } = req.body;
+    const videoId = extractVideoId(url);
+    if (!videoId) return res.status(400).json({ error: 'Lien YouTube invalide' });
+
+    const [stats, tr] = await Promise.all([
+      getVideoStats(videoId).catch(() => null),
+      getTranscript(videoId).catch(() => ({ available: false, segments: [] }))
+    ]);
+    if (!tr.available || !tr.segments.length) {
+      return res.status(422).json({
+        error: "YouTube empêche la récupération des sous-titres depuis un serveur pour cette fonctionnalité. Utilise l'extension VidSpark AI directement sur la page de la vidéo : elle lit la transcription depuis ton navigateur et fonctionne de manière fiable.",
+        code: 'NO_TRANSCRIPT'
+      });
+    }
+
+    const timed = buildTimedTranscript(tr.segments);
+    const durStr = stats?.duration ? secToTimestamp(iso8601ToSeconds(stats.duration)) : '';
+    const result = await instagramRepurposeTimed(stats?.title || '', durStr, timed, language);
+
+    await bumpQuota(req.app.locals.supabase, 'increment_user_quota', req.user.id, 'AI/INSTAGRAM-REPURPOSE');
+    res.json({ video: { id: videoId, title: stats?.title || '', duration: durStr }, ...result });
+  } catch (err) {
+    console.error('[AI/INSTAGRAM-REPURPOSE]', err.message);
+    res.status(500).json({ error: 'Repurpose Instagram indisponible' });
   }
 });
 

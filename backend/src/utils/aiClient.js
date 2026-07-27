@@ -1057,4 +1057,125 @@ Réponds UNIQUEMENT en JSON valide :
   return geminiJson(prompt, 2200);
 }
 
-module.exports = { callGemini, callTextAI, callCloudflareText, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar, tiktokRepurposeTimed };
+/* ════════════════════════════════════════════════════════════════
+   SEO Instagram — suite complète (légende, hooks, hashtags, script,
+   mots-clés, audio, conseils). 100% IA, sans API Instagram.
+   Même architecture que la suite TikTok ci-dessus, adaptée au format
+   Instagram : Reels + carrousels + Stories (pas qu'un seul format
+   vidéo), et une stratégie hashtags propre à Instagram (jusqu'à 30
+   hashtags tolérés, pratique courante de les cacher en 1er commentaire).
+   ════════════════════════════════════════════════════════════════ */
+async function generateInstagramSEO(topic, niche = '', description = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const ctx = [
+    niche && `Niche/style : ${niche}`,
+    description && `Contexte de la publication : ${description}`
+  ].filter(Boolean).join('. ');
+  const prompt = `Tu es un expert SEO Instagram et créateur de contenu viral. Optimise à fond la découvrabilité d'une publication Instagram (Reel).
+Sujet : "${topic}".${ctx ? ' ' + ctx + '.' : ''}
+Adapte-toi aux codes Instagram : Reels verticaux courts, algorithme qui favorise la rétention ET les partages/enregistrements, hashtags souvent placés en fin de légende ou en 1er commentaire.
+
+IMPORTANT : quelle que soit la langue du sujet ci-dessus, ta réponse doit être ENTIÈREMENT rédigée en ${langName} (sauf les hashtags, qui peuvent rester tels quels). Ne mélange jamais les langues.
+
+Réponds UNIQUEMENT en JSON valide, sans texte autour :
+{
+  "caption": "<légende Instagram optimisée : accroche + valeur + appel à l'action (like/enregistrer/partager), 2 à 4 phrases, avec 2-3 emojis pertinents>",
+  "hooks": ["<accroche des 3 premières secondes du Reel ou 1re ligne de légende, très percutante>", "<hook 2>", "<hook 3>", "<hook 4>", "<hook 5>"],
+  "hashtags": {
+    "broad": ["#...", "#...", "#...", "#...", "#..."],
+    "niche": ["#...", "#...", "#...", "#...", "#..."],
+    "trending": ["#...", "#...", "#...", "#...", "#..."]
+  },
+  "keywords": ["<mot-clé que les gens tapent dans la recherche/l'Explorer Instagram>", "<...6 à 8 mots-clés>"],
+  "script": [
+    {"part": "Hook (0-3s)", "content": "<ce qui doit être dit/montré>"},
+    {"part": "Corps", "content": "<développement rythmé>"},
+    {"part": "Chute / CTA", "content": "<fin + appel à enregistrer/partager/commenter>"}
+  ],
+  "sound_advice": "<quel type d'audio/musique tendance Reels utiliser pour ce sujet et pourquoi>",
+  "posting_tips": ["<conseil de publication : durée idéale, format (Reel/carrousel/photo), moment>", "<...3 à 4 conseils>"],
+  "discoverability_tips": ["<astuce concrète pour être mieux référencé dans l'Explorer/la recherche Instagram>", "<...3 à 4 astuces>"]
+}
+Contraintes : 5 hooks VARIÉS, 5 hashtags par catégorie (broad = larges/populaires, niche = spécifiques au sujet, trending = tendance générique), 6-8 mots-clés, 3-4 éléments par liste de conseils. Chaque hashtag commence par # sans espace. Reste CONCIS pour garantir un JSON complet et valide.`;
+  return geminiJson(prompt, 2000);
+}
+
+/* ── Instagram : 10 idées de Reels/publications virales par niche ── */
+async function instagramViralIdeas(niche = '', topic = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const ctx = [niche && `Niche : ${niche}`, topic && `Sujet/angle : ${topic}`].filter(Boolean).join('. ');
+  const prompt = `Tu es stratège Instagram/Reels. Propose 10 idées de publications Instagram à fort potentiel.${ctx ? ' ' + ctx + '.' : ''}
+Varie les formats (Reel POV, tuto, storytime, avant/après, carrousel listicle, réaction, coulisses, Reel esthétique/mood…) et précise le format (Reel/Carrousel/Photo/Story).
+IMPORTANT : réponds ENTIÈREMENT en ${langName}, quelle que soit la langue du sujet fourni.
+Réponds UNIQUEMENT en JSON valide :
+{
+  "ideas": [
+    {"title": "<idée accrocheuse>", "format": "<Reel|Carrousel|Photo|Story>", "hook": "<accroche 3s ou 1re slide>", "why": "<pourquoi ça peut percer>", "viral_score": <0-100>}
+  ]
+}
+Exactement 10 idées. Reste concis.`;
+  return geminiJson(prompt, 2000);
+}
+
+/* ── Instagram : optimiseur de hooks (8 variantes notées) ── */
+async function instagramHooks(topic = '', niche = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const ctx = niche ? ` Niche : ${niche}.` : '';
+  const prompt = `Tu es expert en rétention Instagram/Reels (les 3 premières secondes — ou la 1re slide d'un carrousel — décident de tout). Pour une publication sur : "${topic}".${ctx}
+Génère 8 accroches VARIÉES (question, choc, promesse, curiosité, statistique, controverse, storytime, négatif). Note chacune sur 100 selon son pouvoir d'arrêt du scroll.
+IMPORTANT : réponds ENTIÈREMENT en ${langName}, quelle que soit la langue du sujet fourni.
+Réponds UNIQUEMENT en JSON valide :
+{
+  "hooks": [{"text": "<accroche>", "type": "<type>", "score": <0-100>}],
+  "best_index": <index 0-based du meilleur>,
+  "tip": "<1 conseil pour renforcer un hook>"
+}
+Exactement 8 hooks. Reste concis.`;
+  return geminiJson(prompt, 1400);
+}
+
+/* ── Instagram : calendrier de contenu sur 7 jours (mix Reel/carrousel/photo/story) ── */
+async function instagramCalendar(niche = '', frequency = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const freq = frequency || '1 publication/jour';
+  const prompt = `Tu es coach de croissance Instagram. Établis un calendrier de contenu sur 7 jours pour la niche "${niche || 'généraliste'}", rythme : ${freq}.
+Varie les FORMATS entre Reel, Carrousel, Photo et Story selon ce qui convient le mieux à chaque idée.
+IMPORTANT : réponds ENTIÈREMENT en ${langName}, quelle que soit la langue de la niche fournie.
+Réponds UNIQUEMENT en JSON valide :
+{
+  "schedule": [
+    {"day": "<Jour 1>", "idea": "<idée de publication précise>", "format": "<Reel|Carrousel|Photo|Story>", "hook": "<accroche courte>", "best_time": "<meilleur créneau>"}
+  ]
+}
+Exactement 7 jours, variés (éducatif/divertissant/engageant). Reste concis.`;
+  return geminiJson(prompt, 1800);
+}
+
+/* ── Instagram : découpage HORODATÉ d'une vidéo YouTube en Reels (à partir de sa transcription) ── */
+async function instagramRepurposeTimed(title = '', duration = '', timedTranscript = '', language = 'fr') {
+  const langName = LANG_NAMES[language] || language;
+  const prompt = `Tu es monteur expert de contenu viral. On te donne la TRANSCRIPTION HORODATÉE d'une vidéo YouTube. Identifie les 3 à 5 MEILLEURS moments à découper en Reels Instagram verticaux (15-90s), en donnant les TIMECODES exacts (début → fin) tirés des horodatages fournis.
+Titre : "${title}".${duration ? ' Durée : ' + duration + '.' : ''}
+
+Transcription horodatée :
+${timedTranscript}
+
+IMPORTANT : la transcription ci-dessus est probablement dans une AUTRE langue que celle demandée. Ignore complètement sa langue : ta réponse (angle, hook, caption) doit être ENTIÈREMENT rédigée en ${langName}, jamais dans la langue de la transcription. Ne recopie ni ne traduis mot à mot la transcription — reformule dans le style Instagram/Reels, en ${langName}.
+Réponds UNIQUEMENT en JSON valide :
+{
+  "clips": [
+    {
+      "start": "<timecode de début, ex 1:26>",
+      "end": "<timecode de fin, ex 1:50>",
+      "angle": "<pourquoi ce moment est fort/viral>",
+      "hook": "<accroche des 3 premières secondes>",
+      "caption": "<légende Instagram optimisée avec emojis>",
+      "hashtags": ["#...", "#...", "#...", "#...", "#..."]
+    }
+  ]
+}
+3 à 5 clips. Les timecodes DOIVENT correspondre à des moments réels présents dans la transcription (utilise les [m:ss] fournis). Reste concis pour garantir un JSON valide.`;
+  return geminiJson(prompt, 2200);
+}
+
+module.exports = { callGemini, callTextAI, callCloudflareText, generateTitles, generateReport, generateCompetitorInsights, generateDescription, generateTags, analyzeThumbnail, generateThumbnailImage, thumbnailIdeas, compareTitles, generateShorts, compareThumbnails, analyzeHook, optimizeAudience, generateVideoPackage, estimateRevenue, generateChannelReport, analyzeComments, generateChapters, generateVideoIdeas, keywordOpportunity, titleDoctor, sponsorKit, generateContentPlan, translateMetadata, generateCommunityPosts, generateScript, pairCheck, optimizePlaylists, detectTrends, generateHashtags, bestPublishTime, generateTikTokSEO, tiktokRepurpose, tiktokViralIdeas, tiktokHooks, tiktokCalendar, tiktokRepurposeTimed, generateInstagramSEO, instagramViralIdeas, instagramHooks, instagramCalendar, instagramRepurposeTimed };
