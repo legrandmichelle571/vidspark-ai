@@ -4,9 +4,7 @@
  * Express refuse un middleware `undefined` au moment du `require` : si un fichier
  * de routes déstructure un middleware que `middleware/auth.js` n'exporte pas (faute
  * de frappe, export oublié), le routeur entier lève à l'import — et tout l'espace
- * d'URL qu'il porte disparaît au démarrage du serveur. C'est exactement le cas de
- * `routes/analytics.js` (`optionalAuth` n'est exporté nulle part) : le monter
- * ferait échouer le démarrage du backend complet.
+ * d'URL qu'il porte disparaît au démarrage du serveur.
  *
  * Ce test charge chaque routeur réellement monté par src/index.js et vérifie que
  * l'ensemble est importable, non vide et sans chemin dupliqué. Il échoue aussi si
@@ -81,14 +79,5 @@ describe('montage des routeurs (src/index.js)', () => {
     const mountedFiles = mounts.map(m => m.file);
     const orphans = loadable.filter(f => !mountedFiles.includes(f));
     expect(orphans).toEqual([]);
-  });
-
-  /* Pinning : documente un défaut connu. Le jour où analytics.js devient
-     importable (optionalAuth exporté), ce test échoue — signal qu'il faut le
-     monter dans index.js, ou le supprimer. */
-  test('analytics.js n’est pas importable, et n’est donc pas monté', () => {
-    const { err } = load('analytics');
-    expect(err).toBeDefined();
-    expect(mounts.map(m => m.file)).not.toContain('analytics');
   });
 });
