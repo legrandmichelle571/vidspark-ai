@@ -9,11 +9,11 @@
  * GET  /api/auth/verify-email
  */
 const router  = require('express').Router();
-const crypto  = require('crypto');
 const Joi     = require('joi');
 const { createClient } = require('@supabase/supabase-js');
 const { requireAuth } = require('../middleware/auth');
 const { hasLinkedChannel } = require('../utils/channelGate');
+const { generateActivationId, generateActivationSecret } = require('../utils/activationCode');
 
 const supabaseAnon = () => createClient(
   process.env.SUPABASE_URL,
@@ -133,15 +133,9 @@ router.post('/logout', requireAuth, async (req, res) => {
 });
 
 /* ── Générer ID + Secret uniques (aléa cryptographique) ──
-   Anciennement Math.random() (PRNG prévisible → secrets forgeable).
-   crypto.randomBytes = imprévisible. Format hex MAJUSCULE conservé
-   (compatible casse/copier-coller ; n'affecte que les nouveaux codes). */
-function generateActivationId() {
-  return 'VID' + Date.now().toString(36).toUpperCase() + crypto.randomBytes(5).toString('hex').toUpperCase();
-}
-function generateActivationSecret() {
-  return crypto.randomBytes(16).toString('hex').toUpperCase(); // 128 bits
-}
+   Implémentation unique dans utils/activationCode.js : le durcissement de
+   a873bc3 n'avait été appliqué qu'ici, et routes/user.js a continué de créer
+   des codes en Math.random(). Un seul endroit, plus de dérive possible. */
 
 /* ── Google OAuth via access_token Supabase → Création codes activation ── */
 router.post('/google', async (req, res) => {

@@ -16,6 +16,7 @@ const { getChannelLimit } = require('../config/channelLimits');
 const { logConnection } = require('../utils/connectionLog');
 const { hasLinkedChannel } = require('../utils/channelGate');
 const { coachChat } = require('../utils/aiClient');
+const { generateActivationId, generateActivationSecret } = require('../utils/activationCode');
 
 /* Même limite que le reste des routes IA du site (voir routes/ai.js) : 10 appels/min. */
 const coachChatRateLimit = rateLimit({
@@ -264,11 +265,14 @@ router.get('/me', requireAuth, async (req, res) => {
     const needed = 1;
     if (codes.length < needed) {
       const expiry = codes[0]?.subscription_expiry || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-      const genId = () => 'VID' + Math.random().toString(36).substring(2, 11).toUpperCase() + Date.now().toString(36).toUpperCase();
-      const genSecret = () => Math.random().toString(36).substring(2, 18).toUpperCase() + Math.random().toString(36).substring(2, 18).toUpperCase();
       const toCreate = [];
       for (let i = codes.length; i < needed; i++) {
-        toCreate.push({ user_id: id, activation_id: genId(), activation_secret: genSecret(), subscription_expiry: expiry });
+        toCreate.push({
+          user_id: id,
+          activation_id: generateActivationId(),
+          activation_secret: generateActivationSecret(),
+          subscription_expiry: expiry
+        });
       }
       const { data: created } = await supabase
         .from('activation_codes').insert(toCreate)
