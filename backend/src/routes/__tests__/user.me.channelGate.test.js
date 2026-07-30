@@ -11,8 +11,13 @@ const FAKE_USER = {
   quota_used: 0, quota_limit: 10, language: 'fr', created_at: '2026-01-01T00:00:00Z'
 };
 
+/* Le mock doit fournir TOUT ce que routes/user.js déstructure : une entrée absente
+   vaut `undefined`, et Express refuse un middleware undefined au moment du
+   require — le fichier de routes entier devient alors intestable. C'est ce qui est
+   arrivé à l'ajout de /coach-chat (checkQuota manquant ici). */
 jest.mock('../../middleware/auth', () => ({
-  requireAuth: (req, res, next) => { req.user = FAKE_USER; next(); }
+  requireAuth: (req, res, next) => { req.user = FAKE_USER; next(); },
+  checkQuota:  (req, res, next) => next()
 }));
 
 function buildSupabase({ linked, existingCode }) {
