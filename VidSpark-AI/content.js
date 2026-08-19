@@ -10767,9 +10767,16 @@ function renderChannelInsightsHTML(){
 }
 
 function openChannelInsights(){
-  // Deuxième clic sur le bouton = ferme (comportement toggle standard).
+  // Deuxième clic sur le bouton = ferme (comportement toggle standard), animé pareil.
   const existing = document.getElementById('vidspark-insights-modal');
-  if(existing){ existing.remove(); return; }
+  if(existing){
+    if(!existing.dataset.closing){
+      existing.dataset.closing = '1';
+      existing.classList.add('vs-ins-closing');
+      setTimeout(()=>existing.remove(), 140);
+    }
+    return;
+  }
 
   const backdrop = document.createElement('div');
   backdrop.id = 'vidspark-insights-modal';
@@ -10777,7 +10784,13 @@ function openChannelInsights(){
   backdrop.innerHTML = `<div class="vs-ins-card" role="dialog" aria-modal="true" aria-label="${esc(ST('insights_title'))}">${renderChannelInsightsHTML()}</div>`;
   document.body.appendChild(backdrop);
 
-  const close = ()=>{ backdrop.remove(); document.removeEventListener('keydown', onEsc); };
+  const close = ()=>{
+    if(backdrop.dataset.closing) return;
+    backdrop.dataset.closing = '1';
+    backdrop.classList.add('vs-ins-closing');
+    document.removeEventListener('keydown', onEsc);
+    setTimeout(()=>backdrop.remove(), 140);
+  };
   const onEsc = (e)=>{ if(e.key==='Escape') close(); };
   document.addEventListener('keydown', onEsc);
   backdrop.addEventListener('click', e=>{ if(e.target===backdrop) close(); });
