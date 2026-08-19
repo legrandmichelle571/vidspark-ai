@@ -368,6 +368,19 @@ router.post('/youtube/video', async (req, res) => {
     const data = await getVideoStats(videoId);
     if (!data) return res.status(404).json({ error: 'Vidéo introuvable' });
     res.json(data);
+
+    // Point d'historique de croissance pour cette chaîne — un seul par jour (ON CONFLICT
+    // ignore les rejeux). Non bloquant pour la réponse déjà envoyée : échec silencieux.
+    if (data.channel_id) {
+      supabase.from('channel_growth_snapshots').upsert({
+        channel_id: data.channel_id,
+        views: data.channel_views || 0,
+        subscribers: data.channel_subs || 0,
+        video_count: data.channel_videos || 0,
+        captured_on: new Date().toISOString().slice(0, 10)
+      }, { onConflict: 'channel_id,captured_on', ignoreDuplicates: true })
+        .then(({ error }) => { if (error) console.warn('[GROWTH/SNAPSHOT]', error.message); });
+    }
   } catch (err) {
     console.error('[YT/VIDEO]', err.message);
     res.status(500).json({ error: 'Données YouTube indisponibles', details: err.message });
@@ -388,6 +401,32 @@ router.post('/youtube/competitors', async (req, res) => {
   } catch (err) {
     console.error('[YT/COMP]', err.message);
     res.status(500).json({ error: 'Recherche indisponible', details: err.message });
+  }
+});
+
+/* ── Historique de croissance d'une chaîne (Pro/Business) ──
+   Renvoie uniquement les points réellement enregistrés (voir upsert ci-dessus) :
+   pas d'historique avant la première consultation, jamais de valeur rétro-inventée. */
+router.post('/youtube/growth-history', async (req, res) => {
+  try {
+    const { activation_id, activation_secret, channelId } = req.body;
+    if (!activation_id || !activation_secret || !channelId) return res.status(400).json({ error: 'Paramètres requis' });
+    const supabase = req.app.locals.supabase;
+    const ctx = await getCodeUser(supabase, activation_id, activation_secret, req);
+    if (!ctx)        return res.status(401).json({ error: 'ID ou Secret invalide' });
+    if (!requirePaidPlan(ctx.plan)) return res.status(403).json({ error: 'Historique de croissance réservé aux abonnés Pro et Business.', code: 'UPGRADE_REQUIRED' });
+
+    const { data, error } = await supabase
+      .from('channel_growth_snapshots')
+      .select('views,subscribers,video_count,captured_on')
+      .eq('channel_id', channelId)
+      .order('captured_on', { ascending: true })
+      .limit(90);
+    if (error) throw error;
+    res.json({ points: data || [] });
+  } catch (err) {
+    console.error('[GROWTH/HISTORY]', err.message);
+    res.status(500).json({ error: 'Historique indisponible', details: err.message });
   }
 });
 
