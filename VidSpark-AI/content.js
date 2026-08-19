@@ -10973,12 +10973,12 @@ function closeShellPanels(){
   closeQuickMenu();
   const real = document.getElementById('echo-rank-panel');
   const act  = document.getElementById('vidspark-activation');
-  const wasVisible = (real && !real.classList.contains('echo-panel-hidden')) || (act && act.style.display !== 'none');
+  const wasVisible = (real && !real.classList.contains('echo-panel-hidden')) || (act && !act.classList.contains('vs-act-hidden'));
   if(real){
     real.classList.add('echo-panel-hidden');
     document.getElementById('echo-shorts-toggle')?.classList.remove('echo-toggle-hidden');
   }
-  if(act) act.style.display = 'none';
+  if(act) act.classList.add('vs-act-hidden');
   document.getElementById('vidspark-toolbar-btn')?.setAttribute('aria-expanded','false');
   if(wasVisible) document.getElementById('vidspark-toolbar-btn')?.focus();
 }
@@ -11107,7 +11107,7 @@ function toggleShellPanel(){
   if(real){
     const willShow = real.classList.contains('echo-panel-hidden');
     const act = document.getElementById('vidspark-activation');
-    if(act) act.style.display = 'none';
+    if(act) act.classList.add('vs-act-hidden');
     const shortsToggle = document.getElementById('echo-shorts-toggle');
     if(willShow){
       real.classList.remove('echo-panel-hidden');
@@ -11125,8 +11125,8 @@ function toggleShellPanel(){
   // formulaire de connexion, seule fenêtre alternative possible.
   let panel = document.getElementById('vidspark-activation');
   if(panel){
-    const willShow = panel.style.display === 'none';
-    panel.style.display = willShow ? '' : 'none';
+    const willShow = panel.classList.contains('vs-act-hidden');
+    panel.classList.toggle('vs-act-hidden', !willShow);
     document.getElementById('vidspark-toolbar-btn')?.setAttribute('aria-expanded', String(willShow));
     if(willShow) setTimeout(()=>panel.querySelector('button')?.focus(), 50);
     return;
@@ -11140,7 +11140,7 @@ function toggleShellPanel(){
   panel.innerHTML = renderActivationHTML();
   document.body.appendChild(panel);
   wireActivationEvents(panel, {
-    onSuccess: () => { panel.style.display = 'none'; panelMounted = false; bootFromStorage(); }
+    onSuccess: () => { panel.classList.add('vs-act-hidden'); panelMounted = false; bootFromStorage(); }
   });
   document.getElementById('vidspark-toolbar-btn')?.setAttribute('aria-expanded', 'true');
   setTimeout(()=>panel.querySelector('button')?.focus(), 50);

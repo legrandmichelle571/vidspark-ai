@@ -56,16 +56,17 @@
   scrollbar-width: thin;
   scrollbar-color: #3a3a45 transparent;
   z-index: 2147483000;
-  opacity: 1; transform: scale(1); visibility: visible;
-  transition: opacity .16s ease, transform .16s cubic-bezier(.16,1,.3,1), visibility 0s linear 0s;
+  transform-origin: top center; perspective: 1200px;
+  opacity: 1; transform: rotateX(0deg) scale(1); visibility: visible;
+  transition: opacity .18s ease, transform .18s cubic-bezier(.16,1,.3,1), visibility 0s linear 0s;
 }
-/* Ouverture/fermeture animées (jamais un display:none instantané) — même bouton, mêmes
-   classList.add/remove('echo-panel-hidden') déjà en place partout (toggleShellPanel,
+/* Ouverture/fermeture animées en 3D (jamais un display:none instantané) — même bouton,
+   mêmes classList.add/remove('echo-panel-hidden') déjà en place partout (toggleShellPanel,
    closeShellPanels, #echoPanelHide, #echo-shorts-toggle) : rien à changer côté JS. */
 #echo-rank-panel.echo-panel-hidden {
-  opacity: 0; transform: scale(.97) translateY(-8px);
+  opacity: 0; transform: rotateX(-12deg) translateY(-10px) scale(.96);
   pointer-events: none; visibility: hidden;
-  transition: opacity .12s ease, transform .12s ease, visibility 0s linear .12s;
+  transition: opacity .13s ease, transform .13s ease, visibility 0s linear .13s;
 }
 
 /* En-tête + barres de nav restent visibles pendant le défilement du contenu :
@@ -1707,11 +1708,19 @@
   border-radius: 6px; padding: 5px 9px; white-space: nowrap;
 }
 
-/* Panneau de connexion (#vidspark-activation, stylé en inline dans content.js) — seule
-   l'animation d'apparition vit ici : elle rejoue à chaque fois que style.display repasse
-   de 'none' à visible (comportement standard des animations CSS), sans toucher au JS. */
-#vidspark-activation { animation: vsActivationIn .16s cubic-bezier(.16,1,.3,1); }
-@keyframes vsActivationIn { from { opacity: 0; transform: scale(.95) translateY(-8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+/* Panneau de connexion (#vidspark-activation, stylé en inline dans content.js) — ouverture/
+   fermeture animées en 3D via classList.toggle('vs-act-hidden'), même technique que
+   #echo-rank-panel juste au-dessus (transition, pas keyframe : marche dans les deux sens). */
+#vidspark-activation {
+  transform-origin: top center; perspective: 900px;
+  opacity: 1; transform: rotateX(0deg) scale(1); visibility: visible;
+  transition: opacity .16s ease, transform .16s cubic-bezier(.16,1,.3,1), visibility 0s linear 0s;
+}
+#vidspark-activation.vs-act-hidden {
+  opacity: 0; transform: rotateX(-14deg) translateY(-8px) scale(.95);
+  pointer-events: none; visibility: hidden;
+  transition: opacity .12s ease, transform .12s ease, visibility 0s linear .12s;
+}
 
 /* ── Fenêtre "Recherche concurrents" (façon Channel Insights de TubeBuddy) ──
    Backdrop centré, ouverte par son propre bouton du masthead (#vidspark-insights-btn). */
@@ -1719,22 +1728,23 @@
   position: fixed; inset: 0; z-index: 2147483600;
   background: rgba(0,0,0,.55);
   display: flex; align-items: center; justify-content: center;
+  perspective: 1200px;
   animation: vsInsBackdropIn .15s ease-out;
 }
 .vs-ins-backdrop.vs-ins-closing { animation: vsInsBackdropOut .14s ease-in forwards; }
 .vs-ins-backdrop.vs-ins-closing .vs-ins-card { animation: vsInsCardOut .14s ease-in forwards; }
 @keyframes vsInsBackdropIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes vsInsBackdropOut { from { opacity: 1; } to { opacity: 0; } }
-@keyframes vsInsCardOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.96); } }
+@keyframes vsInsCardOut { from { opacity: 1; transform: rotateX(0deg) scale(1); } to { opacity: 0; transform: rotateX(10deg) scale(.95); } }
 .vs-ins-card {
   width: min(480px, 92vw); max-height: 82vh; display: flex; flex-direction: column;
   background: var(--vs-bg-elevated, #131318); border: 1px solid var(--vs-border, #26262f);
   border-radius: var(--vs-radius-lg, 16px); box-shadow: var(--vs-shadow-panel, 0 24px 60px -12px rgba(0,0,0,.6));
   font-family: var(--vs-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif);
   overflow: hidden;
-  animation: vsInsCardIn .16s cubic-bezier(.16,1,.3,1);
+  animation: vsInsCardIn .18s cubic-bezier(.16,1,.3,1);
 }
-@keyframes vsInsCardIn { from { opacity: 0; transform: scale(.94) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes vsInsCardIn { from { opacity: 0; transform: rotateX(-14deg) scale(.94) translateY(8px); } to { opacity: 1; transform: rotateX(0deg) scale(1) translateY(0); } }
 .vs-ins-header {
   display: flex; align-items: center; gap: 10px; padding: 16px 18px;
   border-bottom: 1px solid var(--vs-border-soft, #1c1c22);
@@ -1788,12 +1798,12 @@ a.vs-ins-row:hover { background: rgba(255,255,255,.05); }
   border-radius: var(--vs-radius-lg, 16px); box-shadow: var(--vs-shadow-panel, 0 24px 60px -12px rgba(0,0,0,.6));
   font-family: var(--vs-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif);
   padding: 10px;
-  transform-origin: top right;
-  animation: vsQmIn .14s cubic-bezier(.16,1,.3,1);
+  transform-origin: top right; perspective: 800px;
+  animation: vsQmIn .16s cubic-bezier(.16,1,.3,1);
 }
-.vs-qm.vs-qm-closing { animation: vsQmOut .1s ease-in forwards; pointer-events: none; }
-@keyframes vsQmIn { from { opacity:0; transform:scale(.97) translateY(-4px); } to { opacity:1; transform:scale(1) translateY(0); } }
-@keyframes vsQmOut { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(.98); } }
+.vs-qm.vs-qm-closing { animation: vsQmOut .11s ease-in forwards; pointer-events: none; }
+@keyframes vsQmIn { from { opacity:0; transform: rotateX(-16deg) translateY(-6px) scale(.95); } to { opacity:1; transform: rotateX(0deg) translateY(0) scale(1); } }
+@keyframes vsQmOut { from { opacity:1; transform: rotateX(0deg) scale(1); } to { opacity:0; transform: rotateX(12deg) translateY(-4px) scale(.96); } }
 
 .vs-qm-head {
   display: flex; align-items: center; gap: 8px; padding: 8px 6px 12px;
