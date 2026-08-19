@@ -5560,7 +5560,8 @@ const SHELL_STRINGS = {
        insights_views:"vues", insights_per_hour:"/h", insights_empty:"Aucun résultat pour cette recherche.",
        stats_growth:"Croissance", stats_growth_start:"Suivi démarré aujourd'hui — reviens dans quelques jours pour voir l'évolution.",
        stats_growth_days:"sur {n} jours", stats_locked_title:"Statistiques Pro",
-       qm_open:"Ouvrir VidSpark", qm_signin:"Se connecter pour débloquer" },
+       qm_open:"Ouvrir VidSpark", qm_signin:"Se connecter pour débloquer",
+       qm_need_video:"Ouvre une vidéo YouTube pour accéder à l'analyse." },
   en:{ shell_title:"VidSpark AI", shell_locked:"Connect your account to unlock", shell_connect:"Sign in",
        shell_dashboard:"Dashboard", shell_close:"Close", side_title:"My account", side_notconnected:"Not connected",
        side_plan:"Plan", side_upgrade:"Upgrade", side_support:"Support", side_free:"Free",
@@ -5582,7 +5583,8 @@ const SHELL_STRINGS = {
        insights_views:"views", insights_per_hour:"/h", insights_empty:"No results for this search.",
        stats_growth:"Growth", stats_growth_start:"Tracking started today — check back in a few days to see the trend.",
        stats_growth_days:"over {n} days", stats_locked_title:"Pro Statistics",
-       qm_open:"Open VidSpark", qm_signin:"Sign in to unlock" },
+       qm_open:"Open VidSpark", qm_signin:"Sign in to unlock",
+       qm_need_video:"Open a YouTube video to access the analysis." },
   ar:{ stats_views:"المشاهدات", stats_comments:"التعليقات", stats_likes:"الإعجابات",
        stats_seo:"نقاط SEO", stats_viral:"نقاط الانتشار", stats_global:"النقاط الإجمالية", stats_tags:"الوسوم",
        stats_summary:"الملخص", stats_scores:"النقاط", stats_channel:"القناة", stats_subscribers:"المشتركون",
@@ -5590,7 +5592,8 @@ const SHELL_STRINGS = {
        stats_click_load:"انقر للتحميل", stats_na:"—",
        stats_growth:"النمو", stats_growth_start:"بدأ التتبع اليوم — عد خلال بضعة أيام لرؤية التطور.",
        stats_growth_days:"خلال {n} يوم", stats_locked_title:"إحصائيات برو",
-       qm_open:"فتح VidSpark", qm_signin:"سجّل الدخول للفتح" },
+       qm_open:"فتح VidSpark", qm_signin:"سجّل الدخول للفتح",
+       qm_need_video:"افتح فيديو يوتيوب للوصول إلى التحليل." },
   zh:{ stats_views:"观看次数", stats_comments:"评论", stats_likes:"点赞",
        stats_seo:"SEO 分数", stats_viral:"病毒分数", stats_global:"总分", stats_tags:"标签",
        stats_summary:"摘要", stats_scores:"分数", stats_channel:"频道", stats_subscribers:"订阅者",
@@ -5598,7 +5601,8 @@ const SHELL_STRINGS = {
        stats_click_load:"点击加载", stats_na:"—",
        stats_growth:"增长", stats_growth_start:"今天开始追踪 — 几天后回来查看趋势。",
        stats_growth_days:"过去 {n} 天", stats_locked_title:"专业版统计",
-       qm_open:"打开 VidSpark", qm_signin:"登录以解锁" },
+       qm_open:"打开 VidSpark", qm_signin:"登录以解锁",
+       qm_need_video:"打开一个 YouTube 视频以查看分析。" },
   hi:{ stats_views:"व्यूज़", stats_comments:"टिप्पणियाँ", stats_likes:"लाइक्स",
        stats_seo:"SEO स्कोर", stats_viral:"वायरल स्कोर", stats_global:"कुल स्कोर", stats_tags:"टैग",
        stats_summary:"सारांश", stats_scores:"स्कोर", stats_channel:"चैनल", stats_subscribers:"सब्सक्राइबर",
@@ -5606,7 +5610,8 @@ const SHELL_STRINGS = {
        stats_click_load:"लोड करने के लिए क्लिक करें", stats_na:"—",
        stats_growth:"ग्रोथ", stats_growth_start:"आज से ट्रैकिंग शुरू — रुझान देखने के लिए कुछ दिनों बाद वापस आएं।",
        stats_growth_days:"{n} दिनों में", stats_locked_title:"प्रो आँकड़े",
-       qm_open:"VidSpark खोलें", qm_signin:"अनलॉक करने के लिए लॉगिन करें" },
+       qm_open:"VidSpark खोलें", qm_signin:"अनलॉक करने के लिए लॉगिन करें",
+       qm_need_video:"विश्लेषण देखने के लिए एक YouTube वीडियो खोलें।" },
   ja:{ stats_views:"再生回数", stats_comments:"コメント", stats_likes:"高評価",
        stats_seo:"SEOスコア", stats_viral:"バイラルスコア", stats_global:"総合スコア", stats_tags:"タグ",
        stats_summary:"概要", stats_scores:"スコア", stats_channel:"チャンネル", stats_subscribers:"登録者数",
@@ -5614,7 +5619,8 @@ const SHELL_STRINGS = {
        stats_click_load:"クリックして読み込む", stats_na:"—",
        stats_growth:"成長", stats_growth_start:"本日から記録を開始しました — 数日後に推移を確認できます。",
        stats_growth_days:"{n}日間", stats_locked_title:"Pro統計",
-       qm_open:"VidSparkを開く", qm_signin:"ログインして解除" },
+       qm_open:"VidSparkを開く", qm_signin:"ログインして解除",
+       qm_need_video:"分析にアクセスするにはYouTube動画を開いてください。" },
   ru:{ stats_views:"Просмотры", stats_comments:"Комментарии", stats_likes:"Лайки",
        stats_seo:"SEO-оценка", stats_viral:"Вирусная оценка", stats_global:"Общая оценка", stats_tags:"Теги",
        stats_summary:"Сводка", stats_scores:"Оценки", stats_channel:"Канал", stats_subscribers:"Подписчики",
@@ -5622,7 +5628,8 @@ const SHELL_STRINGS = {
        stats_click_load:"нажмите, чтобы загрузить", stats_na:"—",
        stats_growth:"Рост", stats_growth_start:"Отслеживание начато сегодня — загляните через несколько дней, чтобы увидеть динамику.",
        stats_growth_days:"за {n} дн.", stats_locked_title:"Pro-статистика",
-       qm_open:"Открыть VidSpark", qm_signin:"Войдите, чтобы разблокировать" },
+       qm_open:"Открыть VidSpark", qm_signin:"Войдите, чтобы разблокировать",
+       qm_need_video:"Откройте видео на YouTube, чтобы увидеть анализ." },
   es:{ stats_views:"Vistas", stats_comments:"Comentarios", stats_likes:"Me gusta",
        stats_seo:"Puntuación SEO", stats_viral:"Puntuación viral", stats_global:"Puntuación global", stats_tags:"Etiquetas",
        stats_summary:"Resumen", stats_scores:"Puntuaciones", stats_channel:"Canal", stats_subscribers:"Suscriptores",
@@ -5630,7 +5637,8 @@ const SHELL_STRINGS = {
        stats_click_load:"clic para cargar", stats_na:"—",
        stats_growth:"Crecimiento", stats_growth_start:"Seguimiento iniciado hoy — vuelve en unos días para ver la tendencia.",
        stats_growth_days:"en {n} días", stats_locked_title:"Estadísticas Pro",
-       qm_open:"Abrir VidSpark", qm_signin:"Inicia sesión para desbloquear" },
+       qm_open:"Abrir VidSpark", qm_signin:"Inicia sesión para desbloquear",
+       qm_need_video:"Abre un vídeo de YouTube para acceder al análisis." },
   pt:{ stats_views:"Visualizações", stats_comments:"Comentários", stats_likes:"Curtidas",
        stats_seo:"Pontuação SEO", stats_viral:"Pontuação viral", stats_global:"Pontuação global", stats_tags:"Tags",
        stats_summary:"Resumo", stats_scores:"Pontuações", stats_channel:"Canal", stats_subscribers:"Inscritos",
@@ -5638,7 +5646,8 @@ const SHELL_STRINGS = {
        stats_click_load:"clique para carregar", stats_na:"—",
        stats_growth:"Crescimento", stats_growth_start:"Rastreamento iniciado hoje — volte em alguns dias para ver a tendência.",
        stats_growth_days:"em {n} dias", stats_locked_title:"Estatísticas Pro",
-       qm_open:"Abrir VidSpark", qm_signin:"Entra para desbloquear" },
+       qm_open:"Abrir VidSpark", qm_signin:"Entra para desbloquear",
+       qm_need_video:"Abre um vídeo do YouTube para ver a análise." },
   de:{ stats_views:"Aufrufe", stats_comments:"Kommentare", stats_likes:"Likes",
        stats_seo:"SEO-Wert", stats_viral:"Viral-Wert", stats_global:"Gesamtwert", stats_tags:"Tags",
        stats_summary:"Übersicht", stats_scores:"Werte", stats_channel:"Kanal", stats_subscribers:"Abonnenten",
@@ -5646,7 +5655,8 @@ const SHELL_STRINGS = {
        stats_click_load:"zum Laden klicken", stats_na:"—",
        stats_growth:"Wachstum", stats_growth_start:"Tracking heute gestartet — schau in ein paar Tagen vorbei, um den Trend zu sehen.",
        stats_growth_days:"über {n} Tage", stats_locked_title:"Pro-Statistiken",
-       qm_open:"VidSpark öffnen", qm_signin:"Zum Freischalten anmelden" },
+       qm_open:"VidSpark öffnen", qm_signin:"Zum Freischalten anmelden",
+       qm_need_video:"Öffne ein YouTube-Video, um die Analyse zu sehen." },
   ko:{ stats_views:"조회수", stats_comments:"댓글", stats_likes:"좋아요",
        stats_seo:"SEO 점수", stats_viral:"바이럴 점수", stats_global:"종합 점수", stats_tags:"태그",
        stats_summary:"요약", stats_scores:"점수", stats_channel:"채널", stats_subscribers:"구독자",
@@ -5654,7 +5664,8 @@ const SHELL_STRINGS = {
        stats_click_load:"클릭하여 불러오기", stats_na:"—",
        stats_growth:"성장", stats_growth_start:"오늘부터 추적을 시작했습니다 — 며칠 후 다시 확인해 추이를 보세요.",
        stats_growth_days:"{n}일 동안", stats_locked_title:"Pro 통계",
-       qm_open:"VidSpark 열기", qm_signin:"잠금 해제하려면 로그인" },
+       qm_open:"VidSpark 열기", qm_signin:"잠금 해제하려면 로그인",
+       qm_need_video:"분석을 보려면 YouTube 동영상을 여세요." },
   tr:{ stats_views:"Görüntülenme", stats_comments:"Yorumlar", stats_likes:"Beğeni",
        stats_seo:"SEO Puanı", stats_viral:"Viral Puan", stats_global:"Genel Puan", stats_tags:"Etiketler",
        stats_summary:"Özet", stats_scores:"Puanlar", stats_channel:"Kanal", stats_subscribers:"Abone",
@@ -5662,7 +5673,8 @@ const SHELL_STRINGS = {
        stats_click_load:"yüklemek için tıklayın", stats_na:"—",
        stats_growth:"Büyüme", stats_growth_start:"Takip bugün başladı — eğilimi görmek için birkaç gün sonra tekrar bak.",
        stats_growth_days:"{n} günde", stats_locked_title:"Pro İstatistikleri",
-       qm_open:"VidSpark'ı Aç", qm_signin:"Kilidi açmak için giriş yap" },
+       qm_open:"VidSpark'ı Aç", qm_signin:"Kilidi açmak için giriş yap",
+       qm_need_video:"Analizi görmek için bir YouTube videosu aç." },
   it:{ stats_views:"Visualizzazioni", stats_comments:"Commenti", stats_likes:"Mi piace",
        stats_seo:"Punteggio SEO", stats_viral:"Punteggio virale", stats_global:"Punteggio globale", stats_tags:"Tag",
        stats_summary:"Riepilogo", stats_scores:"Punteggi", stats_channel:"Canale", stats_subscribers:"Iscritti",
@@ -5670,7 +5682,8 @@ const SHELL_STRINGS = {
        stats_click_load:"clic per caricare", stats_na:"—",
        stats_growth:"Crescita", stats_growth_start:"Monitoraggio iniziato oggi — torna tra qualche giorno per vedere l'andamento.",
        stats_growth_days:"in {n} giorni", stats_locked_title:"Statistiche Pro",
-       qm_open:"Apri VidSpark", qm_signin:"Accedi per sbloccare" },
+       qm_open:"Apri VidSpark", qm_signin:"Accedi per sbloccare",
+       qm_need_video:"Apri un video di YouTube per vedere l'analisi." },
   nl:{ stats_views:"Weergaven", stats_comments:"Reacties", stats_likes:"Vind-ik-leuks",
        stats_seo:"SEO-score", stats_viral:"Viral-score", stats_global:"Totaalscore", stats_tags:"Tags",
        stats_summary:"Overzicht", stats_scores:"Scores", stats_channel:"Kanaal", stats_subscribers:"Abonnees",
@@ -5678,7 +5691,8 @@ const SHELL_STRINGS = {
        stats_click_load:"klik om te laden", stats_na:"—",
        stats_growth:"Groei", stats_growth_start:"Tracking vandaag gestart — kom over een paar dagen terug om de trend te zien.",
        stats_growth_days:"over {n} dagen", stats_locked_title:"Pro-statistieken",
-       qm_open:"VidSpark openen", qm_signin:"Log in om te ontgrendelen" }
+       qm_open:"VidSpark openen", qm_signin:"Log in om te ontgrendelen",
+       qm_need_video:"Open een YouTube-video om de analyse te zien." }
 };
 function ST(key){
   const L = SHELL_STRINGS[currentLanguage] || SHELL_STRINGS.en;
@@ -10715,13 +10729,11 @@ function injectToolbarButtons(){
     <button id="vidspark-toolbar-btn" class="vidspark-tb-btn" type="button" title="${esc(ST('shell_title'))}" aria-label="${esc(ST('shell_title'))}" aria-expanded="false">
       <img src="${chrome.runtime.getURL('icon.png')}" alt="" class="vidspark-tb-icon">
     </button>
-    <button id="vidspark-menu-btn" class="vidspark-tb-btn vidspark-tb-menu" type="button" title="${esc(ST('side_title'))}" aria-label="${esc(ST('side_title'))}" aria-expanded="false">☰</button>
     <button id="vidspark-insights-btn" class="vidspark-tb-btn" type="button" title="${esc(ST('insights_title'))}" aria-label="${esc(ST('insights_title'))}">🏆</button>
   `;
   container.prepend(wrap);
 
   document.getElementById('vidspark-toolbar-btn').addEventListener('click', (e)=>{ e.stopPropagation(); toggleQuickMenu(); });
-  document.getElementById('vidspark-menu-btn').addEventListener('click', (e)=>{ e.stopPropagation(); toggleSidePanel(); });
   document.getElementById('vidspark-insights-btn').addEventListener('click', (e)=>{
     e.stopPropagation();
     if(!currentUserToken || !currentUserEmail){ toggleShellPanel(); return; } // pas connecté → flux de connexion habituel
@@ -10955,7 +10967,6 @@ function closeShellPanels(){
   }
   if(act) act.style.display = 'none';
   document.getElementById('vidspark-toolbar-btn')?.setAttribute('aria-expanded','false');
-  document.getElementById('vidspark-menu-btn')?.setAttribute('aria-expanded','false');
   if(wasVisible) document.getElementById('vidspark-toolbar-btn')?.focus();
 }
 
@@ -10965,7 +10976,9 @@ function closeShellPanels(){
  *  complet (SECTIONS, ST, T). Ne remplace pas #echo-rank-panel : "→ Ouvrir VidSpark" et
  *  chaque section l'ouvrent tel quel (voir openVidSparkSection). */
 function renderQuickMenuHTML(){
-  const hasData = !!(lastPanelData && lastPanelScores);
+  const pageType = getPageType();
+  const isVideoCtx = pageType === 'VIDEO' || pageType === 'SHORT';
+  const hasData = isVideoCtx && !!(lastPanelData && lastPanelScores);
   const scores = lastPanelScores || {};
   const planBadge = currentPlan ? `<span class="echo-plan-badge ${currentPlan}">${esc(T("plan_"+currentPlan))}</span>` : '';
   const scoresHTML = hasData ? `
@@ -10974,6 +10987,13 @@ function renderQuickMenuHTML(){
       <div class="vs-qm-score"><b style="color:${scoreColor(scores.viral)}">${scores.viral}</b><span>${esc(ST('stats_viral'))}</span></div>
       <div class="vs-qm-score"><b style="color:${scoreColor(scores.global)}">${scores.global}</b><span>${esc(ST('stats_global'))}</span></div>
     </div>` : '';
+  // Le panneau complet ne se monte qu'sur une page vidéo (architecture actuelle, inchangée
+  // ici) — sur une page chaîne/recherche, on le dit clairement plutôt que de laisser croire
+  // que les sections vont s'ouvrir avec un contenu propre à cette page (aucune donnée de ce
+  // type n'existe aujourd'hui, on n'en invente pas).
+  const hintHTML = !isVideoCtx
+    ? `<div class="vs-qm-hint">${esc(ST('qm_need_video'))}</div>`
+    : '';
   const openLabel = currentUserToken ? ST('qm_open') : ST('qm_signin');
   return `
     <div class="vs-qm-head">
@@ -10982,6 +11002,7 @@ function renderQuickMenuHTML(){
       ${planBadge}
     </div>
     ${scoresHTML}
+    ${hintHTML}
     <div class="vs-qm-sep"></div>
     <div class="vs-qm-sections" role="none">
       ${SECTIONS.map(s=>`<button class="vs-qm-item" role="menuitem" type="button" data-qm-section="${s.id}">${s.icon} ${esc(T(s.key))}</button>`).join('')}
@@ -10991,12 +11012,15 @@ function renderQuickMenuHTML(){
   `;
 }
 
+/** Ferme avec une courte animation (voir .vs-qm-closing) — jamais de suppression brutale.
+ *  Idempotent : appeler sur un menu déjà en train de se fermer, ou absent, ne fait rien. */
 function closeQuickMenu(){
   const menu = document.getElementById('vidspark-quickmenu');
-  if(menu){
-    menu.remove();
-    document.getElementById('vidspark-toolbar-btn')?.setAttribute('aria-expanded','false');
-  }
+  if(!menu || menu.dataset.closing) return;
+  menu.dataset.closing = '1';
+  document.getElementById('vidspark-toolbar-btn')?.setAttribute('aria-expanded','false');
+  menu.classList.add('vs-qm-closing');
+  setTimeout(()=>menu.remove(), 110);
 }
 
 function openQuickMenu(){
@@ -11009,10 +11033,23 @@ function openQuickMenu(){
   menu.className = 'vs-qm';
   menu.setAttribute('role','menu');
   menu.setAttribute('aria-label', 'VidSpark AI');
+  // Position provisoire (ancré sous le bouton, aligné à droite) — corrigée juste après
+  // avec les dimensions réelles pour ne jamais sortir de l'écran (petites fenêtres, Shorts).
   menu.style.top = (rect.bottom + 8) + 'px';
   menu.style.right = Math.max(8, window.innerWidth - rect.right) + 'px';
   menu.innerHTML = renderQuickMenuHTML();
   document.body.appendChild(menu);
+
+  const mRect = menu.getBoundingClientRect();
+  if(mRect.bottom > window.innerHeight - 8){
+    // Pas assez de place en dessous → au-dessus du bouton à la place.
+    menu.style.top = 'auto';
+    menu.style.bottom = Math.max(8, window.innerHeight - rect.top + 8) + 'px';
+  }
+  if(mRect.left < 8){
+    menu.style.right = 'auto';
+    menu.style.left = '8px';
+  }
 
   menu.querySelectorAll('[data-qm-section]').forEach(b=>{
     b.addEventListener('click', ()=>openVidSparkSection(b.dataset.qmSection));
@@ -11029,12 +11066,21 @@ function toggleQuickMenu(){
 }
 
 /** Ouvre le panneau complet EXISTANT (jamais une deuxième interface), optionnellement
- *  sur une section précise. Si pas encore activé/monté, retombe sur le flux de connexion
- *  habituel de toggleShellPanel — comportement déjà en place, inchangé. */
+ *  sur une section précise. Si pas encore activé/monté ET qu'on est sur une page vidéo,
+ *  retombe sur le flux de connexion habituel. Si on est connecté mais hors d'une page
+ *  vidéo (chaîne/recherche — le panneau ne s'y monte pas dans l'architecture actuelle),
+ *  on le dit clairement au lieu de renvoyer à tort vers l'écran de connexion. */
 function openVidSparkSection(sid){
   closeQuickMenu();
   const real = document.getElementById('echo-rank-panel');
-  if(!real){ toggleShellPanel(); return; }
+  if(!real){
+    if(currentUserToken && currentUserEmail && !isVideoPage()){
+      showToast(ST('qm_need_video'));
+      return;
+    }
+    toggleShellPanel();
+    return;
+  }
   if(real.classList.contains('echo-panel-hidden')) toggleShellPanel();
   if(sid && lastPanelData && lastPanelScores) switchSection(sid, lastPanelData, lastPanelScores, lastPanelChecklist);
 }
@@ -11085,23 +11131,6 @@ function toggleShellPanel(){
   });
   document.getElementById('vidspark-toolbar-btn')?.setAttribute('aria-expanded', 'true');
   setTimeout(()=>panel.querySelector('button')?.focus(), 50);
-}
-
-/** Bouton ☰ du masthead : ouvre le menu compte DÉJÀ intégré au panneau réel
- *  (.echo-acct-menu — langue, Dashboard, réactivation) plutôt que de dupliquer un second
- *  panneau. Si le panneau réel n'existe pas encore, se comporte comme le bouton principal. */
-function toggleSidePanel(){
-  const real = document.getElementById('echo-rank-panel');
-  if(real){
-    if(real.classList.contains('echo-panel-hidden')){
-      toggleShellPanel(); // l'ouvrir d'abord
-      setTimeout(()=>real.querySelector('#echoAcctBtn')?.click(), 60);
-    }else{
-      real.querySelector('#echoAcctBtn')?.click();
-    }
-    return;
-  }
-  toggleShellPanel();
 }
 
 // Fermeture au clic extérieur / Échap — une seule fois, jamais dupliquée.
@@ -11220,20 +11249,36 @@ chrome.storage.local.get(["activation_id","activation_secret","subscription_expi
     } catch (e) { console.warn('[VidSpark] Resync chaîne échoué:', e.message); }
     createPanel();
   })();
-  // Observer pour les changements de vidéo/URL (plus efficace que setInterval)
+  // Observer pour les changements de vidéo/URL. YouTube émet 'yt-navigate-finish' à chaque
+  // navigation SPA — on la détecte instantanément via cet événement, et le setInterval
+  // (fréquence réduite : simple filet de sécurité, pas la voie principale) couvre les cas
+  // où l'événement ne se déclenche pas (rechargement dur, chargement initial très lent).
   if(_navIv) clearInterval(_navIv);   // un rejeu de bootFromStorage ne doit pas empiler les observateurs
+  checkNavChange(); // état initial, sans attendre le premier tick/événement
+  if(!window.__vidsparkNavListener){  // un rejeu de bootFromStorage ne doit pas empiler les écouteurs
+    window.__vidsparkNavListener = true;
+    document.addEventListener('yt-navigate-finish', checkNavChange);
+  }
   _navIv=setInterval(()=>{
     if(!extAlive()){ clearInterval(_navIv); return; }  // extension rechargée → on s'arrête proprement
-    injectToolbarButtons(); // idempotent — réinjecte si YouTube a recréé le masthead
-    const cur=location.href;
-    const vid=extractVideoId();
-    if(cur!==lastUrl||(vid&&vid!==currentVideoId)){
-      lastUrl=cur;panelMounted=false;currentVideoId=null;
-      closeShellPanels(); // navigation = on referme les panneaux shell (comportement TubeBuddy)
-      setTimeout(createPanel,500);  // UN SEUL appel
-    }
-  },1000);  // Vérifier MOINS souvent (1sec au lieu de 500ms)
+    checkNavChange();
+  },3000);  // filet de sécurité peu fréquent — la détection principale est l'événement ci-dessus
 });
+}
+
+/* Logique de détection de changement de page — appelée par l'événement natif
+   'yt-navigate-finish' (voie principale) et par le setInterval de secours (voir bootFromStorage).
+   Jamais dupliquée entre les deux : une seule implémentation. */
+function checkNavChange(){
+  if(!extAlive()){ if(_navIv) clearInterval(_navIv); return; }
+  injectToolbarButtons(); // idempotent — réinjecte si YouTube a recréé le masthead
+  const cur=location.href;
+  const vid=extractVideoId();
+  if(cur!==lastUrl||(vid&&vid!==currentVideoId)){
+    lastUrl=cur;panelMounted=false;currentVideoId=null;
+    closeShellPanels(); // navigation = on referme les panneaux shell (comportement TubeBuddy)
+    setTimeout(createPanel,500);  // UN SEUL appel
+  }
 }
 
 bootFromStorage();
