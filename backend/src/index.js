@@ -45,14 +45,27 @@ if (_allowedOrigins.length === 0) {
   console.warn('[CORS] ⚠️ ALLOWED_ORIGINS vide — utilisant les domaines par défaut');
 }
 
+/* ID(s) d'extension Chrome autorisés — remplace l'ancien "tout chrome-extension://*"
+   (n'importe quelle extension installée pouvait auparavant appeler cette API).
+   ID de production : https://chromewebstore.google.com/detail/vidspark-ai/ojahpkeponimlmfokadlijbajooeejbk
+   ID(s) de dev additionnels via ALLOWED_EXTENSION_IDS (jamais en dur avec la prod). */
+const _defaultExtensionIds = ['ojahpkeponimlmfokadlijbajooeejbk'];
+const _allowedExtensionIds = process.env.ALLOWED_EXTENSION_IDS
+  ?.split(',').map(o => o.trim()).filter(Boolean) || _defaultExtensionIds;
+
 app.use(cors({
   origin: function(origin, callback) {
     /* Requêtes sans origin : Postman, curl, server-to-server → toujours autorisées */
     if (!origin) return callback(null, true);
     /* Fichier local (file://) : tableau de bord de commande — protégé par la clé admin */
     if (origin === 'null') return callback(null, true);
-    /* Check if origin is a chrome extension */
-    if (origin.startsWith('chrome-extension://')) return callback(null, true);
+    /* Extension Chrome : uniquement les ID explicitement autorisés (voir _allowedExtensionIds) */
+    if (origin.startsWith('chrome-extension://')) {
+      const extensionId = origin.replace('chrome-extension://', '');
+      if (_allowedExtensionIds.includes(extensionId)) return callback(null, true);
+      if (process.env.NODE_ENV === 'development') return callback(null, true);
+      return callback(new Error('CORS: extension non autorisée — ' + extensionId));
+    }
     /* Toujours autoriser YouTube (l'extension appelle l'API depuis les pages YouTube) */
     if (/^https?:\/\/([a-z0-9-]+\.)?youtube\.com$/.test(origin)) return callback(null, true);
     /* Vérifier si origin est dans la liste */
@@ -94,6 +107,7 @@ app.use('/api/public',        require('./routes/public'));
 app.use('/api/auth',          require('./routes/auth'));
 app.use('/api/user',          require('./routes/user'));
 app.use('/api/activation',    require('./routes/activation'));
+app.use('/api/auth/extension', require('./routes/extensionPairing'));
 app.use('/api/channels',      require('./routes/channels'));
 app.use('/api/diamant',       require('./routes/diamant'));
 app.use('/api/analysis',      require('./routes/analysis'));
