@@ -1,14 +1,15 @@
 {
   "manifest_version": 3,
   "name": "VidSpark AI",
-  "version": "4.0",
+  "version": "9",
   "description": "YouTube SEO Intelligence — AI-powered analysis",
-  "permissions": ["activeTab", "storage", "clipboardWrite"],
-  "host_permissions": ["*://*.youtube.com/*", "https://vidsparkpro.com/*", "https://*.vidsparkpro.com/*", "https://*.pages.dev/*"],
+  "permissions": ["storage", "identity"],
+  "host_permissions": ["*://*.youtube.com/*", "https://vidsparkpro.com/*", "https://*.vidsparkpro.com/*"],
   "background": { "service_worker": "background.js" },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "VidSpark AI — Activation"
+    "default_title": "VidSpark AI",
+    "default_icon": { "128": "icon.png" }
   },
   "content_scripts": [{
     "matches": ["*://*.youtube.com/*"],
@@ -16,13 +17,13 @@
     "css": ["styles.css"],
     "run_at": "document_idle"
   }, {
-    "matches": ["https://vidsparkpro.com/*", "https://*.vidsparkpro.com/*", "https://*.pages.dev/*"],
+    "matches": ["https://vidsparkpro.com/*", "https://*.vidsparkpro.com/*"],
     "js": ["website-bridge.js"],
     "run_at": "document_start"
   }],
   "web_accessible_resources": [{
-    "resources": ["ai-report.html", "report.css", "icon.png"],
-    "matches": ["<all_urls>"]
+    "resources": ["icon.png"],
+    "matches": ["*://*.youtube.com/*"]
   }],
   "icons": { "128": "icon.png" }
 }

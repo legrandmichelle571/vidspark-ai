@@ -57,11 +57,19 @@ setInterval(() => {
 /**
  * Écouter les post messages du dashboard avec les infos d'authentification
  */
+const TRUSTED_ORIGINS = new Set([
+  'https://vidsparkpro.com',
+  'https://www.vidsparkpro.com',
+  'https://vidspark-site.pages.dev',
+  window.location.origin
+]);
+
 window.addEventListener('message', (event) => {
   console.log("[Website Bridge] Message received from:", event.origin, "Data:", event.data);
 
-  // Accepter les messages depuis la même origine OU depuis le site principal
-  if (event.origin !== window.location.origin && !event.origin.includes('pages.dev') && !event.origin.includes('vidsparkpro')) {
+  // Égalité stricte — un ancien `.includes('vidsparkpro')` acceptait par erreur
+  // n'importe quel domaine contenant ce mot (ex: evil-vidsparkpro.attacker.com).
+  if (!TRUSTED_ORIGINS.has(event.origin)) {
     console.log("[Website Bridge] Rejected - origin mismatch:", event.origin);
     return;
   }

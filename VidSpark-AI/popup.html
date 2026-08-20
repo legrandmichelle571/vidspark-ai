@@ -1,45 +1,72 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VidSpark AI — Activation</title>
+  <title>VidSpark AI</title>
   <style>
+    :root{
+      --vs-bg-panel:#0d0d10;
+      --vs-bg-elevated:#131318;
+      --vs-bg-surface:#17171d;
+      --vs-bg-surface-2:#1c1c24;
+      --vs-border:#26262f;
+      --vs-border-soft:#1c1c22;
+      --vs-accent:#7c6dfa;
+      --vs-accent-2:#a78bfa;
+      --vs-accent-soft:rgba(124,109,250,.14);
+      --vs-warning:#f7941d;
+      --vs-success:#22c55e;
+      --vs-success-2:#4ade80;
+      --vs-danger:#ef4444;
+      --vs-danger-2:#f87171;
+      --vs-text:#f0f0f5;
+      --vs-text-muted:#9494a4;
+      --vs-text-faint:#6c6c7a;
+      --vs-radius-lg:16px;
+      --vs-radius-md:11px;
+      --vs-radius-sm:8px;
+    }
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
     body {
-      width: 400px;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      color: #fff;
+      width: 380px;
+      background: var(--vs-bg-panel);
+      color: var(--vs-text);
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       padding: 0;
     }
     .container {
-      padding: 20px;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
     .header {
       text-align: center;
-      margin-bottom: 24px;
+      padding: 20px 20px 16px;
+      background: linear-gradient(160deg, var(--vs-bg-elevated), var(--vs-bg-panel));
+      border-bottom: 1px solid var(--vs-border);
     }
     .logo {
-      font-size: 32px;
-      margin-bottom: 8px;
+      font-size: 15px; width: 30px; height: 30px; margin: 0 auto 8px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: var(--vs-radius-sm);
+      background: linear-gradient(155deg, var(--vs-accent), #5b4bd6);
+      box-shadow: 0 3px 10px rgba(124,109,250,.35);
     }
     .title {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 800;
-      color: #7c6dfa;
-      margin-bottom: 4px;
+      color: var(--vs-text);
+      margin-bottom: 3px;
+      letter-spacing: -.2px;
     }
     .subtitle {
-      font-size: 12px;
-      color: #aaa;
+      font-size: 11.5px;
+      color: var(--vs-text-muted);
     }
     .content {
       flex: 1;
@@ -59,149 +86,194 @@
       grid-template-columns: 1fr 1fr;
       gap: 12px;
       margin-bottom: 12px;
+      padding: 20px;
     }
     .btn {
       padding: 14px;
       border: none;
-      border-radius: 8px;
+      border-radius: var(--vs-radius-sm);
+      font-family: inherit;
       font-weight: bold;
       font-size: 13px;
+      line-height: 1.3;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: background-color .18s ease, transform .12s ease;
       text-align: center;
     }
     .btn-plan {
-      background: #ef4444;
+      background: var(--vs-danger);
       color: white;
     }
     .btn-plan:hover {
-      background: #ff6b6b;
-      transform: scale(1.02);
+      background: var(--vs-danger-2);
+      transform: translateY(-1px);
     }
     .btn-connect {
-      background: #7c6dfa;
+      background: var(--vs-accent);
       color: white;
     }
     .btn-connect:hover {
-      background: #a78bfa;
-      transform: scale(1.02);
+      background: var(--vs-accent-2);
+      transform: translateY(-1px);
     }
+    /* Retour d'appui : sans lui, un clic sur ces boutons ne produit aucun signal
+       tant que l'écran suivant n'est pas affiché. */
+    .btn:active { transform: scale(.98); }
     .form-group {
       margin-bottom: 16px;
     }
+    .state-form, .state-activated .foot-actions { padding: 20px; }
     .form-label {
       display: block;
       font-size: 12px;
-      color: #aaa;
+      color: var(--vs-text-muted);
       margin-bottom: 6px;
       font-weight: 600;
     }
+    /* Les deux champs portaient déjà la bordure d'accent au repos : le passage au
+       focus (#7c6dfa → #a78bfa) était quasi invisible, et rien ne distinguait le
+       champ actif de l'autre. Repos neutre, focus accentué. */
     .form-input {
       width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #7c6dfa;
-      border-radius: 8px;
-      background: #0f0f1a;
+      padding: 11px 12px;
+      border: 1px solid var(--vs-border);
+      border-radius: var(--vs-radius-sm);
+      background: var(--vs-bg-surface);
       color: #fff;
+      font-family: inherit;
       font-size: 13px;
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color .18s ease, box-shadow .18s ease;
     }
+    .form-input::placeholder { color: #85859a; }
+    .form-input:hover { border-color: #3d3d5c; }
     .form-input:focus {
-      border-color: #a78bfa;
+      border-color: var(--vs-accent);
+      box-shadow: 0 0 0 3px rgba(124, 109, 250, .18);
     }
     .btn-submit {
       width: 100%;
       padding: 12px;
-      background: #7c6dfa;
+      background: var(--vs-accent);
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: var(--vs-radius-sm);
+      font-family: inherit;
       font-weight: bold;
       font-size: 13px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: background-color .18s ease, transform .12s ease;
     }
     .btn-submit:hover:not(:disabled) {
-      background: #a78bfa;
-      transform: scale(1.02);
+      background: var(--vs-accent-2);
     }
+    .btn-submit:active:not(:disabled) { transform: scale(.98); }
     .btn-submit:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
     .btn-back {
       width: 100%;
-      padding: 10px;
+      padding: 11px;
       background: transparent;
-      color: #7c6dfa;
-      border: 1px solid #7c6dfa;
-      border-radius: 8px;
+      color: #a290ff;
+      border: 1px solid #4b4180;
+      border-radius: var(--vs-radius-sm);
+      font-family: inherit;
       font-weight: bold;
       font-size: 12px;
       cursor: pointer;
       margin-top: 12px;
-      transition: all 0.2s;
+      transition: background-color .18s ease, border-color .18s ease, color .18s ease;
     }
     .btn-back:hover {
-      background: rgba(124, 109, 250, 0.1);
+      background: rgba(124, 109, 250, 0.12);
+      border-color: var(--vs-accent);
+      color: #c4b5fd;
     }
     .status-message {
-      font-size: 11px;
-      margin-top: 8px;
-      text-align: center;
-      min-height: 14px;
-    }
-    .status-success {
-      color: #4ade80;
-    }
-    .status-error {
-      color: #fa6d6d;
-    }
-    .status-info {
-      color: #7c6dfa;
-    }
-    .activated-box {
-      background: rgba(74, 222, 128, 0.1);
-      border: 1px solid #4ade80;
-      border-radius: 12px;
-      padding: 16px;
-      text-align: center;
-      margin-bottom: 16px;
-    }
-    .activated-icon {
-      font-size: 32px;
-      margin-bottom: 8px;
-    }
-    .activated-title {
-      color: #4ade80;
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-    .activated-text {
       font-size: 12px;
-      color: #aaa;
-      margin-bottom: 4px;
+      line-height: 1.45;
+      margin-top: 10px;
+      text-align: center;
+      min-height: 17px;
     }
-    .days-remaining {
-      font-size: 20px;
-      color: #4ade80;
-      font-weight: bold;
-      margin: 8px 0;
-    }
-    .days-label {
-      font-size: 11px;
-      color: #888;
-    }
+    .status-success { color: var(--vs-success-2); }
+    .status-error { color: #fa6d6d; }
+    .status-info { color: var(--vs-accent); }
+    :focus-visible { outline: 2px solid var(--vs-warning); outline-offset: 2px; }
+    /* Texte d'explication principal du popup : 11px/#aaa était le plus petit
+       corps de la fenêtre alors que c'est ce qu'il faut lire en premier. */
     .info-box {
       background: rgba(124, 109, 250, 0.1);
-      border: 1px solid #7c6dfa;
-      border-radius: 8px;
-      padding: 12px;
-      font-size: 11px;
-      color: #aaa;
-      line-height: 1.5;
-      margin-bottom: 12px;
+      border: 1px solid #4b4180;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: #c2c2d0;
+      line-height: 1.55;
+      margin-bottom: 14px;
+    }
+
+    /* ── Launcher (état activé) ── */
+    .launcher-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--vs-border-soft);
+    }
+    .launcher-badges { display: flex; align-items: center; gap: 8px; }
+    .plan-badge {
+      font-size: 10px; font-weight: 800; padding: 4px 9px;
+      border-radius: 999px; text-transform: uppercase; letter-spacing: .05em;
+      background: var(--vs-bg-surface); color: var(--vs-text-muted); border: 1px solid var(--vs-border);
+    }
+    .plan-badge.pro { background: #241a4a; color: var(--vs-accent-2); border-color: #4c3699; }
+    .plan-badge.business { background: #142b1c; color: var(--vs-success-2); border-color: #1c5231; }
+    .plan-badge.diamant { background: #142a33; color: #67e8f9; border-color: #155e75; }
+    .avatar {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: var(--vs-accent-soft); border: 1px solid var(--vs-border);
+      display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--vs-accent-2);
+      object-fit: cover;
+    }
+    .days-chip { text-align: right; font-variant-numeric: tabular-nums; }
+    .days-chip .days-remaining { font-size: 13px; font-weight: 800; color: var(--vs-success-2); }
+    .days-chip .days-label { font-size: 9.5px; color: var(--vs-text-faint); text-transform: uppercase; letter-spacing: .05em; display: block; }
+
+    .launcher-group { padding: 12px 20px 4px; }
+    .launcher-group-label {
+      font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--vs-text-faint); margin: 6px 0 8px;
+    }
+    .launcher-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; margin: 0 -10px; border-radius: 9px; cursor: pointer;
+      transition: background-color .15s ease;
+      color: var(--vs-text); text-decoration: none; border: none; background: none;
+      width: calc(100% + 20px); font-family: inherit; text-align: left;
+    }
+    .launcher-item:hover { background: var(--vs-bg-surface); }
+    .launcher-item .ic { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+    .launcher-item .t { flex: 1; font-size: 12.5px; font-weight: 600; }
+    .launcher-item .chev { color: var(--vs-text-faint); font-size: 11px; }
+
+    .foot-actions { border-top: 1px solid var(--vs-border-soft); margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .btn-open {
+      width: 100%; padding: 12px; background: var(--vs-accent); color: #fff; border: none;
+      border-radius: var(--vs-radius-sm); font-family: inherit; font-weight: bold; font-size: 13px;
+      cursor: pointer; transition: background-color .18s ease, transform .12s ease;
+    }
+    .btn-open:hover { background: var(--vs-accent-2); }
+    .btn-open:active { transform: scale(.98); }
+    .link-back {
+      width: 100%; padding: 8px; background: none; border: none; color: var(--vs-text-faint);
+      font-family: inherit; font-size: 11.5px; cursor: pointer; text-align: center;
+      transition: color .15s ease;
+    }
+    .link-back:hover { color: var(--vs-text-muted); }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition-duration: .01ms !important; }
+      .btn:hover, .btn:active, .btn-submit:active, .btn-open:hover { transform: none !important; }
     }
   </style>
 </head>
@@ -210,43 +282,89 @@
     <div class="header">
       <div class="logo">⚡</div>
       <div class="title">VidSpark AI</div>
-      <div class="subtitle">YouTube SEO Intelligence</div>
+      <div class="subtitle" data-i18n="p_tag">YouTube SEO Intelligence</div>
     </div>
 
     <div class="content">
       <div class="state-initial active">
-        <div class="info-box">Choisissez votre forfait ou activez avec votre ID et Secret.</div>
-        <div class="button-group">
-          <button class="btn btn-plan" id="btnPlan">🎯 Forfais</button>
-          <button class="btn btn-connect" id="btnConnect">🔑 Connecte</button>
+        <div class="button-group" style="padding-bottom:0;">
+          <button class="btn btn-plan" id="btnPlan">🎯 <span data-i18n="p_plans">Forfaits</span></button>
+          <button class="btn btn-connect" id="btnConnect">🔑 <span data-i18n="p_connect">Connecter</span></button>
+        </div>
+        <div style="padding:0 20px 20px;">
+          <div class="info-box" data-i18n="p_choose">Choisissez votre forfait ou activez avec votre ID et Secret.</div>
         </div>
       </div>
 
       <div class="state-form">
-        <div class="info-box">Entrez votre ID et Secret fournis après inscription.</div>
-        <div class="form-group">
-          <label class="form-label">ID d'activation</label>
-          <input type="text" class="form-input" id="inputId" placeholder="VID...">
+        <div class="connect-progress" id="connectProgress" style="padding:28px 20px;text-align:center;">
+          <div class="connect-spinner" style="width:32px;height:32px;margin:0 auto 16px;border:3px solid var(--vs-border);border-top-color:var(--vs-accent);border-radius:50%;animation:vs-spin 0.8s linear infinite;"></div>
+          <p style="font-size:13px;color:var(--vs-text);font-weight:600;" data-i18n="p_connecting">Connexion à VidSpark…</p>
+          <p style="font-size:11.5px;color:var(--vs-text-muted);margin-top:6px;" data-i18n="p_connecting_sub">Ouverture du site dans un nouvel onglet…</p>
         </div>
-        <div class="form-group">
-          <label class="form-label">Code secret</label>
-          <input type="password" class="form-input" id="inputSecret" placeholder="••••••••">
+
+        <div class="connect-error" id="connectError" style="display:none;padding:20px;text-align:center;">
+          <p style="font-size:13px;color:var(--vs-danger-2);font-weight:600;margin-bottom:14px;" data-i18n="p_connect_err">Impossible de terminer la connexion.</p>
+          <button class="btn-submit" id="btnRetryConnect" data-i18n="p_retry">🔄 Réessayer</button>
         </div>
-        <button class="btn-submit" id="btnActivate">✅ Activer</button>
-        <p class="status-message" id="statusForm"></p>
-        <button class="btn-back" id="btnBackForm">← Retour</button>
+
+        <div class="connect-fallback" id="connectFallback" style="display:none;padding:20px;">
+          <p style="font-size:13px;color:var(--vs-text);font-weight:600;text-align:center;margin-bottom:4px;" data-i18n="p_not_detected">Extension non détectée.</p>
+          <p style="font-size:11.5px;color:var(--vs-text-muted);text-align:center;margin-bottom:14px;" data-i18n="p_not_detected_sub">Vérifie que VidSpark AI est bien installée et active.</p>
+          <button class="btn-submit" id="btnRetryDetect" style="margin-bottom:10px;" data-i18n="p_retry">🔄 Réessayer</button>
+          <button class="btn-back" id="btnUseCode" style="margin-top:0;" data-i18n="p_use_code">Utiliser un code de connexion</button>
+
+          <div id="codeRedeemBlock" style="display:none;margin-top:16px;">
+            <div class="form-group">
+              <label class="form-label" for="inputCode" data-i18n="p_code_label">Code de connexion</label>
+              <input type="text" class="form-input" id="inputCode" placeholder="A7K9X-2PMQR" autocapitalize="characters" autocomplete="off" style="text-align:center;letter-spacing:1px;text-transform:uppercase;">
+            </div>
+            <button class="btn-submit" id="btnRedeemCode" data-i18n="p_validate">✅ Valider</button>
+            <p class="status-message" id="statusForm" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+
+        <div style="padding:0 20px 20px;">
+          <button class="btn-back" id="btnBackForm">← <span data-i18n="p_back">Retour</span></button>
+        </div>
       </div>
+      <style>@keyframes vs-spin{to{transform:rotate(360deg)}}</style>
 
       <div class="state-activated">
-        <div class="activated-box">
-          <div class="activated-icon">✅</div>
-          <div class="activated-title">Extension activée</div>
-          <div class="activated-text">Forfait en cours</div>
-          <div class="days-remaining" id="daysRemaining">30 jours</div>
-          <div class="days-label">restants</div>
+        <div class="launcher-head">
+          <div class="launcher-badges">
+            <span class="plan-badge" id="lpPlanBadge">—</span>
+            <img class="avatar" id="lpAvatarImg" alt="" hidden>
+            <span class="avatar" id="lpAvatarIcon">👤</span>
+          </div>
+          <div class="days-chip">
+            <span class="days-remaining" id="daysRemaining">—</span>
+            <span class="days-label" data-i18n="p_days_left">restants</span>
+          </div>
         </div>
-        <div class="info-box">Vous pouvez analyser vos vidéos YouTube. Bloquée sur les chaînes non autorisées.</div>
-        <button class="btn-back" id="btnNewActivation">🔄 Nouvelle activation</button>
+
+        <div class="launcher-group">
+          <div class="launcher-group-label" data-i18n="p_tools">Outils</div>
+          <div id="lpTools"></div>
+        </div>
+
+        <div class="launcher-group">
+          <div class="launcher-group-label" data-i18n="p_account">Compte</div>
+          <a class="launcher-item" href="https://vidsparkpro.com/dashboard.html" target="_blank" rel="noopener">
+            <span class="ic">📊</span><span class="t" data-i18n="p_dashboard">Tableau de bord</span><span class="chev">›</span>
+          </a>
+          <a class="launcher-item" href="https://vidsparkpro.com/billing.html" target="_blank" rel="noopener">
+            <span class="ic">💎</span><span class="t" data-i18n="p_billing">Mon abonnement</span><span class="chev">›</span>
+          </a>
+          <a class="launcher-item" href="https://vidsparkpro.com/contact.html" target="_blank" rel="noopener">
+            <span class="ic">❓</span><span class="t" data-i18n="p_support">Support</span><span class="chev">›</span>
+          </a>
+        </div>
+
+        <div class="foot-actions">
+          <button class="btn-open" id="btnOpenYouTube" data-i18n="p_open_yt">Ouvrir sur YouTube</button>
+          <button class="link-back" id="btnNewActivation">🔄 <span data-i18n="p_new">Nouvelle activation</span></button>
+        </div>
       </div>
     </div>
   </div>

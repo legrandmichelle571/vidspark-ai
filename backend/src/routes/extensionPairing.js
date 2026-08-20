@@ -10,13 +10,19 @@
  * (routes/activation.js, non modifié), que l'extension appelle elle-même
  * juste après avoir reçu ce credential, avec son propre device_id.
  *
+ * Chemins montés sous /api/auth/link (voir index.js) — volontairement
+ * neutres, sans "extension" ni "handshake" dans l'URL : ces mots déclenchent
+ * certains filtres anti-fingerprinting de bloqueurs de pub/VPN, qui
+ * cassaient silencieusement l'appel en "Failed to fetch" pour certains
+ * utilisateurs (observé en test réel).
+ *
  * Flux A — handshake automatique (site → extension) :
- *   POST /handshake/start     (site, requireAuth)   { challenge } → { state }
- *   POST /handshake/complete  (extension, public)    { nonce, state } → credential
+ *   POST /start     (site, requireAuth)   { challenge } → { state }
+ *   POST /complete  (extension, public)    { nonce, state } → credential
  *
  * Flux B — code de secours à un seul champ :
- *   POST /pair/manual-code    (site, requireAuth)   → { code, expires_in }
- *   POST /pair/redeem         (extension, public)    { code } → credential
+ *   POST /code      (site, requireAuth)   → { code, expires_in }
+ *   POST /redeem    (extension, public)    { code } → credential
  *
  * Sécurité : nonce généré et gardé côté extension (jamais transmis en clair au
  * site — seul son empreinte sha256 "challenge" transite par le site), state
@@ -142,8 +148,13 @@ const manualCodeRedeemLimit  = rateLimit({ windowMs: MANUAL_CODE_TTL_MS, max: 5,
 
 /* Appelé par le SITE (utilisateur déjà authentifié). Ne reçoit que le hash du
    nonce (challenge) — le nonce brut ne quitte jamais l'extension avant l'étape
-   /handshake/complete. */
-router.post('/handshake/start', requireAuth, handshakeStartLimit, async (req, res) => {
+   /complete.
+   Chemin volontairement neutre (/api/auth/link/*, pas "/extension/" ni
+   "/handshake/") : certains bloqueurs de pub/VPN filtrent les requêtes dont
+   le chemin contient "extension" (heuristique anti-fingerprinting), ce qui
+   cassait silencieusement cet appel en "Failed to fetch" pour certains
+   utilisateurs. */
+router.post('/start', requireAuth, handshakeStartLimit, async (req, res) => {
   try {
     const { challenge } = req.body;
     if (!challenge || typeof challenge !== 'string' || !/^[a-f0-9]{64}$/i.test(challenge)) {
@@ -172,7 +183,7 @@ router.post('/handshake/start', requireAuth, handshakeStartLimit, async (req, re
 
 /* Appelé DIRECTEMENT par l'extension (jamais relayé par le site) — c'est ici
    que le nonce brut apparaît pour la première et unique fois côté réseau. */
-router.post('/handshake/complete', handshakeCompleteLimit, async (req, res) => {
+router.post('/complete', handshakeCompleteLimit, async (req, res) => {
   try {
     const { nonce, state } = req.body;
     if (!nonce || !state || typeof nonce !== 'string' || typeof state !== 'string') {
@@ -216,7 +227,7 @@ router.post('/handshake/complete', handshakeCompleteLimit, async (req, res) => {
    FLUX B — Code de secours (un seul champ)
 ══════════════════════════════════════════════════════════════ */
 
-router.post('/pair/manual-code', requireAuth, manualCodeIssueLimit, async (req, res) => {
+router.post('/code', requireAuth, manualCodeIssueLimit, async (req, res) => {
   try {
     const supabase = req.app.locals.supabase;
     const code = generateManualCode();
@@ -240,7 +251,7 @@ router.post('/pair/manual-code', requireAuth, manualCodeIssueLimit, async (req, 
   }
 });
 
-router.post('/pair/redeem', manualCodeRedeemLimit, async (req, res) => {
+router.post('/redeem', manualCodeRedeemLimit, async (req, res) => {
   try {
     const normalized = normalizeManualCode(req.body?.code);
     if (!normalized) return res.status(400).json({ error: 'Code required' });
