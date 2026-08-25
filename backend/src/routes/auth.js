@@ -20,6 +20,18 @@ const supabaseAnon = () => createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
+/* Client pour VALIDER un access_token déjà émis (pas pour un flux
+   signup/login/logout/reset/refresh — supabaseAnon() reste correct pour ceux-là).
+   Même stratégie de clé que requireAuth (middleware/auth.js) : SERVICE_KEY en
+   priorité, ANON_KEY en repli. Avant ce fix, /auth/google validait avec
+   supabaseAnon() (ANON_KEY seul) alors que requireAuth (ex: /user/channels)
+   valide avec SERVICE_KEY||ANON_KEY — un même token pouvait donc être accepté
+   par l'un et rejeté par l'autre. */
+const supabaseTokenAuth = () => createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY
+);
+
 /* ── Validation schemas ── */
 const registerSchema = Joi.object({
   email:    Joi.string().email().required(),
@@ -158,7 +170,7 @@ router.post('/google', async (req, res) => {
        faire confiance à un JWT non vérifié fourni par le client. */
     let auth_id;
     try {
-      const { data: { user }, error: tokErr } = await supabaseAnon().auth.getUser(token);
+      const { data: { user }, error: tokErr } = await supabaseTokenAuth().auth.getUser(token);
       if (tokErr || !user) {
         return res.status(401).json({ error: 'Token invalide ou expiré' });
       }
